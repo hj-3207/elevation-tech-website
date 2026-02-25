@@ -49,7 +49,7 @@
     background: linear-gradient(90deg, transparent, var(--orange), transparent);
     opacity: 0.4;
   }
-  .nav-logo img { height: 32px; width: auto; }
+  .nav-logo img { height: 32px; width: auto; max-width: 180px; object-fit: contain; }
   .nav-links { display: flex; align-items: center; gap: 0.25rem; }
   .nav-links a {
     color: #666; text-decoration: none; padding: 0.4rem 0.9rem;
@@ -75,8 +75,8 @@
     background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
   }
   .hero { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
-  .hero-logo { margin: 0 auto 2.5rem; height: 80px; display: flex; align-items: center; justify-content: center; }
-  .hero-logo img { height: 80px; width: auto; }
+  .hero-logo { margin: 0 auto 2.5rem; display: flex; align-items: center; justify-content: center; }
+  .hero-logo img { height: 80px; width: auto; max-width: 320px; object-fit: contain; }
 
   .terminal-tag {
     display: inline-flex; align-items: center; gap: 0.5rem;
