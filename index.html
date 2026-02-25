@@ -74,11 +74,9 @@
     position: absolute; inset: 0; pointer-events: none;
     background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
   }
-  .hero { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
-
-  /* HERO LOGO — fixed height, width scales naturally */
-  .hero-logo { margin: 0 auto 2.5rem; }
-  .hero-logo img { display: block; height: 70px; width: auto; margin: 0 auto; }
+  .hero { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; }
+  .hero-top { display: flex; align-items: stretch; justify-content: center; gap: 3rem; margin-bottom: 1.75rem; text-align: left; }
+  .hero-logo img { display: block; height: 100%; width: auto; }
 
   .terminal-tag {
     display: inline-flex; align-items: center; gap: 0.5rem;
@@ -179,7 +177,7 @@
 <div class="grid-bg"></div>
 
 <nav>
-  <a href="#home" class="nav-logo"><img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions"></a>
+  <a href="#home" class="nav-logo"><img src="TechLogoSecondary-White.png" alt="Elevation Technology Solutions"></a>
   <div class="nav-links">
     <a href="#home">home</a>
     <a href="#about">about</a>
@@ -192,10 +190,12 @@
   <div class="hero-glow"></div>
   <div class="scanline"></div>
   <div class="hero">
-    <div class="hero-logo">
-      <img src="TechLogoSquare-White.png" alt="Elevation Technology Solutions">
+    <div class="hero-top">
+      <div class="hero-logo">
+        <img src="TechLogoSquare-White.png" alt="Elevation Technology Solutions">
+      </div>
+      <h1>Technology That<br><span class="accent">Elevates</span> <span class="outline">Everything</span></h1>
     </div>
-    <h1>Technology That<br><span class="accent">Elevates</span> <span class="outline">Everything</span></h1>
     <div class="hero-divider"></div>
     <p class="hero-sub">Expert <span class="hl">project-based consulting</span> across IT infrastructure, security systems, wireless networking, and <span class="hl">innovative technology tools</span>.</p>
     <br>
