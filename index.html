@@ -26,7 +26,6 @@
   html { scroll-behavior: smooth; }
   body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
 
-  /* ANIMATED GRID BACKGROUND */
   .grid-bg {
     position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background-image:
@@ -49,12 +48,13 @@
     background: linear-gradient(90deg, transparent, var(--orange), transparent);
     opacity: 0.4;
   }
-  .nav-logo img { height: auto; width: auto; max-width: 50px; object-fit: contain; }
+  /* NAV LOGO — fixed height, width scales naturally */
+  .nav-logo img { display: block; height: 36px; width: auto; }
   .nav-links { display: flex; align-items: center; gap: 0.25rem; }
   .nav-links a {
     color: #666; text-decoration: none; padding: 0.4rem 0.9rem;
     font-size: 0.82rem; font-family: var(--mono); letter-spacing: 0.04em;
-    border-radius: 4px; transition: all 0.2s; position: relative;
+    border-radius: 4px; transition: all 0.2s;
   }
   .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.04); }
 
@@ -71,12 +71,14 @@
     pointer-events: none;
   }
   .scanline {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
+    position: absolute; inset: 0; pointer-events: none;
     background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
   }
   .hero { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
-  .hero-logo { margin: 0 auto 2.5rem; display: flex; align-items: center; justify-content: center; }
-  .hero-logo img { height: auto; width: auto; max-width: 100px; object-fit: contain; }
+
+  /* HERO LOGO — fixed height, width scales naturally */
+  .hero-logo { margin: 0 auto 2.5rem; }
+  .hero-logo img { display: block; height: 70px; width: auto; margin: 0 auto; }
 
   .terminal-tag {
     display: inline-flex; align-items: center; gap: 0.5rem;
@@ -93,34 +95,18 @@
   }
   .hero h1 .accent { color: var(--orange); }
   .hero h1 .outline { -webkit-text-stroke: 1px rgba(255,255,255,0.3); color: transparent; }
-
   .hero-sub {
-    font-size: 1rem; color: var(--muted); max-width: 520px; margin: 0 auto 1rem;
+    color: var(--muted); max-width: 520px; margin: 0 auto 1rem;
     line-height: 1.8; font-family: var(--mono); font-size: 0.88rem;
   }
   .hero-sub .hl { color: #aaa; }
-
   .hero-divider { width: 1px; height: 40px; background: linear-gradient(180deg, transparent, var(--orange), transparent); margin: 1.75rem auto; }
-
   .btn-row { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
   .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.75rem; border-radius: 4px; font-weight: 700; font-size: 0.85rem; text-decoration: none; transition: all 0.2s; font-family: var(--mono); letter-spacing: 0.05em; text-transform: uppercase; }
   .btn-primary { background: var(--orange); color: #fff; border: 1px solid var(--orange); }
   .btn-primary:hover { background: var(--orange-bright); transform: translateY(-2px); box-shadow: 0 8px 30px var(--orange-glow); }
   .btn-outline { border: 1px solid var(--border); color: #888; background: transparent; }
   .btn-outline:hover { border-color: rgba(255,255,255,0.2); color: #fff; background: rgba(255,255,255,0.03); }
-
-  /* CORNER BRACKETS */
-  .bracket-box {
-    position: relative; border: 1px solid var(--border); border-radius: 2px; padding: 2rem;
-  }
-  .bracket-box::before, .bracket-box::after,
-  .bracket-box .b2::before, .bracket-box .b2::after {
-    content: ''; position: absolute; width: 12px; height: 12px;
-  }
-  .bracket-box::before { top: -1px; left: -1px; border-top: 2px solid var(--orange); border-left: 2px solid var(--orange); }
-  .bracket-box::after { top: -1px; right: -1px; border-top: 2px solid var(--orange); border-right: 2px solid var(--orange); }
-  .bracket-box .b2::before { bottom: -1px; left: -1px; border-bottom: 2px solid var(--orange); border-left: 2px solid var(--orange); }
-  .bracket-box .b2::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--orange); border-right: 2px solid var(--orange); }
 
   /* SECTIONS */
   section { padding: 6rem 2rem; position: relative; z-index: 1; }
@@ -152,14 +138,8 @@
   /* SERVICES */
   #services { background: var(--bg); }
   .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 3rem; }
-  .service-card {
-    background: var(--card); padding: 1.75rem; transition: all 0.25s; position: relative; overflow: hidden;
-  }
-  .service-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--orange), transparent);
-    opacity: 0; transition: opacity 0.3s;
-  }
+  .service-card { background: var(--card); padding: 1.75rem; transition: all 0.25s; position: relative; overflow: hidden; }
+  .service-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--orange), transparent); opacity: 0; transition: opacity 0.3s; }
   .service-card:hover { background: #141414; }
   .service-card:hover::before { opacity: 1; }
   .svc-num { font-family: var(--mono); font-size: 0.65rem; color: var(--subtle); margin-bottom: 1rem; letter-spacing: 0.1em; }
@@ -172,42 +152,23 @@
 
   /* CONTACT */
   #contact { background: var(--bg2); }
-  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; margin-top: 3.5rem; align-items: start; }
-  .contact-info p { color: #666; line-height: 1.85; margin-bottom: 2rem; font-size: 0.93rem; }
+  .contact-box { margin-top: 3rem; max-width: 580px; }
+  .contact-box p { color: #666; line-height: 1.85; margin-bottom: 2rem; font-size: 0.93rem; }
   .contact-item { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
   .ci { width: 38px; height: 38px; background: rgba(204,85,0,0.08); border: 1px solid var(--border-orange); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0; }
   .contact-item a { color: var(--orange-bright); text-decoration: none; font-family: var(--mono); font-size: 0.85rem; }
   .contact-item a:hover { color: #fff; }
-  .form-wrap { position: relative; }
-  .form-group { margin-bottom: 1rem; }
-  .form-group label { display: block; font-size: 0.72rem; color: var(--subtle); margin-bottom: 0.4rem; font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
-  .form-group input, .form-group textarea, .form-group select {
-    width: 100%; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 4px; padding: 0.7rem 0.9rem; color: #e5e5e5; font-size: 0.88rem;
-    font-family: 'Inter', sans-serif; transition: border-color 0.2s; outline: none;
-  }
-  .form-group select option { background: #111; }
-  .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(204,85,0,0.08); }
-  .form-group textarea { resize: vertical; min-height: 110px; }
-  .submit-btn {
-    width: 100%; padding: 0.85rem; background: var(--orange); color: #fff;
-    border: none; border-radius: 4px; font-size: 0.82rem; font-weight: 700; font-family: var(--mono);
-    cursor: pointer; transition: all 0.2s; letter-spacing: 0.08em; text-transform: uppercase;
-  }
-  .submit-btn:hover { background: var(--orange-bright); box-shadow: 0 6px 24px var(--orange-glow); }
-  .success-msg { display: none; text-align: center; color: #4ade80; padding: 1rem; font-weight: 600; font-family: var(--mono); font-size: 0.85rem; }
 
   /* FOOTER */
   footer { background: #050505; border-top: 1px solid var(--border); padding: 2rem 2.5rem; display: flex; align-items: center; justify-content: space-between; }
-  .footer-logo img { height: auto; width: auto; max-width: 50px; opacity: 0.3; }
+  /* FOOTER LOGO — fixed height, width scales naturally */
+  .footer-logo img { display: block; height: 28px; width: auto; opacity: 0.3; }
   footer p { color: #2a2a2a; font-size: 0.75rem; font-family: var(--mono); }
 
-  @media (max-width: 900px) {
-    .services-grid { grid-template-columns: 1fr 1fr; }
-  }
+  @media (max-width: 900px) { .services-grid { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 680px) {
     .nav-links { display: none; }
-    .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
     .services-grid { grid-template-columns: 1fr; }
     footer { flex-direction: column; gap: 1rem; text-align: center; }
   }
@@ -218,7 +179,7 @@
 <div class="grid-bg"></div>
 
 <nav>
-  <a href="#home"><img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions"></a>
+  <a href="#home" class="nav-logo"><img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions"></a>
   <div class="nav-links">
     <a href="#home">_home</a>
     <a href="#about">_about</a>
@@ -227,7 +188,6 @@
   </div>
 </nav>
 
-<!-- HERO -->
 <section id="home">
   <div class="hero-glow"></div>
   <div class="scanline"></div>
@@ -236,15 +196,9 @@
       <img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions">
     </div>
     <div class="terminal-tag"><span class="dot"></span> SYSTEMS ONLINE</div>
-    <h1>
-      Technology That<br>
-      <span class="accent">Elevates</span> <span class="outline">Everything</span>
-    </h1>
+    <h1>Technology That<br><span class="accent">Elevates</span> <span class="outline">Everything</span></h1>
     <div class="hero-divider"></div>
-    <p class="hero-sub">
-      Expert <span class="hl">project-based consulting</span> across IT infrastructure,
-      security systems, wireless networking, and <span class="hl">innovative technology tools</span>.
-    </p>
+    <p class="hero-sub">Expert <span class="hl">project-based consulting</span> across IT infrastructure, security systems, wireless networking, and <span class="hl">innovative technology tools</span>.</p>
     <br>
     <div class="btn-row">
       <a href="#services" class="btn btn-primary">↓ View Services</a>
@@ -253,7 +207,6 @@
   </div>
 </section>
 
-<!-- ABOUT -->
 <section id="about">
   <div class="container">
     <div class="section-eyebrow">About</div>
@@ -286,7 +239,6 @@
   </div>
 </section>
 
-<!-- SERVICES -->
 <section id="services">
   <div class="container">
     <div class="section-eyebrow">Services</div>
@@ -294,7 +246,6 @@
     <div class="divider"></div>
     <p class="section-sub">Focused, project-based technology engagements — we assess, bid, and build.</p>
     <div class="services-grid">
-
       <div class="service-card">
         <div class="svc-num">01 // CONSULT</div>
         <div class="icon">💻</div>
@@ -307,7 +258,6 @@
           <li>Project scoping & budgeting</li>
         </ul>
       </div>
-
       <div class="service-card">
         <div class="svc-num">02 // NETWORK</div>
         <div class="icon">🌐</div>
@@ -320,7 +270,6 @@
           <li>Configuration & management</li>
         </ul>
       </div>
-
       <div class="service-card">
         <div class="svc-num">03 // WIRELESS</div>
         <div class="icon">📶</div>
@@ -333,7 +282,6 @@
           <li>Performance testing & validation</li>
         </ul>
       </div>
-
       <div class="service-card">
         <div class="svc-num">04 // SURVEILLANCE</div>
         <div class="icon">📷</div>
@@ -346,7 +294,6 @@
           <li>Integration with access control</li>
         </ul>
       </div>
-
       <div class="service-card">
         <div class="svc-num">05 // ACCESS</div>
         <div class="icon">🔐</div>
@@ -359,7 +306,6 @@
           <li>Integration with surveillance</li>
         </ul>
       </div>
-
       <div class="service-card">
         <div class="svc-num">06 // INNOVATE</div>
         <div class="icon">⚙️</div>
@@ -372,76 +318,29 @@
           <li>Unique solutions for unique problems</li>
         </ul>
       </div>
-
     </div>
   </div>
 </section>
 
-<!-- CONTACT -->
 <section id="contact">
   <div class="container">
     <div class="section-eyebrow">Contact</div>
     <div class="section-title">Start a Project</div>
     <div class="divider"></div>
-    <div class="contact-grid">
-      <div class="contact-info">
-        <p>Ready to move forward on a technology project? Reach out and tell us what you need. We'll follow up to schedule an assessment and provide a detailed bid — no commitment required.</p>
-        <div class="contact-item">
-          <div class="ci">📧</div>
-          <a href="mailto:elevationtechnology@outlook.com">elevationtechnology@outlook.com</a>
-        </div>
-      </div>
-      <div class="form-wrap">
-        <div class="bracket-box">
-          <div class="b2"></div>
-          <div class="form-group">
-            <label>Name</label>
-            <input type="text" id="fname" placeholder="John Smith">
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="femail" placeholder="john@example.com">
-          </div>
-          <div class="form-group">
-            <label>Service</label>
-            <select id="fservice">
-              <option value="">Select a service...</option>
-              <option>IT Consulting</option>
-              <option>Network Design & Installation</option>
-              <option>WiFi Survey & Installation</option>
-              <option>Video Surveillance</option>
-              <option>Access Control Systems</option>
-              <option>Technology Tools & Innovation</option>
-              <option>Multiple Services</option>
-              <option>Not Sure Yet</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Project Description</label>
-            <textarea id="fmsg" placeholder="Describe your project or what you're looking to accomplish..."></textarea>
-          </div>
-          <button class="submit-btn" onclick="submitForm()">→ Submit Request</button>
-          <div class="success-msg" id="successMsg">✓ Request received. We'll be in touch shortly.</div>
-        </div>
+    <div class="contact-box">
+      <p>Ready to move forward on a technology project? Reach out and tell us what you need. We'll follow up to schedule an assessment and provide a detailed bid — no commitment required.</p>
+      <div class="contact-item">
+        <div class="ci">📧</div>
+        <a href="mailto:elevationtechnology@outlook.com">elevationtechnology@outlook.com</a>
       </div>
     </div>
   </div>
 </section>
 
 <footer>
-  <img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions">
+  <div class="footer-logo"><img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions"></div>
   <p>&copy; 2026 Elevation Technology Solutions</p>
 </footer>
 
-<script>
-  function submitForm() {
-    const n = document.getElementById('fname').value;
-    const e = document.getElementById('femail').value;
-    const m = document.getElementById('fmsg').value;
-    if (!n || !e || !m) { alert('Please fill in your name, email, and project description.'); return; }
-    document.querySelector('.submit-btn').style.display = 'none';
-    document.getElementById('successMsg').style.display = 'block';
-  }
-</script>
 </body>
 </html>
