@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elevation Technology Solutions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --orange: #CC5500;
+    --orange-bright: #e06010;
+    --orange-glow: rgba(204,85,0,0.25);
+    --bg: #080808;
+    --bg2: #0d0d0d;
+    --card: #111111;
+    --card2: #161616;
+    --border: rgba(255,255,255,0.07);
+    --border-orange: rgba(204,85,0,0.3);
+    --text: #e5e5e5;
+    --muted: #777;
+    --subtle: #444;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+  /* ANIMATED GRID BACKGROUND */
+  .grid-bg {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(204,85,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(204,85,0,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at 50% 50%, black 20%, transparent 80%);
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 100;
+    background: rgba(8,8,8,0.95); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 2.5rem;
+  }
+  nav::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--orange), transparent);
+    opacity: 0.4;
+  }
+  .nav-logo img { height: 32px; width: auto; }
+  .nav-links { display: flex; align-items: center; gap: 0.25rem; }
+  .nav-links a {
+    color: #666; text-decoration: none; padding: 0.4rem 0.9rem;
+    font-size: 0.82rem; font-family: var(--mono); letter-spacing: 0.04em;
+    border-radius: 4px; transition: all 0.2s; position: relative;
+  }
+  .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.04); }
+
+  /* HERO */
+  #home {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 6rem 2rem 5rem;
+    position: relative; overflow: hidden; background: var(--bg);
+  }
+  .hero-glow {
+    position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%);
+    width: 700px; height: 400px; border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(204,85,0,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .scanline {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  }
+  .hero { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+  .hero-logo { margin: 0 auto 2.5rem; height: 80px; display: flex; align-items: center; justify-content: center; }
+  .hero-logo img { height: 80px; width: auto; }
+
+  .terminal-tag {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(204,85,0,0.08); border: 1px solid var(--border-orange);
+    color: var(--orange-bright); font-size: 0.72rem; padding: 0.3rem 0.9rem;
+    border-radius: 3px; margin-bottom: 2rem; font-family: var(--mono); letter-spacing: 0.06em;
+  }
+  .terminal-tag .dot { width: 6px; height: 6px; background: var(--orange); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .hero h1 {
+    font-size: clamp(2.2rem, 5.5vw, 4rem); font-weight: 900; line-height: 1.08;
+    color: #fff; margin-bottom: 1.5rem; letter-spacing: -0.02em;
+  }
+  .hero h1 .accent { color: var(--orange); }
+  .hero h1 .outline { -webkit-text-stroke: 1px rgba(255,255,255,0.3); color: transparent; }
+
+  .hero-sub {
+    font-size: 1rem; color: var(--muted); max-width: 520px; margin: 0 auto 1rem;
+    line-height: 1.8; font-family: var(--mono); font-size: 0.88rem;
+  }
+  .hero-sub .hl { color: #aaa; }
+
+  .hero-divider { width: 1px; height: 40px; background: linear-gradient(180deg, transparent, var(--orange), transparent); margin: 1.75rem auto; }
+
+  .btn-row { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.75rem; border-radius: 4px; font-weight: 700; font-size: 0.85rem; text-decoration: none; transition: all 0.2s; font-family: var(--mono); letter-spacing: 0.05em; text-transform: uppercase; }
+  .btn-primary { background: var(--orange); color: #fff; border: 1px solid var(--orange); }
+  .btn-primary:hover { background: var(--orange-bright); transform: translateY(-2px); box-shadow: 0 8px 30px var(--orange-glow); }
+  .btn-outline { border: 1px solid var(--border); color: #888; background: transparent; }
+  .btn-outline:hover { border-color: rgba(255,255,255,0.2); color: #fff; background: rgba(255,255,255,0.03); }
+
+  /* CORNER BRACKETS */
+  .bracket-box {
+    position: relative; border: 1px solid var(--border); border-radius: 2px; padding: 2rem;
+  }
+  .bracket-box::before, .bracket-box::after,
+  .bracket-box .b2::before, .bracket-box .b2::after {
+    content: ''; position: absolute; width: 12px; height: 12px;
+  }
+  .bracket-box::before { top: -1px; left: -1px; border-top: 2px solid var(--orange); border-left: 2px solid var(--orange); }
+  .bracket-box::after { top: -1px; right: -1px; border-top: 2px solid var(--orange); border-right: 2px solid var(--orange); }
+  .bracket-box .b2::before { bottom: -1px; left: -1px; border-bottom: 2px solid var(--orange); border-left: 2px solid var(--orange); }
+  .bracket-box .b2::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--orange); border-right: 2px solid var(--orange); }
+
+  /* SECTIONS */
+  section { padding: 6rem 2rem; position: relative; z-index: 1; }
+  .container { max-width: 1080px; margin: 0 auto; }
+  .section-eyebrow {
+    display: inline-flex; align-items: center; gap: 0.6rem;
+    font-family: var(--mono); font-size: 0.7rem; color: var(--orange);
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem;
+  }
+  .section-eyebrow::before { content: '//'; color: var(--subtle); }
+  .section-title { font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 900; color: #fff; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+  .section-sub { color: var(--muted); font-size: 0.93rem; line-height: 1.8; max-width: 580px; }
+  .divider { width: 40px; height: 2px; background: var(--orange); margin: 1rem 0 2rem; border-radius: 1px; }
+
+  /* ABOUT */
+  #about { background: var(--bg2); }
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; margin-top: 3.5rem; }
+  .about-text p { color: #777; line-height: 1.9; margin-bottom: 1rem; font-size: 0.94rem; }
+  .about-text strong { color: #ccc; }
+  .about-highlights { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .highlight { background: var(--card); padding: 1.35rem 1.5rem; transition: background 0.2s; position: relative; }
+  .highlight:hover { background: var(--card2); }
+  .highlight::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--orange); opacity: 0; transition: opacity 0.2s; }
+  .highlight:hover::before { opacity: 1; }
+  .highlight-num { font-family: var(--mono); font-size: 0.65rem; color: var(--orange); margin-bottom: 0.4rem; letter-spacing: 0.1em; }
+  .highlight h4 { color: #ddd; font-size: 0.9rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .highlight p { color: var(--muted); font-size: 0.83rem; line-height: 1.65; margin: 0; }
+
+  /* SERVICES */
+  #services { background: var(--bg); }
+  .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 3rem; }
+  .service-card {
+    background: var(--card); padding: 1.75rem; transition: all 0.25s; position: relative; overflow: hidden;
+  }
+  .service-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--orange), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .service-card:hover { background: #141414; }
+  .service-card:hover::before { opacity: 1; }
+  .svc-num { font-family: var(--mono); font-size: 0.65rem; color: var(--subtle); margin-bottom: 1rem; letter-spacing: 0.1em; }
+  .icon { width: 42px; height: 42px; background: rgba(204,85,0,0.08); border: 1px solid var(--border-orange); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.2rem; }
+  .service-card h3 { font-size: 0.98rem; color: #fff; margin-bottom: 0.6rem; font-weight: 700; }
+  .service-card p { color: #666; font-size: 0.86rem; line-height: 1.72; margin-bottom: 1rem; }
+  .service-card ul { list-style: none; }
+  .service-card ul li { color: var(--subtle); font-size: 0.8rem; padding: 0.25rem 0 0.25rem 1rem; position: relative; }
+  .service-card ul li::before { content: '›'; position: absolute; left: 0; color: var(--orange); font-weight: 700; }
+
+  /* CONTACT */
+  #contact { background: var(--bg2); }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; margin-top: 3.5rem; align-items: start; }
+  .contact-info p { color: #666; line-height: 1.85; margin-bottom: 2rem; font-size: 0.93rem; }
+  .contact-item { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .ci { width: 38px; height: 38px; background: rgba(204,85,0,0.08); border: 1px solid var(--border-orange); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0; }
+  .contact-item a { color: var(--orange-bright); text-decoration: none; font-family: var(--mono); font-size: 0.85rem; }
+  .contact-item a:hover { color: #fff; }
+  .form-wrap { position: relative; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 0.72rem; color: var(--subtle); margin-bottom: 0.4rem; font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px; padding: 0.7rem 0.9rem; color: #e5e5e5; font-size: 0.88rem;
+    font-family: 'Inter', sans-serif; transition: border-color 0.2s; outline: none;
+  }
+  .form-group select option { background: #111; }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(204,85,0,0.08); }
+  .form-group textarea { resize: vertical; min-height: 110px; }
+  .submit-btn {
+    width: 100%; padding: 0.85rem; background: var(--orange); color: #fff;
+    border: none; border-radius: 4px; font-size: 0.82rem; font-weight: 700; font-family: var(--mono);
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .submit-btn:hover { background: var(--orange-bright); box-shadow: 0 6px 24px var(--orange-glow); }
+  .success-msg { display: none; text-align: center; color: #4ade80; padding: 1rem; font-weight: 600; font-family: var(--mono); font-size: 0.85rem; }
+
+  /* FOOTER */
+  footer { background: #050505; border-top: 1px solid var(--border); padding: 2rem 2.5rem; display: flex; align-items: center; justify-content: space-between; }
+  .footer-logo img { height: 22px; width: auto; opacity: 0.3; }
+  footer p { color: #2a2a2a; font-size: 0.75rem; font-family: var(--mono); }
+
+  @media (max-width: 900px) {
+    .services-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 680px) {
+    .nav-links { display: none; }
+    .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    .services-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<nav>
+  <a href="#home"><img src="YOUR_LOGO_WHITE.png" alt="Elevation Technology Solutions"></a>
+  <div class="nav-links">
+    <a href="#home">_home</a>
+    <a href="#about">_about</a>
+    <a href="#services">_services</a>
+    <a href="#contact">_contact</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="home">
+  <div class="hero-glow"></div>
+  <div class="scanline"></div>
+  <div class="hero">
+    <div class="hero-logo">
+      <img src="YOUR_LOGO_WHITE.png" alt="Elevation Technology Solutions">
+    </div>
+    <div class="terminal-tag"><span class="dot"></span> SYSTEMS ONLINE</div>
+    <h1>
+      Technology That<br>
+      <span class="accent">Elevates</span> <span class="outline">Everything</span>
+    </h1>
+    <div class="hero-divider"></div>
+    <p class="hero-sub">
+      Expert <span class="hl">project-based consulting</span> across IT infrastructure,
+      security systems, wireless networking, and <span class="hl">innovative technology tools</span>.
+    </p>
+    <br>
+    <div class="btn-row">
+      <a href="#services" class="btn btn-primary">↓ View Services</a>
+      <a href="#contact" class="btn btn-outline">Request a Bid</a>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="container">
+    <div class="section-eyebrow">About</div>
+    <div class="section-title">Built on Expertise.<br>Driven by Results.</div>
+    <div class="divider"></div>
+    <div class="about-grid">
+      <div class="about-text">
+        <p>Elevation Technology Solutions is a small business built on a passion for technology and a commitment to exceptional service. We work closely with clients to understand their unique needs and deliver tailored solutions that get the job done right.</p>
+        <p>We specialize in <strong>project-based work</strong> — from initial assessment and bidding through full implementation. No cookie-cutter packages, no bloated contracts. Just focused, professional execution.</p>
+        <p><strong>Our Mission:</strong> To simplify technology for our clients — making it accessible, reliable, and built to last.</p>
+      </div>
+      <div class="about-highlights">
+        <div class="highlight">
+          <div class="highlight-num">01 // APPROACH</div>
+          <h4>Project-Based Consulting</h4>
+          <p>We assess your needs, provide a detailed bid, and execute from start to finish. No ongoing retainers required.</p>
+        </div>
+        <div class="highlight">
+          <div class="highlight-num">02 // EXPERTISE</div>
+          <h4>Hands-On Experience</h4>
+          <p>From physical installations to custom software tools, we bring real-world experience to every engagement.</p>
+        </div>
+        <div class="highlight">
+          <div class="highlight-num">03 // PHILOSOPHY</div>
+          <h4>Tailored Every Time</h4>
+          <p>Every client and environment is different. We design solutions that fit your specific situation, not a template.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="container">
+    <div class="section-eyebrow">Services</div>
+    <div class="section-title">What We Deploy</div>
+    <div class="divider"></div>
+    <p class="section-sub">Focused, project-based technology engagements — we assess, bid, and build.</p>
+    <div class="services-grid">
+
+      <div class="service-card">
+        <div class="svc-num">01 // CONSULT</div>
+        <div class="icon">💻</div>
+        <h3>IT Consulting</h3>
+        <p>Strategic technology guidance to help your business make smart decisions about infrastructure and systems.</p>
+        <ul>
+          <li>Technology assessments & planning</li>
+          <li>Infrastructure recommendations</li>
+          <li>Vendor selection guidance</li>
+          <li>Project scoping & budgeting</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <div class="svc-num">02 // NETWORK</div>
+        <div class="icon">🌐</div>
+        <h3>Network Design & Installation</h3>
+        <p>End-to-end network deployment — cabling, data closets, enterprise switching, firewalls, and gateways.</p>
+        <ul>
+          <li>Network architecture & design</li>
+          <li>Data closet & IT rack installation</li>
+          <li>Switch, firewall & gateway setup</li>
+          <li>Configuration & management</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <div class="svc-num">03 // WIRELESS</div>
+        <div class="icon">📶</div>
+        <h3>WiFi Surveys & Installation</h3>
+        <p>Professional wireless assessments and deployments that eliminate dead zones and deliver reliable coverage.</p>
+        <ul>
+          <li>Site surveys & RF analysis</li>
+          <li>Access point placement planning</li>
+          <li>Enterprise & SMB WiFi installation</li>
+          <li>Performance testing & validation</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <div class="svc-num">04 // SURVEILLANCE</div>
+        <div class="icon">📷</div>
+        <h3>Video Surveillance</h3>
+        <p>Professional surveillance installation to protect your property, assets, and people.</p>
+        <ul>
+          <li>Camera placement & installation</li>
+          <li>NVR/DVR setup & configuration</li>
+          <li>Remote viewing setup</li>
+          <li>Integration with access control</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <div class="svc-num">05 // ACCESS</div>
+        <div class="icon">🔐</div>
+        <h3>Access Control Systems</h3>
+        <p>Modern access control giving you full control over who enters your facility — scalable for any size.</p>
+        <ul>
+          <li>Keycard & fob access systems</li>
+          <li>Smart lock installation</li>
+          <li>Multi-door & multi-site systems</li>
+          <li>Integration with surveillance</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <div class="svc-num">06 // INNOVATE</div>
+        <div class="icon">⚙️</div>
+        <h3>Technology Tools & Innovation</h3>
+        <p>We build useful, innovative technology tools tailored to solve real business problems from the ground up.</p>
+        <ul>
+          <li>Custom business software & apps</li>
+          <li>Workflow automation tools</li>
+          <li>Internal dashboards & utilities</li>
+          <li>Unique solutions for unique problems</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="container">
+    <div class="section-eyebrow">Contact</div>
+    <div class="section-title">Start a Project</div>
+    <div class="divider"></div>
+    <div class="contact-grid">
+      <div class="contact-info">
+        <p>Ready to move forward on a technology project? Reach out and tell us what you need. We'll follow up to schedule an assessment and provide a detailed bid — no commitment required.</p>
+        <div class="contact-item">
+          <div class="ci">📧</div>
+          <a href="mailto:elevationtechnology@outlook.com">elevationtechnology@outlook.com</a>
+        </div>
+      </div>
+      <div class="form-wrap">
+        <div class="bracket-box">
+          <div class="b2"></div>
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="fname" placeholder="John Smith">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="femail" placeholder="john@example.com">
+          </div>
+          <div class="form-group">
+            <label>Service</label>
+            <select id="fservice">
+              <option value="">Select a service...</option>
+              <option>IT Consulting</option>
+              <option>Network Design & Installation</option>
+              <option>WiFi Survey & Installation</option>
+              <option>Video Surveillance</option>
+              <option>Access Control Systems</option>
+              <option>Technology Tools & Innovation</option>
+              <option>Multiple Services</option>
+              <option>Not Sure Yet</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Project Description</label>
+            <textarea id="fmsg" placeholder="Describe your project or what you're looking to accomplish..."></textarea>
+          </div>
+          <button class="submit-btn" onclick="submitForm()">→ Submit Request</button>
+          <div class="success-msg" id="successMsg">✓ Request received. We'll be in touch shortly.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <img src="YOUR_LOGO_WHITE.png" alt="Elevation Technology Solutions">
+  <p>&copy; 2026 Elevation Technology Solutions</p>
+</footer>
+
+<script>
+  function submitForm() {
+    const n = document.getElementById('fname').value;
+    const e = document.getElementById('femail').value;
+    const m = document.getElementById('fmsg').value;
+    if (!n || !e || !m) { alert('Please fill in your name, email, and project description.'); return; }
+    document.querySelector('.submit-btn').style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+  }
+</script>
+</body>
+</html>
