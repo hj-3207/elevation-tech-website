@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Elevation Technology Solutions</title>
+<link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="shortcut icon" href="favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content="Elevation Technology Solutions" />
+<link rel="manifest" href="site.webmanifest" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -48,7 +54,6 @@
     background: linear-gradient(90deg, transparent, var(--orange), transparent);
     opacity: 0.4;
   }
-  /* NAV LOGO — fixed height, width scales naturally */
   .nav-logo img { display: block; height: 54px; width: auto; }
   .nav-links { display: flex; align-items: center; gap: 0.25rem; }
   .nav-links a {
@@ -76,16 +81,7 @@
   }
   .hero { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; }
   .hero-top { display: flex; align-items: center; justify-content: center; gap: 3rem; margin-bottom: 1.75rem; text-align: left; }
-  .hero-logo img { display: block; height: 300px; width: auto; }
-
-  .terminal-tag {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    background: rgba(204,85,0,0.08); border: 1px solid var(--border-orange);
-    color: var(--orange-bright); font-size: 0.72rem; padding: 0.3rem 0.9rem;
-    border-radius: 3px; margin-bottom: 2rem; font-family: var(--mono); letter-spacing: 0.06em;
-  }
-  .terminal-tag .dot { width: 6px; height: 6px; background: var(--orange); border-radius: 50%; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .hero-logo img { display: block; height: 130px; width: auto; }
 
   .hero h1 {
     font-size: clamp(2.2rem, 5.5vw, 4rem); font-weight: 900; line-height: 1.08;
@@ -159,7 +155,6 @@
 
   /* FOOTER */
   footer { background: #050505; border-top: 1px solid var(--border); padding: 2rem 2.5rem; display: flex; align-items: center; justify-content: space-between; }
-  /* FOOTER LOGO — fixed height, width scales naturally */
   .footer-logo img { display: block; height: 35px; width: auto; opacity: 0.3; }
   footer p { color: #2a2a2a; font-size: 0.75rem; font-family: var(--mono); }
 
@@ -171,15 +166,6 @@
     footer { flex-direction: column; gap: 1rem; text-align: center; }
   }
 </style>
-
-/* FAVICON */
-<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="shortcut icon" href="/favicon.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<meta name="apple-mobile-web-app-title" content="MyWebSite" />
-<link rel="manifest" href="/site.webmanifest" />
-  
 </head>
 <body>
 
