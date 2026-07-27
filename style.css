@@ -209,3 +209,17 @@
 
 .rd-title { font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 900; color: #fff; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 1.1rem; }
 .rd-title span { color: var(--orange); }
+
+/* ===== LEGAL / POLICY PAGES ===== */
+.legal { max-width: 780px; margin: 0 auto; padding: 9rem 2rem 5rem; position: relative; z-index: 1; }
+.legal h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 900; color: #fff; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+.legal .updated { color: var(--subtle); font-family: var(--mono); font-size: 0.78rem; margin-bottom: 2.5rem; }
+.legal h2 { color: #fff; font-size: 1.15rem; font-weight: 800; margin: 2.25rem 0 0.75rem; }
+.legal p, .legal li { color: #888; line-height: 1.85; font-size: 0.92rem; }
+.legal ul { margin: 0.5rem 0 0.5rem 1.25rem; }
+.legal li { margin-bottom: 0.5rem; }
+.legal a { color: var(--orange-bright); text-decoration: none; }
+.legal a:hover { color: #fff; }
+.legal strong { color: #ccc; }
+.footer-links a { color: #444; text-decoration: none; font-size: 0.75rem; font-family: var(--mono); }
+.footer-links a:hover { color: var(--orange-bright); }
