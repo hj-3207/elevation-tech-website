@@ -210,7 +210,10 @@
 .rd-title { font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 900; color: #fff; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 1.1rem; }
 .rd-title span { color: var(--orange); }
 
-/* ===== RACK TRACKER PAGE ===== */
+/* ===== APP LANDING PAGES (rack-tracker.html + rack-scorer.html) =====
+   The rt-* classes are shared by both mobile-app pages — phone-shaped screenshots,
+   the privacy callout, and the screenshot carousel. Kept under the original prefix
+   rather than renamed so both pages keep pointing at one set of rules. */
 /* Phone screenshots are portrait, so unlike .rd-elk (a landscape photo) they need a
    width cap or they tower over the hero copy beside them. */
 .rt-phone { display: block; width: 100%; max-width: 300px; margin: 0 auto; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
