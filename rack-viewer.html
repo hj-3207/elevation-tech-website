@@ -38,11 +38,13 @@
       <p class="rd-tagline">Rip through a season of camera-card photos and video, keeping only the ones worth keeping.</p>
       <p class="rd-sub">Hold the arrow key and every photo is already on screen — no waiting, no loading spinner. Press <strong>K</strong> on the ones you want, then move everything else to a single trash folder in one go. Clips play with sound, right in the window. Free, and fully offline on Windows.</p>
       <div class="rd-buttons">
-        <!-- TODO: replace href with the OneDrive share link for RackViewer_Setup.exe and
-             change the label to "↓ Download (Free)". Use the stable-name approach (upload
-             once, then replace the file in place on updates) so the link never has to
-             change again. Until then this scrolls to the Get it section rather than being
-             a dead link. -->
+        <!-- TODO: replace href with the OneDrive share link for RackViewer_Setup.exe,
+             change the label to "↓ Download (Free)", and add
+             target="_blank" rel="noopener" onclick="rvCountDownload()"
+             so the click is counted. Use the stable-name approach (upload once, then replace
+             the file in place on updates) so the link never has to change again. Until then
+             this scrolls to the Get it section rather than being a dead link, and is not
+             counted — scrolling is not a download. -->
         <a href="#get" class="btn btn-primary">Get Rack Viewer ↓</a>
         <a href="rack-detector.html" class="btn btn-outline">Pairs with Rack Detector →</a>
       </div>
@@ -164,10 +166,11 @@
       <p class="price-sub">Windows 10 or 11 · 64-bit · no GPU required · works completely offline</p>
       <p class="price-sub" style="margin-top:.4rem;">Sorted your photos with <a href="rack-detector.html" style="color:var(--orange-bright);">Rack Detector</a> already? Point Rack Viewer at a species folder and pick out the keepers.</p>
       <div class="rd-buttons" style="justify-content: center;">
-        <!-- TODO: once RackViewer_Setup.exe is on OneDrive, replace this button with the
-             share link and the "↓ Download (Free)" label used on the other app pages,
-             and do the same for the hero button above. -->
-        <a href="mailto:elevationtechnology@outlook.com?subject=Rack%20Viewer%20download" class="btn btn-primary">Request the download</a>
+        <!-- TODO: once RackViewer_Setup.exe is on OneDrive, swap this href for the share
+             link and use the "↓ Download (Free)" label from the other app pages, keeping
+             onclick="rvCountDownload()" and adding target="_blank" rel="noopener". Do the
+             same for the hero button above. -->
+        <a href="mailto:elevationtechnology@outlook.com?subject=Rack%20Viewer%20download" class="btn btn-primary" onclick="rvCountDownload()">Request the download</a>
       </div>
       <p class="rd-note" style="margin-top:1.25rem;">The direct download is being set up — email us in the meantime and we'll send it straight over. Questions to the same address: <a href="mailto:elevationtechnology@outlook.com" style="color:var(--orange-bright);">elevationtechnology@outlook.com</a></p>
     </div>
@@ -208,6 +211,41 @@
   <div class="footer-logo"><img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions"></div>
   <p class="footer-links">&copy; 2026 Elevation Technology Solutions &nbsp;·&nbsp; <a href="privacy-policy-rackviewer.html">Privacy Policy</a> &nbsp;·&nbsp; <a href="index.html#apps">More Apps</a></p>
 </footer>
+
+<script>
+  // Log an anonymous, timestamped download-click to Supabase (fire-and-forget: never blocks or
+  // breaks the actual download). Publishable key = safe to expose; RLS lets visitors only
+  // INSERT, never read/edit. Only a timestamp is stored — no personal data.
+  //
+  // Writes to `downloads_rackviewer`, deliberately NOT the `downloads` table that
+  // rack-detector.html posts to: that table has no app column, so sharing it would silently
+  // fold Rack Viewer clicks into the Rack Detector count. Table definition:
+  //
+  //   create table if not exists public.downloads_rackviewer (
+  //     id bigint generated always as identity primary key,
+  //     created_at timestamptz not null default now()
+  //   );
+  //   alter table public.downloads_rackviewer enable row level security;
+  //   create policy "anon can insert download events"
+  //     on public.downloads_rackviewer for insert to anon with check (true);
+  //   grant insert on public.downloads_rackviewer to anon;
+  function rvCountDownload() {
+    try {
+      var URL = "https://baopxmwebqfdubvgjsri.supabase.co/rest/v1/downloads_rackviewer";
+      var KEY = "sb_publishable_54t4NxwLHZqGuGNrDM9TrA_b7F3Dh3B";
+      fetch(URL, {
+        method: "POST",
+        headers: {
+          "apikey": KEY,
+          "Authorization": "Bearer " + KEY,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: "{}"
+      }).catch(function () {});
+    } catch (e) {}
+  }
+</script>
 
 </body>
 </html>
