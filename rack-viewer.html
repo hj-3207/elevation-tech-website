@@ -38,14 +38,12 @@
       <p class="rd-tagline">Rip through a season of camera-card photos and video, keeping only the ones worth keeping.</p>
       <p class="rd-sub">Hold the arrow key and every photo is already on screen — no waiting, no loading spinner. Press <strong>K</strong> on the ones you want, then move everything else to a single trash folder in one go. Clips play with sound, right in the window. Free, and fully offline on Windows.</p>
       <div class="rd-buttons">
-        <!-- TODO: replace href with the OneDrive share link for RackViewer_Setup.exe,
-             change the label to "↓ Download (Free)", and add
-             target="_blank" rel="noopener" onclick="rvCountDownload()"
-             so the click is counted. Use the stable-name approach (upload once, then replace
-             the file in place on updates) so the link never has to change again. Until then
-             this scrolls to the Get it section rather than being a dead link, and is not
-             counted — scrolling is not a download. -->
-        <a href="#get" class="btn btn-primary">Get Rack Viewer ↓</a>
+        <!-- Download: OneDrive share link for RackViewer_1.1_Installer.exe.
+             NOTE: unlike RackDetector_Setup.zip, this file name carries the version, so a
+             new release needs a fresh upload and a new link in both places below. Renaming
+             the OneDrive file to a version-agnostic name (a rename keeps the share link
+             working) and uploading future builds over it would make this link permanent. -->
+        <a href="https://1drv.ms/u/c/4D99778560189925/IQD_KCYbA2vmS4eGMDoWzwGgAeWn7M82-K-DwUBsEsjV6sQ?e=RcsaCe" class="btn btn-primary" target="_blank" rel="noopener" onclick="rvCountDownload()">↓ Download (Free)</a>
         <a href="rack-detector.html" class="btn btn-outline">Pairs with Rack Detector →</a>
       </div>
       <p class="rd-note">Free · Windows 10/11 · no account, no cloud, no GPU needed. Your photos never leave your computer.</p>
@@ -166,13 +164,10 @@
       <p class="price-sub">Windows 10 or 11 · 64-bit · no GPU required · works completely offline</p>
       <p class="price-sub" style="margin-top:.4rem;">Sorted your photos with <a href="rack-detector.html" style="color:var(--orange-bright);">Rack Detector</a> already? Point Rack Viewer at a species folder and pick out the keepers.</p>
       <div class="rd-buttons" style="justify-content: center;">
-        <!-- TODO: once RackViewer_Setup.exe is on OneDrive, swap this href for the share
-             link and use the "↓ Download (Free)" label from the other app pages, keeping
-             onclick="rvCountDownload()" and adding target="_blank" rel="noopener". Do the
-             same for the hero button above. -->
-        <a href="mailto:elevationtechnology@outlook.com?subject=Rack%20Viewer%20download" class="btn btn-primary" onclick="rvCountDownload()">Request the download</a>
+        <!-- Same OneDrive share link as the hero button. -->
+        <a href="https://1drv.ms/u/c/4D99778560189925/IQD_KCYbA2vmS4eGMDoWzwGgAeWn7M82-K-DwUBsEsjV6sQ?e=RcsaCe" class="btn btn-primary" target="_blank" rel="noopener" onclick="rvCountDownload()">↓ Download (Free)</a>
       </div>
-      <p class="rd-note" style="margin-top:1.25rem;">The direct download is being set up — email us in the meantime and we'll send it straight over. Questions to the same address: <a href="mailto:elevationtechnology@outlook.com" style="color:var(--orange-bright);">elevationtechnology@outlook.com</a></p>
+      <p class="rd-note" style="margin-top:1.25rem;">Questions? Email <a href="mailto:elevationtechnology@outlook.com" style="color:var(--orange-bright);">elevationtechnology@outlook.com</a></p>
     </div>
   </div>
 </section>
