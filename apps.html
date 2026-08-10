@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Apps — Trail-Camera and Hunting Tools | Elevation Technology Solutions</title>
+<meta name="description" content="Four purpose-built hunting tools from Elevation Technology Solutions: Rack Detector sorts trail-camera photos by species, Rack Viewer culls them down to the keepers, Rack Tracker maps individual animals across seasons, and Rack Scorer scores the rack. Windows and Android.">
+<link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="shortcut icon" href="favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="manifest" href="site.webmanifest" />
+<link rel="stylesheet" href="style.css">
+<style>
+/* Page-scoped styles. This page is the only one with the app-row and comparison
+   layouts, so they live here rather than in style.css, which eight other pages
+   share. Everything else reuses the site's existing classes and variables. */
+
+/* Shorter than .rd-hero: this page is a directory, so the list should be visible
+   without scrolling past a full-height hero. */
+.apps-hero { min-height: auto; padding: 9rem 2rem 4rem; text-align: center; }
+.apps-hero-inner { max-width: 780px; margin: 0 auto; position: relative; z-index: 1; }
+
+/* Jump links to each app block. */
+.app-jump { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-top: 2.25rem; }
+.app-jump a { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.95rem; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--text); text-decoration: none; font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; transition: all 0.25s; }
+.app-jump a:hover { border-color: var(--border-orange); background: var(--card2); transform: translateY(-2px); }
+.app-jump img { width: 18px; height: 18px; object-fit: contain; }
+
+/* The four-step workflow. Four across, then two, then one. */
+.flow-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 3rem; }
+.flow-step { background: var(--card); padding: 1.9rem 1.6rem; }
+.flow-num { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange); margin-bottom: 0.9rem; }
+.flow-step h3 { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
+.flow-step p { color: var(--muted); font-size: 0.84rem; line-height: 1.6; }
+
+/* One block per app: copy on one side, a real screenshot on the other. */
+.app-row { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; align-items: center; max-width: 1080px; margin: 0 auto; padding: 4.5rem 0; border-top: 1px solid var(--border); }
+.app-row:first-of-type { border-top: none; padding-top: 1rem; }
+.app-row.flip .app-row-media { order: -1; }
+.app-row-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.1rem; }
+.app-row-icon { width: 58px; height: 58px; flex: none; border-radius: 12px; background: rgba(204,85,0,0.08); border: 1px solid var(--border-orange); display: flex; align-items: center; justify-content: center; }
+.app-row-icon img { width: 36px; height: 36px; object-fit: contain; }
+.app-row h2 { font-size: 1.75rem; font-weight: 900; color: #fff; line-height: 1.1; }
+.app-badge { display: inline-block; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange); border: 1px solid var(--border-orange); border-radius: 999px; padding: 0.2rem 0.6rem; margin-top: 0.4rem; }
+.app-row-tag { color: var(--text); font-size: 1.02rem; line-height: 1.6; margin-bottom: 1.2rem; }
+.app-points { list-style: none; margin: 0 0 1.4rem; padding: 0; }
+.app-points li { color: var(--muted); font-size: 0.88rem; line-height: 1.55; padding-left: 1.35rem; margin-bottom: 0.6rem; position: relative; }
+.app-points li::before { content: '▸'; position: absolute; left: 0; color: var(--orange); }
+.app-price { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.3rem; }
+.app-price strong { color: #fff; font-weight: 700; }
+
+/* Comparison table. Scrolls inside its own box on narrow screens rather than
+   pushing the page sideways. */
+.cmp-wrap { margin-top: 3rem; overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+.cmp { width: 100%; border-collapse: collapse; min-width: 660px; background: var(--card); }
+.cmp th, .cmp td { text-align: left; padding: 1rem 1.15rem; border-bottom: 1px solid var(--border); font-size: 0.86rem; }
+.cmp thead th { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange); background: var(--card2); }
+.cmp tbody tr:last-child td { border-bottom: none; }
+.cmp td { color: var(--muted); }
+.cmp td.app { color: #fff; font-weight: 700; }
+.cmp td.app a { color: #fff; text-decoration: none; }
+.cmp td.app a:hover { color: var(--orange-bright); }
+
+@media (max-width: 1100px) { .flow-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 900px) {
+  .app-row { grid-template-columns: 1fr; gap: 2.25rem; padding: 3.25rem 0; }
+  /* Cancel the desktop alternation once stacked: every block reads name, then
+     what it does, then the picture. Without this reset the flipped rows keep
+     order:-1 and the layout alternates confusingly down a phone screen. */
+  .app-row.flip .app-row-media { order: 0; }
+}
+@media (max-width: 600px) { .flow-grid { grid-template-columns: 1fr; } .apps-hero { padding: 7rem 1.25rem 3rem; } .app-row h2 { font-size: 1.45rem; } }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<nav>
+  <a href="index.html#home" class="nav-logo"><img src="TechLogoSecondary-White.png" alt="Elevation Technology Solutions"></a>
+  <div class="nav-links">
+    <a href="index.html#home">home</a>
+    <a href="apps.html">apps</a>
+    <a href="#compare">compare</a>
+    <a href="index.html#contact">contact</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="rd-hero apps-hero">
+  <div class="hero-glow"></div>
+  <div class="scanline"></div>
+  <div class="apps-hero-inner">
+    <div class="section-eyebrow" style="margin-bottom: 1rem;">Apps &amp; Tools</div>
+    <h1 class="rd-title">Four Apps.<br>One <span>Season.</span></h1>
+    <p class="rd-sub" style="margin-left:auto; margin-right:auto;">Purpose-built software for hunters and land managers — from the moment you pull the card to the moment you put a tape on the rack. Your photos and your data stay on your own device, and everything keeps working where the signal doesn't.</p>
+    <div class="app-jump">
+      <a href="#detector"><img src="img/rackdetector-horn.png" alt="">Rack Detector</a>
+      <a href="#viewer"><img src="img/rackviewer-icon.png" alt="">Rack Viewer</a>
+      <a href="#tracker"><img src="img/racktracker-icon.png" alt="">Rack Tracker</a>
+      <a href="#scorer"><img src="img/rackscorer-icon.png" alt="">Rack Scorer</a>
+    </div>
+  </div>
+</section>
+
+<!-- HOW THEY FIT TOGETHER -->
+<section id="how" style="background: var(--bg2);">
+  <div class="container">
+    <div class="section-eyebrow">How they fit together</div>
+    <div class="section-title">Card to scoresheet</div>
+    <div class="divider"></div>
+    <p class="section-sub">They were built in the order you actually use them — but each one stands on its own. Pick the one that solves your problem and ignore the rest.</p>
+    <div class="flow-grid">
+      <div class="flow-step">
+        <div class="flow-num">01 // Sort</div>
+        <h3>Rack Detector</h3>
+        <p>Point it at a card full of photos and AI sorts them into per-species folders. The elk are in the elk folder before you have looked at a single frame.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02 // Cull</div>
+        <h3>Rack Viewer</h3>
+        <p>Rip through that folder at arrow-key speed, star the ones worth keeping, and move everything else to the trash in one action.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03 // Track</div>
+        <h3>Rack Tracker</h3>
+        <p>Log the keepers against the specific animal they show, and watch that bull's movement draw itself across the mountain, season after season.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">04 // Score</div>
+        <h3>Rack Scorer</h3>
+        <p>When you finally put your hands on the rack, score it properly at the tailgate — gross and net, live, with no signal and no arithmetic.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THE APPS -->
+<section id="apps">
+  <div class="container">
+    <div class="section-eyebrow">The apps</div>
+    <div class="section-title">What each one does</div>
+    <div class="divider"></div>
+
+    <!-- RACK DETECTOR -->
+    <div class="app-row" id="detector">
+      <div>
+        <div class="app-row-head">
+          <div class="app-row-icon"><img src="img/rackdetector-horn.png" alt="Rack Detector"></div>
+          <div>
+            <h2>Rack Detector</h2>
+            <span class="app-badge">Windows</span>
+          </div>
+        </div>
+        <p class="app-row-tag">AI that batch-sorts a season of trail-camera photos into per-species folders — surface the elk without the scrubbing.</p>
+        <ul class="app-points">
+          <li>Sorts thousands of images unattended into folders by species</li>
+          <li>Runs entirely on your own computer — no upload, no cloud</li>
+          <li><strong>An NVIDIA GPU is strongly recommended.</strong> It runs CPU-only too, but much slower — use the free trial to measure it on your machine first</li>
+        </ul>
+        <p class="app-price"><strong>$100 one-time</strong> · free trial sorts up to 10,000 images</p>
+        <div class="rd-buttons">
+          <a href="rack-detector.html" class="btn btn-primary">See Rack Detector →</a>
+          <a href="https://1drv.ms/u/c/4D99778560189925/IQAH5AvCv8NNS76q802jGS54AeDLTgkJXkaLQPbbrkLBdzg?e=G79hAQ" class="btn btn-outline" target="_blank" rel="noopener" onclick="rdCountDownload()">↓ Download (Free)</a>
+        </div>
+      </div>
+      <div class="app-row-media">
+        <img src="img/rackdetector-elk.jpg" alt="A bull elk trail-camera photo of the kind Rack Detector sorts into a per-species folder" class="rd-elk">
+      </div>
+    </div>
+
+    <!-- RACK VIEWER -->
+    <div class="app-row flip" id="viewer">
+      <div>
+        <div class="app-row-head">
+          <div class="app-row-icon"><img src="img/rackviewer-icon.png" alt="Rack Viewer"></div>
+          <div>
+            <h2>Rack Viewer</h2>
+            <span class="app-badge">Windows</span>
+          </div>
+        </div>
+        <p class="app-row-tag">Rip through a season of camera-card photos and video, keeping only the ones worth keeping.</p>
+        <ul class="app-points">
+          <li>Photos are decoded ahead of you, so holding the arrow key never waits</li>
+          <li>Press K to star a keeper; clips play with sound right in the window</li>
+          <li>One action moves every non-keeper to a single trash folder — moved, never deleted</li>
+        </ul>
+        <p class="app-price"><strong>Free to view, forever</strong> · $10 one-time to keep clearing out, after 10 free runs</p>
+        <div class="rd-buttons">
+          <a href="rack-viewer.html" class="btn btn-primary">See Rack Viewer →</a>
+          <a href="https://1drv.ms/u/c/4D99778560189925/IQD_KCYbA2vmS4eGMDoWzwGgAeWn7M82-K-DwUBsEsjV6sQ?e=RcsaCe" class="btn btn-outline" target="_blank" rel="noopener" onclick="rvCountDownload()">↓ Download (Free)</a>
+        </div>
+      </div>
+      <div class="app-row-media">
+        <img src="img/rackviewer-screenshot.jpg" alt="The Rack Viewer window: a bull elk photo marked as a keeper, with the keeper list alongside it" class="rd-elk">
+      </div>
+    </div>
+
+    <!-- RACK TRACKER -->
+    <div class="app-row" id="tracker">
+      <div>
+        <div class="app-row-head">
+          <div class="app-row-icon"><img src="img/racktracker-icon.png" alt="Rack Tracker"></div>
+          <div>
+            <h2>Rack Tracker</h2>
+            <span class="app-badge">Android</span>
+          </div>
+        </div>
+        <p class="app-row-tag">Stop guessing which bull you're looking at. Track individual animals across every season.</p>
+        <ul class="app-points">
+          <li>Log every trail-cam hit, glassing session and shed find against the animal it belongs to</li>
+          <li>Watch that rack's movement draw itself across satellite and topo maps, in order</li>
+          <li>Built for elk, mule deer, whitetail, bighorn and bear — and your data never leaves your phone</li>
+        </ul>
+        <p class="app-price"><strong>$10 / year</strong> · free to start, with room for a couple of racks</p>
+        <div class="rd-buttons">
+          <a href="rack-tracker.html" class="btn btn-primary">See Rack Tracker →</a>
+          <a href="https://play.google.com/store/apps/details?id=com.racktracker.app" class="btn btn-outline" target="_blank" rel="noopener">Get it on Google Play ↗</a>
+        </div>
+      </div>
+      <div class="app-row-media">
+        <img src="img/RackTrackerScreenshot1.jpg" alt="Rack Tracker on a phone: one rack's movement path drawn between its locations with directional arrows" class="rt-phone">
+      </div>
+    </div>
+
+    <!-- RACK SCORER -->
+    <div class="app-row flip" id="scorer">
+      <div>
+        <div class="app-row-head">
+          <div class="app-row-icon"><img src="img/rackscorer-icon.png" alt="Rack Scorer"></div>
+          <div>
+            <h2>Rack Scorer</h2>
+            <span class="app-badge">Android</span>
+          </div>
+        </div>
+        <p class="app-row-tag">Score it properly at the tailgate — no folded paper sheet, no arithmetic, no signal.</p>
+        <ul class="app-points">
+          <li>Boone &amp; Crockett and Pope &amp; Young style scoring, seven species groups across thirteen categories</li>
+          <li>Enter measurements in inches and eighths; gross and net totals recalculate as you go</li>
+          <li>Save the sheet, share the summary, and check it against book minimums — fully offline</li>
+        </ul>
+        <p class="app-price"><strong>$4.99 one-time</strong> · no subscription, no ads, no in-app purchases</p>
+        <div class="rd-buttons">
+          <a href="rack-scorer.html" class="btn btn-primary">See Rack Scorer →</a>
+          <a href="https://play.google.com/store/apps/details?id=com.rackscorer.app" class="btn btn-outline" target="_blank" rel="noopener">Get it on Google Play ↗</a>
+        </div>
+      </div>
+      <div class="app-row-media">
+        <img src="img/RackScorerScreenshot3.jpg" alt="Rack Scorer on a phone: a scoring entry page with inch and eighths fields, a live score summary and a reference diagram" class="rt-phone">
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section id="compare" style="background: var(--bg2);">
+  <div class="container">
+    <div class="section-eyebrow">Side by side</div>
+    <div class="section-title">All four at a glance</div>
+    <div class="divider"></div>
+    <p class="section-sub">Every one of them can be tried before you pay, and none of them send your photos or your locations anywhere.</p>
+    <div class="cmp-wrap">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <th scope="col">App</th>
+            <th scope="col">Platform</th>
+            <th scope="col">What it does</th>
+            <th scope="col">Try it</th>
+            <th scope="col">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="app"><a href="rack-detector.html">Rack Detector</a></td>
+            <td>Windows 10/11</td>
+            <td>Sorts trail-camera photos into per-species folders</td>
+            <td>Free for 10,000 images</td>
+            <td>$100 one-time</td>
+          </tr>
+          <tr>
+            <td class="app"><a href="rack-viewer.html">Rack Viewer</a></td>
+            <td>Windows 10/11</td>
+            <td>Reviews photos and video fast, keeps the good ones, bins the rest</td>
+            <td>Viewing free forever; 10 free cleanups</td>
+            <td>$10 one-time</td>
+          </tr>
+          <tr>
+            <td class="app"><a href="rack-tracker.html">Rack Tracker</a></td>
+            <td>Android</td>
+            <td>Tracks individual animals and maps their movement across seasons</td>
+            <td>Free for a couple of racks</td>
+            <td>$10 / year</td>
+          </tr>
+          <tr>
+            <td class="app"><a href="rack-scorer.html">Rack Scorer</a></td>
+            <td>Android</td>
+            <td>B&amp;C and P&amp;Y style scoring with live gross and net totals</td>
+            <td>&mdash;</td>
+            <td>$4.99 one-time</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="rd-note" style="margin-top:1.5rem;">Buying Rack Detector includes a Rack Viewer license. The Android apps are Android-only for now — iOS versions are in the works.</p>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow">Questions</div>
+    <div class="section-title">Ask us anything</div>
+    <div class="divider"></div>
+    <div class="contact-box">
+      <p>Not sure which one fits what you're doing, or want to know whether it will run on your computer? Send us a note and we'll tell you straight — including when the answer is that you don't need it.</p>
+      <div class="contact-item">
+        <div class="ci">📧</div>
+        <a href="mailto:elevationtechnology@outlook.com">elevationtechnology@outlook.com</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo"><img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions"></div>
+  <p class="footer-links">&copy; 2026 Elevation Technology Solutions &nbsp;·&nbsp; <a href="index.html#home">Home</a> &nbsp;·&nbsp; <a href="index.html#services">Services</a> &nbsp;·&nbsp; <a href="index.html#contact">Contact</a></p>
+</footer>
+
+<script>
+  // Download-click counters, copied verbatim from the two product pages so the
+  // buttons here feed the same totals rather than going uncounted. Each app has
+  // its own table: `downloads` is Rack Detector's and has no app column, so Rack
+  // Viewer writes to `downloads_rackviewer` instead. Both are fire-and-forget and
+  // can never block or break the actual download. The publishable key is safe to
+  // expose — RLS lets visitors insert only, never read or edit. Only a timestamp
+  // is stored; no personal data.
+  var DL_URL = "https://baopxmwebqfdubvgjsri.supabase.co/rest/v1/";
+  var DL_KEY = "sb_publishable_54t4NxwLHZqGuGNrDM9TrA_b7F3Dh3B";
+
+  function dlCount(table) {
+    try {
+      fetch(DL_URL + table, {
+        method: "POST",
+        headers: {
+          "apikey": DL_KEY,
+          "Authorization": "Bearer " + DL_KEY,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: "{}"
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  function rdCountDownload() { dlCount("downloads"); }
+  function rvCountDownload() { dlCount("downloads_rackviewer"); }
+</script>
+
+</body>
+</html>
