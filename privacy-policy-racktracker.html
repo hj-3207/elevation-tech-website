@@ -16,12 +16,19 @@
 
 <div class="grid-bg"></div>
 
+<!-- Site nav. Identical on all 12 pages except that index.html uses bare
+     fragments for its own sections. Keep the five links and their order in
+     sync when editing any one copy. Toggle behaviour lives in nav.js. -->
 <nav>
   <a href="index.html#home" class="nav-logo"><img src="TechLogoSecondary-White.png" alt="Elevation Technology Solutions"></a>
-  <div class="nav-links">
+  <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-links">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="nav-links">
     <a href="index.html#home">home</a>
+    <a href="index.html#about">about</a>
+    <a href="index.html#services">services</a>
     <a href="apps.html">apps</a>
-    <a href="rack-tracker.html">rack tracker</a>
     <a href="index.html#contact">contact</a>
   </div>
 </nav>
@@ -126,6 +133,8 @@
   <div class="footer-logo"><img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions"></div>
   <p class="footer-links">&copy; 2026 Elevation Technology Solutions &nbsp;·&nbsp; <a href="rack-tracker.html">Rack Tracker</a> &nbsp;·&nbsp; <a href="index.html#apps">More Apps</a></p>
 </footer>
+
+<script src="nav.js"></script>
 
 </body>
 </html>

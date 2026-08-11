@@ -50,6 +50,23 @@
   }
   .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.04); }
 
+  /* Hamburger toggle. Hidden on desktop; below 680px it is the only nav control,
+     where .nav-links becomes a dropdown panel. Driven by nav.js — the three spans
+     are the bars, and .open crosses them into an X. */
+  .nav-toggle {
+    display: none; width: 44px; height: 44px; padding: 0;
+    flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    background: transparent; border: 1px solid var(--border); border-radius: 6px;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .nav-toggle:hover { border-color: var(--border-orange); }
+  .nav-toggle:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+  .nav-toggle span { display: block; width: 20px; height: 2px; background: #999; transition: transform 0.25s, opacity 0.2s; }
+  /* 2px bar + 5px gap = 7px of travel to land each outer bar on the middle one. */
+  .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; }
+  .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
   /* HERO */
   #home {
     min-height: 100vh; display: flex; align-items: center; justify-content: center;
@@ -147,7 +164,17 @@
 
   @media (max-width: 900px) { .services-grid { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 680px) {
-    .nav-links { display: none; }
+    /* The link row drops onto its own full-width line under the logo, collapsed
+       until nav.js adds .open. It used to be display:none here, which left phones
+       with no navigation at all beyond the logo. */
+    nav { flex-wrap: wrap; padding: 0.9rem 1.25rem; }
+    .nav-toggle { display: flex; }
+    .nav-links {
+      display: none; flex-basis: 100%; flex-direction: column; align-items: stretch;
+      gap: 0; margin-top: 0.9rem; padding-top: 0.4rem; border-top: 1px solid var(--border);
+    }
+    .nav-links.open { display: flex; }
+    .nav-links a { padding: 0.7rem 0.5rem; font-size: 1.05rem; }
     .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
     .services-grid { grid-template-columns: 1fr; }
     footer { flex-direction: column; gap: 1rem; text-align: center; }
