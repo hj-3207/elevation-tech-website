@@ -150,6 +150,26 @@ Prices and trial terms appear in several places per app. When one changes, grep 
 the old figure across every page — `index.html`, `apps.html`, the product page,
 and the comparison table all carry them.
 
+On `apps.html`, each app's **hero step card and its app-block lead paragraph carry
+the same sentence, by design** — one canonical description per app. Change both
+together, or the page starts telling two stories. The three bullets under each
+lead are meant to add facts the lead does not state; keep them that way.
+
+## Page titles
+
+One convention, every page: `<Page> | Elevation Technology`. Legal pages use
+`Rack Viewer Privacy Policy | Elevation Technology`. `index.html` carries
+`Elevation Technology` alone, having no page name to sit in front of it.
+
+Note the titles say "Elevation Technology" while the footer, logo alt text and
+body copy all say "Elevation Technology **Solutions**". That shortening is
+deliberate and confined to the tab title.
+
+These titles are intentionally short. The product pages previously carried SEO
+descriptors (`Rack Detector — AI Trail-Camera Photo Sorting | …`); those were
+dropped for brevity, so the `<meta name="description">` on each page is now the
+main place those keywords live. Do not strip the descriptions too.
+
 ## Known open items
 
 - No terms page for Rack Tracker or Rack Scorer.
@@ -159,10 +179,9 @@ and the comparison table all carry them.
 - No `sitemap.xml` or `robots.txt`; `index.html` has no meta description.
 - `index.html` lists the apps as Viewer, Detector, Tracker, Scorer, which
   contradicts the Sort → View → Track → Score order `apps.html` teaches.
-- Each app is described in three places on `apps.html` (hero card, `app-row-tag`
-  plus bullets, comparison table "What it does"). Dropping the tag line and that
-  table column was proposed and not taken.
 - The comparison table's `min-width: 660px` forces sideways scrolling on a phone.
-- Page titles are inconsistent: most are
-  `Name — Description | Elevation Technology Solutions`, but `apps.html` is now
-  just `Apps - Elevation Technology`.
+  Dropping its "What it does" column would likely fix that, and that column is a
+  third restatement of each app's description; proposed and not taken.
+- `apps.html` says "Rack Viewer **culls** them down to the keepers" in its meta
+  description, though the step verb is now "View". Left as-is because *cull* reads
+  fine as an ordinary verb there.
