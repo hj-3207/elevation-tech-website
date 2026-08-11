@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Our Apps — Trail-Camera and Hunting Tools | Elevation Technology Solutions</title>
+<title>Apps - Elevation Technology</title>
 <meta name="description" content="Four purpose-built hunting tools from Elevation Technology Solutions: Rack Detector sorts trail-camera photos by species, Rack Viewer culls them down to the keepers, Rack Tracker maps individual animals across seasons, and Rack Scorer scores the rack. Windows and Android.">
 <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
@@ -19,20 +19,10 @@
 /* Shorter than .rd-hero: this page is a directory, so the list should be visible
    without scrolling past a full-height hero. */
 .apps-hero { min-height: auto; padding: 9rem 2rem 4rem; text-align: center; }
-.apps-hero-inner { max-width: 780px; margin: 0 auto; position: relative; z-index: 1; }
-
-/* Jump links to each app block. */
-.app-jump { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-top: 2.25rem; }
-.app-jump a { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.95rem; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--text); text-decoration: none; font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; transition: all 0.25s; }
-.app-jump a:hover { border-color: var(--border-orange); background: var(--card2); transform: translateY(-2px); }
-.app-jump img { width: 18px; height: 18px; object-fit: contain; }
-
-/* The four-step workflow. Four across, then two, then one. */
-.flow-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 3rem; }
-.flow-step { background: var(--card); padding: 1.9rem 1.6rem; }
-.flow-num { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange); margin-bottom: 0.9rem; }
-.flow-step h3 { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
-.flow-step p { color: var(--muted); font-size: 0.84rem; line-height: 1.6; }
+/* Wide, because the four step cards and the three arrows between them need
+   the room. The headline breaks on its own <br> and .rd-sub keeps its own
+   500px cap, so this width only affects the step row, not the reading copy. */
+.apps-hero-inner { max-width: 1280px; margin: 0 auto; position: relative; z-index: 1; }
 
 /* One block per app: copy on one side, a real screenshot on the other. */
 .app-row { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; align-items: center; max-width: 1080px; margin: 0 auto; padding: 4.5rem 0; border-top: 1px solid var(--border); }
@@ -61,8 +51,8 @@
 .cmp td.app { color: #fff; font-weight: 700; }
 .cmp td.app a { color: #fff; text-decoration: none; }
 .cmp td.app a:hover { color: var(--orange-bright); }
+.cmp-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-top: 1.75rem; }
 
-@media (max-width: 1100px) { .flow-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 900px) {
   .app-row { grid-template-columns: 1fr; gap: 2.25rem; padding: 3.25rem 0; }
   /* Cancel the desktop alternation once stacked: every block reads name, then
@@ -70,7 +60,41 @@
      order:-1 and the layout alternates confusingly down a phone screen. */
   .app-row.flip .app-row-media { order: 0; }
 }
-@media (max-width: 600px) { .flow-grid { grid-template-columns: 1fr; } .apps-hero { padding: 7rem 1.25rem 3rem; } .app-row h2 { font-size: 1.45rem; } }
+@media (max-width: 600px) { .apps-hero { padding: 7rem 1.25rem 3rem; } .app-row h2 { font-size: 1.45rem; } }
+
+/* ===== OPTION F: stepped app cards (A + C) ===== */
+/* Grid with an explicit card/arrow/card/arrow/... track list rather than a
+   wrapping flex row. A grid line cannot wrap, so the four steps always stay on
+   one line and no arrow is ever left dangling at the end of a row - the cards
+   compress together instead. */
+.hero-fflow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; align-items: stretch; gap: 0.5rem; margin-top: 2.75rem; }
+.hero-fcard { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem 1.1rem 1.5rem; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; transition: border-color 0.25s, background 0.25s, transform 0.25s; }
+.hero-fcard:hover { border-color: var(--border-orange); background: var(--card2); transform: translateY(-3px); }
+.hero-fverb { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--orange); white-space: nowrap; }
+.hero-fcard img { width: 34px; height: 34px; object-fit: contain; margin: 0.2rem 0 0.1rem; }
+/* nowrap on the name and platform holds each card's min-content wide enough that
+   the row stays legible as it compresses. The description must be free to wrap,
+   so it is deliberately left out of this. */
+.hero-fname { color: #fff; font-weight: 800; font-size: 0.95rem; white-space: nowrap; }
+.hero-fplat { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+/* Left-aligned and full width: these run to several lines now, and a centred
+   paragraph that long is ragged on both edges and hard to read. The card header
+   above it stays centred. */
+.hero-fdesc { color: var(--muted); font-size: 0.8rem; line-height: 1.6; margin-top: 0.35rem; text-align: left; align-self: stretch; }
+.hero-farrow { align-self: center; color: var(--subtle); font-size: 1.1rem; text-align: center; }
+/* Trust strip. Sits between the cards and the app list, so the offline and
+   on-device promises land before the reader starts into the detail. Sized to its
+   contents rather than the full 1280px so it reads as one line, not a banner. */
+.hero-trust { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.7rem 1.5rem; width: fit-content; max-width: 100%; margin: 2.25rem auto 0; padding: 0.9rem 1.5rem; background: var(--card); border: 1px solid var(--border); border-radius: 12px; font-family: var(--mono); font-size: 0.74rem; color: var(--muted); }
+.hero-trust span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.hero-trust span::before { content: '✓'; color: var(--orange); font-weight: 700; }
+/* Four across stops being readable on a phone, so below this the arrows go and
+   the cards fall into 2 x 2 - the one place they are allowed off a single line. */
+@media (max-width: 820px) {
+  .hero-fflow { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .hero-farrow { display: none; }
+}
+@media (max-width: 390px) { .hero-fflow { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -99,46 +123,50 @@
   <div class="hero-glow"></div>
   <div class="scanline"></div>
   <div class="apps-hero-inner">
-    <div class="section-eyebrow" style="margin-bottom: 1rem;">Apps &amp; Tools</div>
-    <h1 class="rd-title">Four Apps.<br>One <span>Season.</span></h1>
-    <p class="rd-sub" style="margin-left:auto; margin-right:auto;">Purpose-built software for hunters and land managers — from the moment you pull the card to the moment you put a tape on the rack. Your photos and your data stay on your own device, and everything keeps working where the signal doesn't.</p>
-    <div class="app-jump">
-      <a href="#detector"><img src="img/rackdetector-horn.png" alt="">Rack Detector</a>
-      <a href="#viewer"><img src="img/rackviewer-icon.png" alt="">Rack Viewer</a>
-      <a href="#tracker"><img src="img/racktracker-icon.png" alt="">Rack Tracker</a>
-      <a href="#scorer"><img src="img/rackscorer-icon.png" alt="">Rack Scorer</a>
+    <h1 class="rd-title">Hunting Software<br>Built by <span>Hunters</span></h1>
+    <p class="rd-sub" style="margin-left:auto; margin-right:auto;">Four programs and apps built by hunters for hunters, to help you from early-season scouting to a rack in the back of a truck.</p>
+    <!-- Option F: A's icons and platform labels wearing C's step verbs, arrows
+         and one-line descriptions, so the hero shows what each tool is for and
+         the order you would use them in. -->
+    <div class="hero-fflow">
+      <a class="hero-fcard" href="#detector">
+        <span class="hero-fverb">01 // Sort</span>
+        <img src="img/rackdetector-horn.png" alt="">
+        <span class="hero-fname">Rack Detector</span>
+        <span class="hero-fplat">Windows</span>
+        <span class="hero-fdesc">Point at an SD card full of trail-camera photos and it filters out blanks and livestock, then sorts the photos into per-species folders. The elk are in the elk folder before you have looked at a single frame.</span>
+      </a>
+      <span class="hero-farrow" aria-hidden="true">→</span>
+      <a class="hero-fcard" href="#viewer">
+        <span class="hero-fverb">02 // View</span>
+        <img src="img/rackviewer-icon.png" alt="">
+        <span class="hero-fname">Rack Viewer</span>
+        <span class="hero-fplat">Windows</span>
+        <span class="hero-fdesc">Rip through a folder of photos at arrow-key speed, star the ones worth keeping, and move everything else to the trash in one action.</span>
+      </a>
+      <span class="hero-farrow" aria-hidden="true">→</span>
+      <a class="hero-fcard" href="#tracker">
+        <span class="hero-fverb">03 // Track</span>
+        <img src="img/racktracker-icon.png" alt="">
+        <span class="hero-fname">Rack Tracker</span>
+        <span class="hero-fplat">Android</span>
+        <span class="hero-fdesc">Track and map sightings throughout the year and season after season. Every trail-cam hit, find while glassing and shed scoop belongs to a named rack, so you can see a short list of your targets and observe trends and patterns.</span>
+      </a>
+      <span class="hero-farrow" aria-hidden="true">→</span>
+      <a class="hero-fcard" href="#scorer">
+        <span class="hero-fverb">04 // Score</span>
+        <img src="img/rackscorer-icon.png" alt="">
+        <span class="hero-fname">Rack Scorer</span>
+        <span class="hero-fplat">Android</span>
+        <span class="hero-fdesc">When you put your hands on the rack, enter the measurements and have the scoresheet calculated automatically. Save and easily share with family and friends.</span>
+      </a>
     </div>
-  </div>
-</section>
-
-<!-- HOW THEY FIT TOGETHER -->
-<section id="how" style="background: var(--bg2);">
-  <div class="container">
-    <div class="section-eyebrow">How they fit together</div>
-    <div class="section-title">Card to scoresheet</div>
-    <div class="divider"></div>
-    <p class="section-sub">They were built in the order you actually use them — but each one stands on its own. Pick the one that solves your problem and ignore the rest.</p>
-    <div class="flow-grid">
-      <div class="flow-step">
-        <div class="flow-num">01 // Sort</div>
-        <h3>Rack Detector</h3>
-        <p>Point it at a card full of photos and AI sorts them into per-species folders. The elk are in the elk folder before you have looked at a single frame.</p>
-      </div>
-      <div class="flow-step">
-        <div class="flow-num">02 // Cull</div>
-        <h3>Rack Viewer</h3>
-        <p>Rip through that folder at arrow-key speed, star the ones worth keeping, and move everything else to the trash in one action.</p>
-      </div>
-      <div class="flow-step">
-        <div class="flow-num">03 // Track</div>
-        <h3>Rack Tracker</h3>
-        <p>Log the keepers against the specific animal they show, and watch that bull's movement draw itself across the mountain, season after season.</p>
-      </div>
-      <div class="flow-step">
-        <div class="flow-num">04 // Score</div>
-        <h3>Rack Scorer</h3>
-        <p>When you finally put your hands on the rack, score it properly at the tailgate — gross and net, live, with no signal and no arithmetic.</p>
-      </div>
+    <!-- Carries the on-device / offline claim, which nothing else above the fold
+         states now that the sub-copy is a single sentence. -->
+    <div class="hero-trust">
+      <span>Works offline</span>
+      <span>No account</span>
+      <span>Your data never leaves your device</span>
     </div>
   </div>
 </section>
@@ -147,7 +175,7 @@
 <section id="apps">
   <div class="container">
     <div class="section-eyebrow">The apps</div>
-    <div class="section-title">What each one does</div>
+    <div class="section-title">A closer look</div>
     <div class="divider"></div>
 
     <!-- RACK DETECTOR -->
@@ -166,10 +194,9 @@
           <li>Runs entirely on your own computer — no upload, no cloud</li>
           <li><strong>An NVIDIA GPU is strongly recommended.</strong> It runs CPU-only too, but much slower — use the free trial to measure it on your machine first</li>
         </ul>
-        <p class="app-price"><strong>$100 one-time</strong> · free trial sorts up to 10,000 images</p>
+        <p class="app-price"><strong>$100 one-time</strong> · includes a Rack Viewer license · free trial sorts up to 10,000 images</p>
         <div class="rd-buttons">
           <a href="rack-detector.html" class="btn btn-primary">See Rack Detector →</a>
-          <a href="https://1drv.ms/u/c/4D99778560189925/IQAH5AvCv8NNS76q802jGS54AeDLTgkJXkaLQPbbrkLBdzg?e=G79hAQ" class="btn btn-outline" target="_blank" rel="noopener" onclick="rdCountDownload()">↓ Download (Free)</a>
         </div>
       </div>
       <div class="app-row-media">
@@ -196,7 +223,6 @@
         <p class="app-price"><strong>Free to view, forever</strong> · $10 one-time to keep clearing out, after 10 free runs</p>
         <div class="rd-buttons">
           <a href="rack-viewer.html" class="btn btn-primary">See Rack Viewer →</a>
-          <a href="https://1drv.ms/u/c/4D99778560189925/IQD_KCYbA2vmS4eGMDoWzwGgAeWn7M82-K-DwUBsEsjV6sQ?e=RcsaCe" class="btn btn-outline" target="_blank" rel="noopener" onclick="rvCountDownload()">↓ Download (Free)</a>
         </div>
       </div>
       <div class="app-row-media">
@@ -223,7 +249,6 @@
         <p class="app-price"><strong>$10 / year</strong> · free to start, with room for a couple of racks</p>
         <div class="rd-buttons">
           <a href="rack-tracker.html" class="btn btn-primary">See Rack Tracker →</a>
-          <a href="https://play.google.com/store/apps/details?id=com.racktracker.app" class="btn btn-outline" target="_blank" rel="noopener">Get it on Google Play ↗</a>
         </div>
       </div>
       <div class="app-row-media">
@@ -250,7 +275,6 @@
         <p class="app-price"><strong>$4.99 one-time</strong> · no subscription, no ads, no in-app purchases</p>
         <div class="rd-buttons">
           <a href="rack-scorer.html" class="btn btn-primary">See Rack Scorer →</a>
-          <a href="https://play.google.com/store/apps/details?id=com.rackscorer.app" class="btn btn-outline" target="_blank" rel="noopener">Get it on Google Play ↗</a>
         </div>
       </div>
       <div class="app-row-media">
@@ -267,7 +291,6 @@
     <div class="section-eyebrow">Side by side</div>
     <div class="section-title">All four at a glance</div>
     <div class="divider"></div>
-    <p class="section-sub">Three of the four can be tried before you pay, and none of them send your photos or your locations anywhere.</p>
     <div class="cmp-wrap">
       <table class="cmp">
         <thead>
@@ -311,7 +334,17 @@
         </tbody>
       </table>
     </div>
-    <p class="rd-note" style="margin-top:1.5rem;">Buying Rack Detector includes a Rack Viewer license. The Android apps are Android-only for now — iOS versions are in the works.</p>
+    <p class="rd-note" style="margin-top:1.5rem;">The Android apps are Android-only for now — iOS versions are in the works.</p>
+    <!-- Acts on the decision the table just helped make, instead of sending the
+         reader back up the page. These go to each app's own page rather than
+         straight to a download, so nobody installs anything before reading the
+         detail and the system requirements. Reuses .btn styles. -->
+    <div class="cmp-actions">
+      <a href="rack-detector.html" class="btn btn-outline">Rack Detector →</a>
+      <a href="rack-viewer.html" class="btn btn-outline">Rack Viewer →</a>
+      <a href="rack-tracker.html" class="btn btn-outline">Rack Tracker →</a>
+      <a href="rack-scorer.html" class="btn btn-outline">Rack Scorer →</a>
+    </div>
   </div>
 </section>
 
@@ -336,9 +369,6 @@
   <p class="footer-links">&copy; 2026 Elevation Technology Solutions &nbsp;·&nbsp; <a href="index.html#home">Home</a> &nbsp;·&nbsp; <a href="index.html#services">Services</a> &nbsp;·&nbsp; <a href="index.html#contact">Contact</a></p>
 </footer>
 
-<!-- Anonymous download-click counters. Shared with the two product pages so the
-     buttons here feed the same totals rather than going uncounted. -->
-<script src="downloads.js"></script>
 
 <script src="nav.js"></script>
 

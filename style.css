@@ -17,6 +17,13 @@
     --mono: 'JetBrains Mono', monospace;
   }
   html { scroll-behavior: smooth; }
+  /* The nav is fixed, so an anchor target would otherwise scroll to the very top
+     of the viewport and sit underneath it - landing you halfway down the heading
+     you just clicked. The nav is a 54px logo plus 0.9rem padding top and bottom,
+     so ~84px; this reserves that plus a little air. Covers every in-page target
+     on every page, including the .app-row blocks on apps.html, whose top border
+     is the divider the link should line up with. */
+  section[id], .app-row[id] { scroll-margin-top: 100px; }
   body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
 
   .grid-bg {
