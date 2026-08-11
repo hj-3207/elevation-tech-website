@@ -211,40 +211,9 @@
   <p class="footer-links">&copy; 2026 Elevation Technology Solutions &nbsp;·&nbsp; <a href="privacy-policy-rackviewer.html">Privacy Policy</a> &nbsp;·&nbsp; <a href="terms-rackviewer.html">Terms of Service</a> &nbsp;·&nbsp; <a href="index.html#apps">More Apps</a></p>
 </footer>
 
-<script>
-  // Log an anonymous, timestamped download-click to Supabase (fire-and-forget: never blocks or
-  // breaks the actual download). Publishable key = safe to expose; RLS lets visitors only
-  // INSERT, never read/edit. Only a timestamp is stored — no personal data.
-  //
-  // Writes to `downloads_rackviewer`, deliberately NOT the `downloads` table that
-  // rack-detector.html posts to: that table has no app column, so sharing it would silently
-  // fold Rack Viewer clicks into the Rack Detector count. Table definition:
-  //
-  //   create table if not exists public.downloads_rackviewer (
-  //     id bigint generated always as identity primary key,
-  //     created_at timestamptz not null default now()
-  //   );
-  //   alter table public.downloads_rackviewer enable row level security;
-  //   create policy "anon can insert download events"
-  //     on public.downloads_rackviewer for insert to anon with check (true);
-  //   grant insert on public.downloads_rackviewer to anon;
-  function rvCountDownload() {
-    try {
-      var URL = "https://baopxmwebqfdubvgjsri.supabase.co/rest/v1/downloads_rackviewer";
-      var KEY = "sb_publishable_54t4NxwLHZqGuGNrDM9TrA_b7F3Dh3B";
-      fetch(URL, {
-        method: "POST",
-        headers: {
-          "apikey": KEY,
-          "Authorization": "Bearer " + KEY,
-          "Content-Type": "application/json",
-          "Prefer": "return=minimal"
-        },
-        body: "{}"
-      }).catch(function () {});
-    } catch (e) {}
-  }
-</script>
+<!-- Anonymous download-click counter, shared with rack-detector.html and apps.html.
+     Rack Viewer writes to its own table; see downloads.js for why. -->
+<script src="downloads.js"></script>
 
 </body>
 </html>

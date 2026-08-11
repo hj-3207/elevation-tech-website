@@ -131,21 +131,6 @@
   .service-card ul li { color: var(--subtle); font-size: 0.8rem; padding: 0.25rem 0 0.25rem 1rem; position: relative; }
   .service-card ul li::before { content: '›'; position: absolute; left: 0; color: var(--orange); font-weight: 700; }
 
-  /* PRODUCTS */
-  #products { background: var(--bg2); }
-  .product-card { margin-top: 3rem; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 2.25rem; position: relative; overflow: hidden; }
-  .product-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--orange), transparent); }
-  .product-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; margin-bottom: 1.25rem; }
-  .product-name { font-size: 1.6rem; font-weight: 900; color: #fff; letter-spacing: -0.01em; margin: 0.15rem 0 0.4rem; }
-  .product-tag { color: #aaa; font-size: 0.95rem; line-height: 1.6; max-width: 620px; }
-  .product-desc { color: #777; font-size: 0.9rem; line-height: 1.85; margin-bottom: 1.5rem; max-width: 720px; }
-  .product-features { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem; margin-bottom: 1.75rem; }
-  .product-features li { color: var(--muted); font-size: 0.84rem; padding-left: 1.1rem; position: relative; }
-  .product-features li::before { content: '›'; position: absolute; left: 0; color: var(--orange); font-weight: 700; }
-  .products-soon { margin-top: 1.75rem; color: var(--subtle); font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.03em; }
-  .products-soon span { color: var(--muted); }
-  @media (max-width: 680px) { .product-features { grid-template-columns: 1fr; } .product-head { flex-direction: column; } }
-
   /* CONTACT */
   #contact { background: var(--bg2); }
   .contact-box { margin-top: 3rem; max-width: 580px; }
@@ -181,24 +166,16 @@
 .app-tile-tag { color: var(--muted); font-size: 0.84rem; line-height: 1.6; flex: 1; }
 .app-tile-status { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1.15rem; }
 .app-tile.live .app-tile-status { color: var(--orange); }
-.app-tile.soon { cursor: default; opacity: 0.55; }
-.app-tile.soon .app-tile-status { color: var(--subtle); }
-.app-tile.soon .app-tile-icon { filter: grayscale(1); opacity: 0.7; }
-/* Two-up variant for the "More from Elevation" block on each app page, which shows
-   the other two apps. Needs its own breakpoint rule: .apps-grid.two outranks the
-   plain .apps-grid collapse below, so without this it would stay 2-up on phones. */
-.apps-grid.two { grid-template-columns: repeat(2, 1fr); }
 /* Four-up variant for the index, now that there are four apps. Goes 4 -> 2 -> 1 so
    the tiles never get too narrow to read on a tablet. */
 .apps-grid.four { grid-template-columns: repeat(4, 1fr); }
 
 @media (max-width: 1100px) { .apps-grid.four { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 900px) { .apps-grid, .apps-grid.two, .apps-grid.four { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .apps-grid, .apps-grid.four { grid-template-columns: 1fr; } }
 
 /* ===== RACK DETECTOR PAGE ===== */
 .rd-hero { min-height: 84vh; display: flex; align-items: center; padding: 8rem 2rem 4rem; position: relative; overflow: hidden; background: var(--bg); }
 .rd-hero-inner { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 3.5rem; align-items: center; position: relative; z-index: 1; }
-.rd-logo { max-width: 360px; width: 100%; height: auto; margin-bottom: 1.5rem; }
 .rd-tagline { color: #cbcbcb; font-size: 1.08rem; line-height: 1.7; margin-bottom: 1.1rem; max-width: 520px; }
 .rd-sub { color: var(--muted); font-family: var(--mono); font-size: 0.84rem; line-height: 1.85; margin-bottom: 2rem; max-width: 500px; }
 .rd-elk { width: 100%; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.55); display: block; }

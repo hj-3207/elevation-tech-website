@@ -260,7 +260,7 @@
     <div class="section-eyebrow">Side by side</div>
     <div class="section-title">All four at a glance</div>
     <div class="divider"></div>
-    <p class="section-sub">Every one of them can be tried before you pay, and none of them send your photos or your locations anywhere.</p>
+    <p class="section-sub">Three of the four can be tried before you pay, and none of them send your photos or your locations anywhere.</p>
     <div class="cmp-wrap">
       <table class="cmp">
         <thead>
@@ -298,7 +298,7 @@
             <td class="app"><a href="rack-scorer.html">Rack Scorer</a></td>
             <td>Android</td>
             <td>B&amp;C and P&amp;Y style scoring with live gross and net totals</td>
-            <td>&mdash;</td>
+            <td>No free trial</td>
             <td>$4.99 one-time</td>
           </tr>
         </tbody>
@@ -329,35 +329,9 @@
   <p class="footer-links">&copy; 2026 Elevation Technology Solutions &nbsp;·&nbsp; <a href="index.html#home">Home</a> &nbsp;·&nbsp; <a href="index.html#services">Services</a> &nbsp;·&nbsp; <a href="index.html#contact">Contact</a></p>
 </footer>
 
-<script>
-  // Download-click counters, copied verbatim from the two product pages so the
-  // buttons here feed the same totals rather than going uncounted. Each app has
-  // its own table: `downloads` is Rack Detector's and has no app column, so Rack
-  // Viewer writes to `downloads_rackviewer` instead. Both are fire-and-forget and
-  // can never block or break the actual download. The publishable key is safe to
-  // expose — RLS lets visitors insert only, never read or edit. Only a timestamp
-  // is stored; no personal data.
-  var DL_URL = "https://baopxmwebqfdubvgjsri.supabase.co/rest/v1/";
-  var DL_KEY = "sb_publishable_54t4NxwLHZqGuGNrDM9TrA_b7F3Dh3B";
-
-  function dlCount(table) {
-    try {
-      fetch(DL_URL + table, {
-        method: "POST",
-        headers: {
-          "apikey": DL_KEY,
-          "Authorization": "Bearer " + DL_KEY,
-          "Content-Type": "application/json",
-          "Prefer": "return=minimal"
-        },
-        body: "{}"
-      }).catch(function () {});
-    } catch (e) {}
-  }
-
-  function rdCountDownload() { dlCount("downloads"); }
-  function rvCountDownload() { dlCount("downloads_rackviewer"); }
-</script>
+<!-- Anonymous download-click counters. Shared with the two product pages so the
+     buttons here feed the same totals rather than going uncounted. -->
+<script src="downloads.js"></script>
 
 </body>
 </html>

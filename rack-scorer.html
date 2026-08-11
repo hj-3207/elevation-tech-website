@@ -171,76 +171,8 @@
       </div>
     </div>
 
-    <script>
-      /* Shared with rack-tracker.html. Scroll-snap carousel: the track is a real
-         horizontal scroller so swipe and trackpad gestures work natively and keep
-         working if this script fails. Buttons, dots and counter are enhancement. */
-      (function () {
-        document.querySelectorAll('[data-carousel]').forEach(function (root) {
-          var track  = root.querySelector('[data-car-track]');
-          var slides = Array.prototype.slice.call(root.querySelectorAll('.rt-car-slide'));
-          var dotBox = root.querySelector('[data-car-dots]');
-          var count  = root.querySelector('[data-car-count]');
-          var prev   = root.querySelector('[data-car-prev]');
-          var next   = root.querySelector('[data-car-next]');
-          if (!track || !slides.length) return;
-
-          var current = 0;
-          var reduce  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-          var dots = slides.map(function (_, i) {
-            var d = document.createElement('button');
-            d.type = 'button';
-            d.className = 'rt-car-dot';
-            d.setAttribute('aria-label', 'Go to screenshot ' + (i + 1));
-            d.addEventListener('click', function () { go(i); });
-            dotBox.appendChild(d);
-            return d;
-          });
-
-          function go(i) {
-            i = Math.max(0, Math.min(slides.length - 1, i));
-            track.scrollTo({ left: slides[i].offsetLeft - track.offsetLeft, behavior: reduce ? 'auto' : 'smooth' });
-            paint(i);
-          }
-
-          function paint(i) {
-            current = i;
-            dots.forEach(function (d, n) {
-              d.classList.toggle('active', n === i);
-              d.setAttribute('aria-current', n === i ? 'true' : 'false');
-            });
-            count.textContent = (i + 1) + ' / ' + slides.length;
-            prev.disabled = i === 0;
-            next.disabled = i === slides.length - 1;
-          }
-
-          prev.addEventListener('click', function () { go(current - 1); });
-          next.addEventListener('click', function () { go(current + 1); });
-
-          track.addEventListener('keydown', function (e) {
-            if (e.key === 'ArrowRight') { e.preventDefault(); go(current + 1); }
-            if (e.key === 'ArrowLeft')  { e.preventDefault(); go(current - 1); }
-          });
-
-          var settle;
-          track.addEventListener('scroll', function () {
-            clearTimeout(settle);
-            settle = setTimeout(function () {
-              var mid = track.scrollLeft + track.clientWidth / 2;
-              var nearest = 0, best = Infinity;
-              slides.forEach(function (s, n) {
-                var c = (s.offsetLeft - track.offsetLeft) + s.offsetWidth / 2;
-                if (Math.abs(c - mid) < best) { best = Math.abs(c - mid); nearest = n; }
-              });
-              paint(nearest);
-            }, 90);
-          }, { passive: true });
-
-          paint(0);
-        });
-      })();
-    </script>
+    <!-- Carousel behaviour is shared with rack-tracker.html; see carousel.js. -->
+    <script src="carousel.js"></script>
 
     <p class="rd-note" style="text-align:center; margin-top:1.5rem;">Swipe, drag, or use the arrows to browse. Screens show sample scoresheets.</p>
   </div>
@@ -334,7 +266,7 @@
         </div>
         <div class="rt-privacy-item">
           <h4>No tracking, no ads</h4>
-          <p>No analytics package, no advertising identifier, no crash telemetry. The iOS build ships a privacy manifest declaring exactly this.</p>
+          <p>No analytics package, no advertising identifier, no crash telemetry. There is nothing in the app measuring what you do with it.</p>
         </div>
         <div class="rt-privacy-item">
           <h4>You control sharing</h4>

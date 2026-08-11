@@ -40,7 +40,7 @@
       <div class="rd-buttons">
         <!-- Download: OneDrive share link for RackDetector_Setup.zip (stable name — replace in place on updates so this link never changes) -->
         <a href="https://1drv.ms/u/c/4D99778560189925/IQAH5AvCv8NNS76q802jGS54AeDLTgkJXkaLQPbbrkLBdzg?e=G79hAQ" class="btn btn-outline" target="_blank" rel="noopener" onclick="rdCountDownload()">↓ Download (Free)</a>
-        <!-- TODO: replace href with your Stripe Payment Link -->
+        <!-- Stripe Payment Link — Rack Detector license, $100 one-time -->
         <a href="https://buy.stripe.com/28E5kE4hP6ppfQs4Y7fbq00" class="btn btn-primary" target="_blank" rel="noopener">Buy License — $100</a>
       </div>
       <p class="rd-note">Free to try — sort up to 10,000 images. Windows 10/11. <strong>An NVIDIA GPU is strongly recommended</strong> — it runs on CPU-only PCs too, but is much slower. Try the free version to check the speed on your computer first.</p>
@@ -149,27 +149,8 @@
   <p class="footer-links">&copy; 2026 Elevation Technology Solutions &nbsp;·&nbsp; <a href="privacy-policy-rackdetector.html">Privacy Policy</a> &nbsp;·&nbsp; <a href="terms-rackdetector.html">Terms of Service</a> &nbsp;·&nbsp; <a href="index.html#apps">More Apps</a></p>
 </footer>
 
-<script>
-  // Log an anonymous, timestamped download-click to Supabase (fire-and-forget: never blocks or
-  // breaks the actual download, which opens in a new tab). Publishable key = safe to expose;
-  // RLS lets visitors only INSERT, never read/edit. Only a timestamp is stored — no personal data.
-  function rdCountDownload() {
-    try {
-      var URL = "https://baopxmwebqfdubvgjsri.supabase.co/rest/v1/downloads";
-      var KEY = "sb_publishable_54t4NxwLHZqGuGNrDM9TrA_b7F3Dh3B";
-      fetch(URL, {
-        method: "POST",
-        headers: {
-          "apikey": KEY,
-          "Authorization": "Bearer " + KEY,
-          "Content-Type": "application/json",
-          "Prefer": "return=minimal"
-        },
-        body: "{}"
-      }).catch(function () {});
-    } catch (e) {}
-  }
-</script>
+<!-- Anonymous download-click counter, shared with rack-viewer.html and apps.html. -->
+<script src="downloads.js"></script>
 
 </body>
 </html>
