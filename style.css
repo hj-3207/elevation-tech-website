@@ -203,6 +203,9 @@
 .app-tile-name { font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 0.45rem; }
 .app-tile-tag { color: var(--muted); font-size: 0.84rem; line-height: 1.6; flex: 1; }
 .app-tile-status { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1.15rem; }
+/* Keeps a price phrase whole if the status line wraps, so it drops to the next
+   line intact rather than splitting across two. */
+.nowrap { white-space: nowrap; }
 .app-tile.live .app-tile-status { color: var(--orange); }
 /* Four-up variant for the index, now that there are four apps. Goes 4 -> 2 -> 1 so
    the tiles never get too narrow to read on a tablet. */
