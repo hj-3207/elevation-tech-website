@@ -42,7 +42,7 @@ The software line is hunting tools. Two Windows programs, two Android apps.
 | App | Platform | Price | Delivery |
 |---|---|---|---|
 | Rack Detector | Windows 10/11 | $100 one-time, free to 10,000 images | OneDrive zip + Stripe |
-| Rack Viewer | Windows 10/11 | Free to view forever; $10 one-time after 10 Keeper Cleanups | OneDrive exe + Stripe |
+| Rack Viewer | Windows 10/11 | Free to view forever; $20 one-time after 10 Keeper Cleanups | OneDrive exe + Stripe |
 | Rack Tracker | Android | $10/year | Google Play `com.racktracker.app` |
 | Rack Scorer | Android | $4.99 one-time, **no free trial** | Google Play `com.rackscorer.app` |
 
