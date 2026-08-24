@@ -12,6 +12,19 @@
 <link rel="manifest" href="site.webmanifest" />
 <link rel="stylesheet" href="style.css">
 <style>
+/* Hero proportions, scoped to this page. .rd-hero-inner is shared with the Detector,
+   Scorer and Tracker pages, whose hero art is a photo or a phone screenshot; Viewer's
+   is a shot of the app window, carrying readable UI - the keeper list, the folder
+   path, the footer legend - so at half the row it was too small to be worth showing.
+   Widening the row and giving the surplus to the image works because the copy is
+   capped at 500-520px by .rd-tagline and .rd-sub anyway, so nothing stretches into
+   over-long lines of text; the image simply gets the rest. */
+.rd-hero-inner { max-width: 1260px; grid-template-columns: 0.85fr 1.15fr; gap: 3rem; }
+/* Required, not belt-and-braces: style.css collapses this to one column at 820px,
+   but that rule has the same specificity and comes earlier in source order, so the
+   override above would otherwise keep two columns on a phone. */
+@media (max-width: 820px) { .rd-hero-inner { grid-template-columns: 1fr; } }
+
 /* Page-scoped, following apps.html: this pair of supporting screenshots is the only
    place on the site with a two-up captioned image row, so the rule lives here rather
    than in style.css, which eight other pages share. The images themselves reuse
@@ -55,7 +68,7 @@
       <div class="section-eyebrow" style="margin-bottom: 1rem;">Trail-Camera Review</div>
       <h1 class="rd-title">Rack <span>Viewer</span></h1>
       <p class="rd-tagline">Rip through a season of camera-card photos and video, keeping only the ones worth keeping.</p>
-      <p class="rd-sub">Hold the arrow key and every photo is already on screen — no waiting, no loading spinner. Mark the ones worth keeping, then move everything else to a single trash folder in one go. Clips play with sound and start themselves, right in the window. Viewing is free forever, on Windows.</p>
+      <p class="rd-sub">Hold the arrow key and every photo is already on screen — no waiting, no loading spinner. Mark the ones worth keeping, then move everything else to a single trash folder in one go. Video clips play with sound, and you can zoom, rotate or bin a photo without ever leaving the window.</p>
       <div class="rd-buttons">
         <!-- Download: OneDrive share link for RackViewer_Installer.exe (stable name —
              upload each new build over the existing file so this link never changes).
@@ -65,7 +78,7 @@
         <!-- Stripe Payment Link — Rack Viewer license, $20 one-time -->
         <a href="https://buy.stripe.com/3cI6oI7u15ll1ZCairfbq02" class="btn btn-primary" target="_blank" rel="noopener">Buy License — $20</a>
       </div>
-      <p class="rd-note">Browsing, keepers and video are <strong>free forever</strong> — the $20 license covers clearing out the non-keepers, after 10 free runs. Windows 10/11 · no cloud, no GPU needed. Your photos never leave your computer.</p>
+      <p class="rd-note"><strong>Viewing is free forever</strong> — browsing, marking, zoom, rotate and video with sound, with no license and no time limit. Clearing out the non-keepers starts with a free trial of 10 cleanups; the license makes them unlimited. Windows 10/11 · no cloud — your photos never leave your computer.</p>
     </div>
     <div>
       <img src="img/rackviewer-hero.jpg" alt="Rack Viewer showing a bull elk trail-camera photo marked with the gold keeper star, KEEPER MODE in the header, and 40 keepers listed from a folder of 3,823" class="rd-elk">
