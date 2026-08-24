@@ -11,6 +11,23 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
 <link rel="manifest" href="site.webmanifest" />
 <link rel="stylesheet" href="style.css">
+<style>
+/* Screenshot blocks, this page only. These are UI captures rather than photos, so each
+   block caps near the capture's own pixel width - 831px for the Explorer shot, ~550 per
+   cell for the app windows, 518 for the narrow one. Scaled past native, the log text and
+   progress bars soften, which is exactly the detail worth showing. */
+.rd-shot-solo   { max-width: 830px; margin: 3rem auto 0; }
+.rd-shot-narrow { max-width: 520px; margin: 2.5rem auto 0; }
+.rd-shots { display: grid; grid-template-columns: 1fr 1fr; gap: 2.25rem; max-width: 1150px; margin: 3rem auto 0; }
+.rd-shots figure { margin: 0; }
+.rd-shot-solo figcaption, .rd-shot-narrow figcaption, .rd-shots figcaption {
+  color: var(--muted); font-family: var(--mono); font-size: 0.74rem;
+  line-height: 1.65; margin-top: 0.9rem; text-align: center;
+}
+/* Same 820px breakpoint style.css uses to cap .rd-elk at 340px, so the pair collapses
+   at the moment the images stop being wide enough to sit side by side. */
+@media (max-width: 820px) { .rd-shots { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body>
 
@@ -81,7 +98,33 @@
         <p>What is left is filed per species — elk, mule deer, whitetail, bird, bear, mountain lion, human — with anything that does not belong in North America filtered out on the way.</p>
       </div>
     </div>
+    <figure class="rd-shot-solo">
+      <img src="img/rackdetectorscreenshot4.png"
+           alt="A Windows Explorer window showing the output folder for a camera named BearPaw, containing folders named bear, blank, elk, human, livestock, mule deer, other and whitetail, alongside a classification.json file"
+           class="rd-elk">
+      <figcaption>One camera's card once the run finishes. Blanks and livestock are out of the way, every species has its own folder, and <strong>classification.json</strong> keeps the full result if you ever want the raw numbers.</figcaption>
+    </figure>
+    <div class="rd-shots">
+      <figure>
+        <img src="img/rackdetectorscreenshot1.png"
+             alt="The Rack Detector window starting a run on one folder, its log reading: compute device GPU NVIDIA GeForce RTX 4070 SUPER, filtering out species that don't occur anywhere in the USA, and source folder 21,429 images to sort"
+             class="rd-elk">
+        <figcaption>21,429 photos off a single camera, queued as one folder. The log names the GPU it found and confirms the species filter before it reads a frame.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/rackdetectorscreenshot5.png"
+             alt="The Rack Detector window part way through a five-folder run, showing four input folders, a processing bar at 100 percent, a sorting bar at 32 percent, and a log line confirming all 489 source images were verified as sorted"
+             class="rd-elk">
+        <figcaption>Point it at a whole season and walk away. Each folder is counted back against its source before the next one starts, so nothing is quietly left behind.</figcaption>
+      </figure>
+    </div>
     <p class="section-sub" style="margin-top: 3rem;">Pulled several cards off one camera? <strong>Combine Folders</strong> merges any number of already-sorted runs into a single set of species folders. Files are prefixed in card order, so a name sort stays chronological and nothing overwrites anything — and each source folder is only removed once it has been checked empty.</p>
+    <figure class="rd-shot-narrow">
+      <img src="img/rackdetectorscreenshot6.png"
+           alt="The Combine Folders tab of Rack Detector, listing four sorted card folders numbered 01 through 04 for a camera named CaseyClearing, with an output location and a Combine button"
+           class="rd-elk">
+      <figcaption>Four cards off one camera, in the order they were pulled. Those <strong>01</strong> to <strong>04</strong> prefixes carry through to the combined folders, so a name sort stays chronological.</figcaption>
+    </figure>
   </div>
 </section>
 

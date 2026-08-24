@@ -5,3 +5,8 @@
 # deliberately kept out of git: once committed they stay in history for good, even
 # if deleted later, and nothing on the site ever serves them.
 img/rackviewerscreenshot*.png
+
+# The Rack Detector shots (img/rackdetectorscreenshot*.png) are committed as PNG on
+# purpose - do not "fix" this for consistency. Those are flat-colour UI captures, not
+# photographs: JPEG re-encoding came out 2-42% LARGER on every one of them, and softened
+# the log text that is the whole reason for showing the window.
