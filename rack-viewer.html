@@ -13,13 +13,15 @@
 <link rel="stylesheet" href="style.css">
 <style>
 /* Hero proportions, scoped to this page. .rd-hero-inner is shared with the Detector,
-   Scorer and Tracker pages, whose hero art is a photo or a phone screenshot; Viewer's
-   is a shot of the app window, carrying readable UI - the keeper list, the folder
-   path, the footer legend - so at half the row it was too small to be worth showing.
-   Widening the row and giving the surplus to the image works because the copy is
-   capped at 500-520px by .rd-tagline and .rd-sub anyway, so nothing stretches into
-   over-long lines of text; the image simply gets the rest. */
-.rd-hero-inner { max-width: 1260px; grid-template-columns: 0.85fr 1.15fr; gap: 3rem; }
+   Scorer and Tracker pages, whose hero art is a photo or a portrait phone screenshot
+   and does not want this treatment.
+   The hero shot is the app window with the keeper list collapsed, so the photo fills
+   it and the aspect is 1.44 rather than the 1.65 of a shot with the list showing.
+   That squarer shape is what actually fixed "too small": at 590px wide it stands 410px
+   tall, within 12px of the 697px-wide version it replaced, so the image reads as large
+   while taking 107px less of the row - which hands the copy back a comfortable 562px
+   column instead of 515px. */
+.rd-hero-inner { max-width: 1200px; grid-template-columns: 1fr 1.05fr; gap: 3rem; }
 /* Required, not belt-and-braces: style.css collapses this to one column at 820px,
    but that rule has the same specificity and comes earlier in source order, so the
    override above would otherwise keep two columns on a phone. */
@@ -78,10 +80,10 @@
         <!-- Stripe Payment Link — Rack Viewer license, $20 one-time -->
         <a href="https://buy.stripe.com/3cI6oI7u15ll1ZCairfbq02" class="btn btn-primary" target="_blank" rel="noopener">Buy License — $20</a>
       </div>
-      <p class="rd-note"><strong>Viewing is free forever</strong> — browsing, marking, zoom, rotate and video with sound, with no license and no time limit. Clearing out the non-keepers starts with a free trial of 10 cleanups; the license makes them unlimited. Windows 10/11 · no cloud — your photos never leave your computer.</p>
+      <p class="rd-note"><strong>Viewing is free forever.</strong> Windows 10/11 · no cloud — your photos never leave your computer.</p>
     </div>
     <div>
-      <img src="img/rackviewer-hero.jpg" alt="Rack Viewer showing a bull elk trail-camera photo marked with the gold keeper star, KEEPER MODE in the header, and 40 keepers listed from a folder of 3,823" class="rd-elk">
+      <img src="img/rackviewer-hero.jpg" alt="Rack Viewer with the keeper list collapsed so a bull elk trail-camera photo fills the window, the gold keeper star on the image, KEEPER MODE in the header, and 44 keepers of 3,823 on the slim side rail" class="rd-elk">
     </div>
   </div>
 </section>
