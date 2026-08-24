@@ -116,6 +116,10 @@
   /* SECTIONS */
   section { padding: 6rem 2rem; position: relative; z-index: 1; }
   .container { max-width: 1080px; margin: 0 auto; }
+  /* Wider variant for the app-tile grids. At 1080 each of the three tiles gives
+     303px of text width, and the Rack Viewer status line needs ~327px in JetBrains
+     Mono, so it wrapped to a second line. 1200 gives 343px. */
+  .container.wide { max-width: 1200px; }
   .section-eyebrow {
     display: inline-flex; align-items: center; gap: 0.6rem;
     font-family: var(--mono); font-size: 0.7rem; color: var(--orange);
