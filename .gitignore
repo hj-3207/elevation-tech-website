@@ -1,0 +1,7 @@
+# Source screenshot captures for the app pages.
+#
+# The JPEGs committed in img/ are generated from these at the width the pages
+# actually render — 7.5 MB of PNG becomes about 1.1 MB of JPEG. The originals are
+# deliberately kept out of git: once committed they stay in history for good, even
+# if deleted later, and nothing on the site ever serves them.
+img/rackviewerscreenshot*.png

@@ -11,6 +11,19 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
 <link rel="manifest" href="site.webmanifest" />
 <link rel="stylesheet" href="style.css">
+<style>
+/* Page-scoped, following apps.html: this pair of supporting screenshots is the only
+   place on the site with a two-up captioned image row, so the rule lives here rather
+   than in style.css, which eight other pages share. The images themselves reuse
+   .rd-elk, so their border, radius and shadow stay identical to every other
+   screenshot on the page and there is nothing extra to keep in sync. */
+.rv-shots { display: grid; grid-template-columns: 1fr 1fr; gap: 2.25rem; max-width: 1000px; margin: 2.5rem auto 0; }
+.rv-shots figure { margin: 0; }
+.rv-shots figcaption { color: var(--muted); font-family: var(--mono); font-size: 0.74rem; line-height: 1.65; margin-top: 0.9rem; text-align: center; }
+/* Same breakpoint .rd-elk uses, so the two collapse to one column at the moment the
+   images start being capped at 340px anyway. */
+@media (max-width: 820px) { .rv-shots { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body>
 
@@ -97,6 +110,20 @@
     <img src="img/rackviewer-screenshot.jpg"
          alt="The full Rack Viewer window: a grazing bull elk marked as a keeper, the keeper list showing 40 flagged files, and the footer showing photo 590 of 3,823 with the keyboard shortcuts"
          class="rd-elk" style="max-width: 1000px; margin: 3rem auto 0;">
+    <div class="rv-shots">
+      <figure>
+        <img src="img/rackviewer-fullscreen.jpg"
+             alt="Rack Viewer in full screen: a bull elk and a mule deer fill the display, with 2696/3823 and KEEPER MODE in light grey at the top left and the gold keeper star at the top right"
+             class="rd-elk">
+        <figcaption>Full screen leaves the photo and nothing else — just your place in the folder, which way round you're working, and the mark.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/rackviewer-video.jpg"
+             alt="Rack Viewer playing a trail-camera clip of a bull elk, with the play controls, scrub bar at eight seconds of ten, and volume along the bottom"
+             class="rd-elk">
+        <figcaption>Clips play in the window with sound, and start themselves when you land on one.</figcaption>
+      </figure>
+    </div>
   </div>
 </section>
 
