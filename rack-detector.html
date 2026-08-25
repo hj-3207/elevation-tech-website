@@ -144,13 +144,25 @@
     <div class="section-eyebrow">Demo</div>
     <div class="section-title">See it in action</div>
     <div class="divider"></div>
-    <p class="section-sub">Watch Rack Detector sort a batch of trail-camera photos from start to finish.</p>
-    <div class="video-wrap">
-      <!-- TODO: paste your YouTube embed here, e.g.:
-        <iframe src="https://www.youtube.com/embed/VIDEO_ID" title="Rack Detector demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-      Then delete the placeholder div below. -->
-      <div class="video-placeholder"><div class="play">▶</div>Demo video coming soon</div>
-    </div>
+          <p class="section-sub">Two demos: sorting a fresh card, and merging several that are already sorted.</p>
+      <!-- Videos are hosted on YouTube because the recordings run to about a
+           gigabyte between them: four of the five are past GitHub's hard 100 MB
+           per-file limit, and Pages caps a site near 1 GB in any case. Fill in
+           data-yt with the id from the share link to switch a tab on. -->
+      <div class="vtabs" data-vtabs>
+        <div class="vtab-row" role="tablist" aria-label="Demo videos">
+        <button class="vtab is-on" role="tab" aria-selected="true"
+                data-yt="" data-title="Rack Detector demo: sorting a card into per-species folders"
+                data-cap="A card of trail-camera photos sorted into per-species folders, with the blanks and the livestock separated out on the way.">Sort by Species</button>
+        <button class="vtab" role="tab" aria-selected="false"
+                data-yt="" data-title="Rack Detector demo: combining several sorted cards"
+                data-cap="Several already-sorted cards from one camera merged into a single set of species folders, prefixed in card order.">Combine Folders</button>
+        </div>
+        <div class="video-wrap" data-vstage>
+          <div class="video-placeholder"><div class="play">&#9654;</div>Demo video coming soon</div>
+        </div>
+        <p class="vtab-cap" data-vcap></p>
+      </div>
   </div>
 </section>
 
@@ -213,6 +225,7 @@
 <script src="downloads.js"></script>
 
 <script src="nav.js"></script>
+<script src="videotabs.js"></script>
 <script src="lightbox.js"></script>
 
 </body>

@@ -341,3 +341,19 @@
   font-size: 1.6rem; line-height: 1; cursor: pointer; transition: all 0.2s; }
 .lb-close:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: var(--orange); }
 html.lb-open { overflow: hidden; }
+
+/* ---- DEMO VIDEO TABS (videotabs.js) -------------------------------------
+   One player, topics as buttons above it. The stage reuses .video-wrap, so the
+   frame matches the single-video sections on the other pages. */
+.vtab-row { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-top: 2.5rem; }
+.vtab { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--muted); background: transparent;
+  border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 1.05rem;
+  cursor: pointer; transition: all 0.2s; }
+.vtab:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+.vtab.is-on { color: #fff; border-color: var(--border-orange); background: rgba(204,85,0,0.10); }
+.vtabs .video-wrap { margin-top: 1.35rem; }
+.vtabs .video-wrap[data-ready="yes"] { cursor: pointer; }
+.vtabs .video-wrap[data-ready="yes"]:hover .play { border-color: var(--orange); color: var(--orange-bright); }
+.vtab-cap { color: var(--muted); font-family: var(--mono); font-size: 0.78rem;
+  line-height: 1.7; text-align: center; max-width: 720px; margin: 1.1rem auto 0; }

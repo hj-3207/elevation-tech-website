@@ -191,13 +191,28 @@
     <div class="section-eyebrow">Demo</div>
     <div class="section-title">See it in action</div>
     <div class="divider"></div>
-    <p class="section-sub">Watch a full card get reviewed down to the keepers.</p>
-    <div class="video-wrap">
-      <!-- TODO: paste your YouTube embed here, e.g.:
-        <iframe src="https://www.youtube.com/embed/VIDEO_ID" title="Rack Viewer demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-      Then delete the placeholder div below. -->
-      <div class="video-placeholder"><div class="play">▶</div>Demo video coming soon</div>
-    </div>
+          <p class="section-sub">Three demos: how fast it moves, and both ways of working through a card.</p>
+      <!-- Videos are hosted on YouTube because the recordings run to about a
+           gigabyte between them: four of the five are past GitHub's hard 100 MB
+           per-file limit, and Pages caps a site near 1 GB in any case. Fill in
+           data-yt with the id from the share link to switch a tab on. -->
+      <div class="vtabs" data-vtabs>
+        <div class="vtab-row" role="tablist" aria-label="Demo videos">
+        <button class="vtab is-on" role="tab" aria-selected="true"
+                data-yt="" data-title="Rack Viewer demo: arrow-key speed through a full card"
+                data-cap="Holding the arrow key through a whole card. Photos are decoded ahead of where you are, so there is nothing to wait for.">Speed</button>
+        <button class="vtab" role="tab" aria-selected="false"
+                data-yt="" data-title="Rack Viewer demo: marking keepers and clearing out the rest"
+                data-cap="Marking the ones worth keeping, then moving everything else to a single trash folder in one action.">Keeper Mode</button>
+        <button class="vtab" role="tab" aria-selected="false"
+                data-yt="" data-title="Rack Viewer demo: marking only the rejects"
+                data-cap="The inverse: mark only the rejects, and everything you leave unmarked stays exactly where it is.">Discard Mode</button>
+        </div>
+        <div class="video-wrap" data-vstage>
+          <div class="video-placeholder"><div class="play">&#9654;</div>Demo video coming soon</div>
+        </div>
+        <p class="vtab-cap" data-vcap></p>
+      </div>
   </div>
 </section>
 
@@ -265,6 +280,7 @@
 <script src="downloads.js"></script>
 
 <script src="nav.js"></script>
+<script src="videotabs.js"></script>
 <script src="lightbox.js"></script>
 
 </body>
