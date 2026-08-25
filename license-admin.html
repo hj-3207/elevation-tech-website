@@ -307,16 +307,19 @@
     el('count').textContent = shown.length + ' of ' + rows.length + ' codes';
     el('rows').innerHTML = shown.slice(0, 400).map(function (r) {
       var st = state(r);
-      return '<tr>' +
+      return '<tr data-row="' + esc(r.code) + '">' +
         '<td class="la-code">' + esc(r.code) + '</td>' +
         '<td>' + esc(productName(r.version)) + '</td>' +
-        '<td><span class="la-pill ' + st + '">' + LABEL[st] + '</span></td>' +
-        '<td>' + (r.issued_to ? esc(r.issued_to) : '<span class="la-muted">-</span>') + '</td>' +
-        '<td class="la-muted">' + day(r.issued_at) + '</td>' +
+        '<td class="c-state"><span class="la-pill ' + st + '">' + LABEL[st] + '</span></td>' +
+        '<td class="c-sent">' + (r.issued_to ? esc(r.issued_to) : '<span class="la-muted">-</span>') + '</td>' +
+        '<td class="c-when la-muted">' + day(r.issued_at) + '</td>' +
         '<td>' + (r.email ? esc(r.email) : '<span class="la-muted">-</span>') + '</td>' +
         '<td class="la-muted">' + day(r.activated_at) + '</td>' +
-        '<td><input class="la-note" data-code="' + esc(r.code) + '" value="' + esc(r.notes) + '" placeholder="note"></td>' +
-        '<td><button class="la-mini" data-copy="' + esc(r.code) + '">copy</button></td>' +
+        '<td class="c-notes">' + (r.notes ? esc(r.notes) : '<span class="la-muted">-</span>') + '</td>' +
+        '<td class="c-act" style="white-space:nowrap;">' +
+          '<button class="la-mini" data-edit>edit</button> ' +
+          '<button class="la-mini" data-copy="' + esc(r.code) + '">copy</button>' +
+        '</td>' +
         '</tr>';
     }).join('');
 
@@ -335,58 +338,123 @@
       .catch(function () { say('msg', 'Could not copy. The code is ' + code, 'bad'); });
   });
 
-  // Notes save on blur, and only when actually changed.
-  el('rows').addEventListener('focusout', function (e) {
-    var i = e.target.closest('.la-note');
-    if (!i) return;
-    var code = i.getAttribute('data-code');
-    var row = rows.filter(function (r) { return r.code === code; })[0];
-    var val = i.value.trim();
-    if (!row || (row.notes || '') === val) return;
+  /* ---- row editing -----------------------------------------------------
+   * Codes you sent by hand before this page existed have no issued_to, so the assign
+   * button would happily hand them out a second time. Filling in "Sent to" here is what
+   * takes a code out of the pool; clearing it puts the code back.
+   */
+  function rowFor(code) { return rows.filter(function (r) { return r.code === code; })[0]; }
+
+  function beginEdit(tr, r) {
+    tr.querySelector('.c-sent').innerHTML =
+      '<input class="la-note ed-to" type="email" placeholder="buyer@example.com" value="' + esc(r.issued_to) + '">';
+    tr.querySelector('.c-when').innerHTML =
+      '<input class="la-note ed-when" type="date" value="' + day(r.issued_at) + '">';
+    tr.querySelector('.c-notes').innerHTML =
+      '<input class="la-note ed-note" placeholder="note" value="' + esc(r.notes) + '">';
+    tr.querySelector('.c-act').innerHTML =
+      '<button class="la-mini" data-save>save</button> <button class="la-mini" data-cancel>cancel</button>';
+    tr.querySelector('.ed-to').focus();
+  }
+
+  function saveEdit(tr) {
+    var code = tr.getAttribute('data-row');
+    var r = rowFor(code);
+    var to = tr.querySelector('.ed-to').value.trim();
+    var when = tr.querySelector('.ed-when').value;
+    var note = tr.querySelector('.ed-note').value.trim();
+
+    var body = { issued_to: to || null, notes: note || null };
+    if (!to) {
+      body.issued_at = null;                    // no buyer means the code is free again
+    } else if (when) {
+      // Midday UTC, so the date you typed cannot slide a day either way on display.
+      body.issued_at = new Date(when + 'T12:00:00Z').toISOString();
+    } else {
+      body.issued_at = r.issued_at || new Date().toISOString();
+    }
+
+    say('msg', 'Saving ' + code + '...', '');
     authFetch('/rest/v1/license_keys?code=eq.' + encodeURIComponent(code), {
       method: 'PATCH',
       headers: { Prefer: 'return=representation' },
-      body: JSON.stringify({ notes: val || null })
-    }).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      row.notes = val || null;
-      say('msg', 'Note saved for ' + code + '.', 'good');
-    }).catch(function (err) { say('msg', 'Could not save note: ' + err.message, 'bad'); });
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      if (!res.ok) return res.text().then(function (t) { throw new Error('HTTP ' + res.status + ' ' + t.slice(0, 140)); });
+      return res.json();
+    }).then(function (out) {
+      if (out.length) {
+        var i = rows.findIndex(function (x) { return x.code === code; });
+        if (i >= 0) rows[i] = out[0];
+      }
+      say('msg', code + ' saved.', 'good');
+      render();
+    }).catch(function (err) { say('msg', 'Could not save ' + code + ': ' + err.message, 'bad'); });
+  }
+
+  el('rows').addEventListener('click', function (e) {
+    var tr = e.target.closest('tr[data-row]');
+    if (!tr) return;
+    if (e.target.closest('[data-edit]')) { beginEdit(tr, rowFor(tr.getAttribute('data-row'))); return; }
+    if (e.target.closest('[data-save]')) { saveEdit(tr); return; }
+    if (e.target.closest('[data-cancel]')) { render(); }
   });
 
-  /* ---- assign the next unused code ------------------------------------- */
+  // Enter saves, Escape abandons the edit.
+  el('rows').addEventListener('keydown', function (e) {
+    var tr = e.target.closest('tr[data-row]');
+    if (!tr || !e.target.classList.contains('la-note')) return;
+    if (e.key === 'Enter') { e.preventDefault(); saveEdit(tr); }
+    if (e.key === 'Escape') { e.preventDefault(); render(); }
+  });
+
+  /* ---- assign the next unsold code --------------------------------------
+   * "Unsold" means status is still 'unused' AND issued_to is empty. A code you sent by
+   * hand and recorded with the edit button is therefore skipped, which is the whole point.
+   */
   el('assign').addEventListener('click', function () {
     var buyer = el('buyer').value.trim();
     var ver = el('aProduct').value;
     if (!buyer) { say('msg', 'Enter the buyer email first.', 'bad'); return; }
     if (!ver) { say('msg', 'Pick a product.', 'bad'); return; }
 
-    var candidates = rows.filter(function (r) {
+    var pool = rows.filter(function (r) {
       return String(r.version) === String(ver) && r.status === 'unused' && !r.issued_to;
     });
-    if (!candidates.length) { say('msg', 'No unsold codes left for ' + productName(Number(ver)) + '. Generate more with gen_codes.py.', 'bad'); return; }
+    if (!pool.length) {
+      say('msg', 'No unsold codes left for ' + productName(Number(ver)) + '. Generate more with gen_codes.py.', 'bad');
+      return;
+    }
 
-    var code = candidates[0].code;
-    // issued_to=is.null guards the write, so two assignments racing cannot both claim the
-    // same code: the loser updates zero rows and we simply try the next one.
-    authFetch('/rest/v1/license_keys?code=eq.' + encodeURIComponent(code) + '&issued_to=is.null', {
-      method: 'PATCH',
-      headers: { Prefer: 'return=representation' },
-      body: JSON.stringify({ issued_to: buyer, issued_at: new Date().toISOString() })
-    }).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).then(function (out) {
-      if (!out.length) { say('msg', 'That code was taken as you clicked. Press Assign again.', 'bad'); return load(); }
-      var saved = out[0];
-      var i = rows.findIndex(function (r) { return r.code === saved.code; });
-      if (i >= 0) rows[i] = saved;
-      el('buyer').value = '';
-      if (navigator.clipboard) navigator.clipboard.writeText(saved.code).catch(function () {});
-      say('msg', saved.code + ' assigned to ' + buyer + ' and copied to your clipboard.', 'good');
-      el('q').value = saved.code;
-      render();
-    }).catch(function (err) { say('msg', 'Could not assign: ' + err.message, 'bad'); });
+    // issued_to=is.null guards the write, so a code claimed since the last load updates
+    // zero rows and we move to the next candidate instead of overwriting anyone.
+    function claim(i) {
+      if (i >= pool.length || i >= 8) {
+        say('msg', 'Could not find a free code just now. Refreshing.', 'bad');
+        return load();
+      }
+      var code = pool[i].code;
+      return authFetch('/rest/v1/license_keys?code=eq.' + encodeURIComponent(code) + '&issued_to=is.null', {
+        method: 'PATCH',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify({ issued_to: buyer, issued_at: new Date().toISOString() })
+      }).then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error('HTTP ' + r.status + ' ' + t.slice(0, 140)); });
+        return r.json();
+      }).then(function (out) {
+        if (!out.length) return claim(i + 1);
+        var saved = out[0];
+        var k = rows.findIndex(function (x) { return x.code === saved.code; });
+        if (k >= 0) rows[k] = saved;
+        el('buyer').value = '';
+        if (navigator.clipboard) navigator.clipboard.writeText(saved.code).catch(function () {});
+        say('msg', saved.code + ' assigned to ' + buyer + ' and copied to your clipboard.', 'good');
+        el('q').value = saved.code;
+        render();
+      });
+    }
+
+    claim(0).catch(function (err) { say('msg', 'Could not assign: ' + err.message, 'bad'); });
   });
 
   ['q', 'fProduct', 'fState'].forEach(function (id) {
