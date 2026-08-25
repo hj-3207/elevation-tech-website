@@ -7,8 +7,8 @@
  * Shared by all 12 pages. No dependencies.
  */
 (function () {
-  var SELECTOR = 'img.rd-elk, img.rt-phone, .rt-car-slide img';
-  var overlay, imgEl, capEl, closeBtn, lastFocus;
+  var SELECTOR = 'img.rd-elk, img.rt-phone, .rt-car-slide img, video.rd-elk';
+  var overlay, imgEl, vidEl, capEl, closeBtn, lastFocus;
 
   function build() {
     overlay = document.createElement('div');
@@ -21,10 +21,12 @@
       '<button class="lb-close" type="button" aria-label="Close preview">&times;</button>' +
       '<figure class="lb-figure">' +
         '<img class="lb-img" alt="">' +
+        '<video class="lb-vid" controls loop muted playsinline></video>' +
         '<figcaption class="lb-cap"></figcaption>' +
       '</figure>';
     document.body.appendChild(overlay);
     imgEl = overlay.querySelector('.lb-img');
+    vidEl = overlay.querySelector('.lb-vid');
     capEl = overlay.querySelector('.lb-cap');
     closeBtn = overlay.querySelector('.lb-close');
 
@@ -39,13 +41,22 @@
     if (!overlay) build();
     lastFocus = document.activeElement;
 
-    imgEl.src = img.currentSrc || img.src;
-    imgEl.alt = img.alt || '';
+    // A page video opens as a video, with controls so it can be scrubbed.
+    var isVideo = img.tagName === 'VIDEO';
+    imgEl.hidden = isVideo;
+    vidEl.hidden = !isVideo;
+    if (isVideo) {
+      vidEl.src = img.currentSrc || img.src;
+      vidEl.play().catch(function () {});
+    } else {
+      imgEl.src = img.currentSrc || img.src;
+      imgEl.alt = img.alt || '';
+    }
 
     // Prefer the figure's own caption; fall back to alt text.
     var fig = img.closest('figure');
     var cap = fig ? fig.querySelector('figcaption') : null;
-    var text = cap ? cap.textContent.trim() : (img.alt || '');
+    var text = cap ? cap.textContent.trim() : (img.alt || img.getAttribute('aria-label') || '');
     capEl.textContent = text;
     capEl.hidden = !text;
 
@@ -59,6 +70,9 @@
     overlay.hidden = true;
     document.documentElement.classList.remove('lb-open');
     imgEl.removeAttribute('src');
+    vidEl.pause();
+    vidEl.removeAttribute('src');
+    vidEl.load();
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
@@ -78,7 +92,8 @@
       img.classList.add('lb-zoom');
       img.tabIndex = 0;
       img.setAttribute('role', 'button');
-      img.setAttribute('aria-label', (img.alt ? img.alt + '. ' : '') + 'View full size');
+      var label = img.alt || img.getAttribute('aria-label') || '';
+      img.setAttribute('aria-label', (label ? label + '. ' : '') + 'View full size');
       img.addEventListener('click', function () { open(img); });
       img.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(img); }
