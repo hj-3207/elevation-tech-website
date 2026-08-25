@@ -181,7 +181,7 @@ def peak_points(w, h, base_frac, amp_frac, seed=7):
     return [(round(i * w / n), h * base_frac - amp * v) for i, v in enumerate(vals)]
 
 
-def _height_field(cols, rows, seed=11):
+def _height_field(cols, rows, seed=23):
     """A terrain height field: several gaussian summits and basins over a domain that runs
     well past the frame, plus a gentle tilt.
 
@@ -239,7 +239,7 @@ def _contours(f, level):
     return segs
 
 
-def topo_layer(w, h, pad, seed=11):
+def topo_layer(w, h, pad, seed=23):
     """Render the contour map once, oversized by `pad` so it can drift without exposing an
     edge. Doing this per frame would mean thousands of draw calls 200 times over."""
     W, H = w + pad, h + pad
@@ -334,7 +334,7 @@ def card_layer(w, h, logo, line, font, p, colour=MUTED, scale=1.0, lift=0.0):
 
 # ---------------------------------------------------------------- assembly
 
-def build(w, h, fps, cards, card_seconds, crossfade, style, terrain=11):
+def build(w, h, fps, cards, card_seconds, crossfade, style, terrain=23):
     step = card_seconds - crossfade
     total_s = card_seconds + step * (len(cards) - 1)
     n = max(1, int(round(fps * total_s)))
@@ -460,7 +460,7 @@ def main():
     ap.add_argument("--title", default="",
                     help="what the video demonstrates, e.g. SPEED. The product logo already "
                          "names the product, so this only needs the topic.")
-    ap.add_argument("--terrain", type=int, default=11,
+    ap.add_argument("--terrain", type=int, default=23,
                     help="seed for the ridge height field; any integer is a different range")
     ap.add_argument("--card-seconds", type=float, default=3.6)
     ap.add_argument("--crossfade", type=float, default=0.6)
