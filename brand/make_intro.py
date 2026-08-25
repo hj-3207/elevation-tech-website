@@ -239,12 +239,12 @@ def _contours(f, level):
     return segs
 
 
-def topo_layer(w, h, pad):
+def topo_layer(w, h, pad, seed=11):
     """Render the contour map once, oversized by `pad` so it can drift without exposing an
     edge. Doing this per frame would mean thousands of draw calls 200 times over."""
     W, H = w + pad, h + pad
     cols, rows = 240, max(60, int(240 * H / W))
-    f = _height_field(cols, rows)
+    f = _height_field(cols, rows, seed)
     lo, hi = float(f.min()), float(f.max())
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
@@ -334,7 +334,7 @@ def card_layer(w, h, logo, line, font, p, colour=MUTED, scale=1.0, lift=0.0):
 
 # ---------------------------------------------------------------- assembly
 
-def build(w, h, fps, cards, card_seconds, crossfade, style):
+def build(w, h, fps, cards, card_seconds, crossfade, style, terrain=11):
     step = card_seconds - crossfade
     total_s = card_seconds + step * (len(cards) - 1)
     n = max(1, int(round(fps * total_s)))
@@ -344,8 +344,8 @@ def build(w, h, fps, cards, card_seconds, crossfade, style):
     font = ImageFont.truetype(MONO, max(13, int(w * 0.0145)))
     blank = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     mark = extract_mark() if style == "mask" else None
-    TOPO_PAD = 48
-    topo = topo_layer(w, h, TOPO_PAD) if style == "ridge" else None
+    TOPO_PAD = 64
+    topo = topo_layer(w, h, TOPO_PAD, terrain) if style == "ridge" else None
     # profile puts terrain along the bottom, so the lockup lifts clear of it
     lift = 0.10 if style == "profile" else 0.0
 
@@ -364,8 +364,9 @@ def build(w, h, fps, cards, card_seconds, crossfade, style):
         if style == "ridge":
             # Drift the whole map slowly, so it reads as terrain being panned
             # over rather than anything animating in place.
-            off = int(TOPO_PAD * (1.0 - g))
-            view = topo.crop((off, off, off + w, off + h))
+            off = TOPO_PAD * (1.0 - g)          # float: no integer stepping
+            view = topo.transform((w, h), Image.AFFINE, (1, 0, off, 0, 1, off * 0.55),
+                                  resample=Image.BILINEAR)
             fade = ramp(g, 0.0, 0.20)
             if fade < 1:
                 view.putalpha(view.getchannel("A").point(
@@ -459,6 +460,8 @@ def main():
     ap.add_argument("--title", default="",
                     help="what the video demonstrates, e.g. SPEED. The product logo already "
                          "names the product, so this only needs the topic.")
+    ap.add_argument("--terrain", type=int, default=11,
+                    help="seed for the ridge height field; any integer is a different range")
     ap.add_argument("--card-seconds", type=float, default=3.6)
     ap.add_argument("--crossfade", type=float, default=0.6)
     ap.add_argument("--out", default=os.path.join(HERE, "elevation-intro.mp4"))
@@ -474,7 +477,8 @@ def main():
         cards.append((load_logo(PRODUCT_LOGOS[a.product], h, 0.26, True),
                       a.title.upper(), TEXT, 1.8))
 
-    frames = build(a.width, h, a.fps, cards, a.card_seconds, a.crossfade, a.style)
+    frames = build(a.width, h, a.fps, cards, a.card_seconds, a.crossfade, a.style,
+                   a.terrain)
     encode(frames, a.out, a.fps)
     print("wrote %s  %s  %dx%d  %d cards  %.1fs at %gfps  %.2f MB"
           % (os.path.basename(a.out), a.style, a.width, h, len(cards),
