@@ -181,39 +181,82 @@ def peak_points(w, h, base_frac, amp_frac, seed=7):
     return [(round(i * w / n), h * base_frac - amp * v) for i, v in enumerate(vals)]
 
 
-def bg_ridge(w, h, g):
-    """Contour rings around two summits, plus heavier index contours every fourth ring.
+def _height_field(cols, rows, seed=11):
+    """A terrain height field: several gaussian summits and basins over a domain that runs
+    well past the frame, plus a gentle tilt.
 
-    Parallel wavy lines are not what makes a map read as topographic; nested closed rings
-    around high ground are. Rings creep outward across the clip, so the map feels alive
-    without anything obviously moving.
+    Centres deliberately sit outside 0..1 as well as inside, so contours cross the edges
+    instead of clustering in the middle. The tilt guarantees some lines traverse the whole
+    frame rather than closing into rings.
     """
-    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    d = ImageDraw.Draw(layer)
-    fade_in = ramp(g, 0.0, 0.22)
-    if fade_in <= 0:
-        return layer
+    import numpy as np
+    rnd = random.Random(seed)
+    y, x = np.mgrid[0:rows, 0:cols]
+    x = x / (cols - 1)
+    y = y / (rows - 1)
+    f = 0.55 * x + 0.30 * y                       # tilt, so contours run off the edges
+    for _ in range(9):
+        cx, cy = rnd.uniform(-0.25, 1.25), rnd.uniform(-0.30, 1.30)
+        amp = rnd.uniform(0.5, 1.0) * rnd.choice((1, 1, 1, -1))   # mostly peaks, some basins
+        sig = rnd.uniform(0.10, 0.30)
+        f = f + amp * np.exp(-(((x - cx) ** 2 + (y - cy) ** 2) / (2 * sig * sig)))
+    return f
 
-    summits = ((0.28, 0.40, 1.00, 0.0), (0.74, 0.63, 0.78, 1.9))
-    for cx, cy, scale, phase in summits:
-        for k in range(1, 16):
-            rr = (0.035 + k * 0.036 + g * 0.012) * scale      # in units of frame height
-            index = (k % 4 == 0)
-            far = max(0.0, 1.0 - k / 17.0)
-            alpha = int((150 if index else 96) * far * fade_in)
-            if alpha <= 2:
-                continue
-            pts = []
-            for a in range(0, 366, 6):
-                th = math.radians(a)
-                # Irregular radius, so rings read as landform rather than concentric circles.
-                r = rr * (1
-                          + 0.20 * math.sin(3 * th + phase)
-                          + 0.11 * math.sin(7 * th - k * 0.35 + phase)
-                          + 0.06 * math.sin(13 * th + k * 0.2))
-                pts.append((cx * w + r * h * 1.45 * math.cos(th),
-                            cy * h + r * h * math.sin(th)))
-            d.line(pts, fill=ORANGE + (alpha,), width=max(1, h // (420 if index else 620)))
+
+def _contours(f, level):
+    """Marching squares. Emits segments per cell rather than tracing closed paths: for
+    drawing that is indistinguishable, and it avoids the bookkeeping of joining them."""
+    import numpy as np
+    a, b = f[:-1, :-1], f[:-1, 1:]
+    c, d = f[1:, 1:], f[1:, :-1]
+    lo = np.minimum(np.minimum(a, b), np.minimum(c, d))
+    hi = np.maximum(np.maximum(a, b), np.maximum(c, d))
+    # Only cells the level actually crosses, which is a small fraction of the grid.
+    cells = np.argwhere((lo <= level) & (hi > level))
+    segs = []
+    for j, i in cells:
+        v = (f[j, i], f[j, i + 1], f[j + 1, i + 1], f[j + 1, i])
+        idx = (v[0] > level) | ((v[1] > level) << 1) | ((v[2] > level) << 2) | ((v[3] > level) << 3)
+        if idx in (0, 15):
+            continue
+
+        def ip(p, q):                     # interpolate along one cell edge
+            t = (level - v[p]) / (v[q] - v[p]) if v[q] != v[p] else 0.5
+            pts = ((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1))
+            return (pts[p][0] + (pts[q][0] - pts[p][0]) * t,
+                    pts[p][1] + (pts[q][1] - pts[p][1]) * t)
+
+        top, right, bottom, left = ip(0, 1), ip(1, 2), ip(3, 2), ip(0, 3)
+        table = {1: (top, left), 2: (top, right), 3: (left, right), 4: (right, bottom),
+                 5: (top, right, bottom, left), 6: (top, bottom), 7: (left, bottom),
+                 8: (bottom, left), 9: (top, bottom), 10: (top, left, bottom, right),
+                 11: (right, bottom), 12: (left, right), 13: (top, right),
+                 14: (top, left)}
+        e = table[idx]
+        segs.append((e[0], e[1]))
+        if len(e) == 4:
+            segs.append((e[2], e[3]))
+    return segs
+
+
+def topo_layer(w, h, pad):
+    """Render the contour map once, oversized by `pad` so it can drift without exposing an
+    edge. Doing this per frame would mean thousands of draw calls 200 times over."""
+    W, H = w + pad, h + pad
+    cols, rows = 240, max(60, int(240 * H / W))
+    f = _height_field(cols, rows)
+    lo, hi = float(f.min()), float(f.max())
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    levels = 26
+    sx, sy = W / (cols - 1), H / (rows - 1)
+    for k in range(1, levels):
+        level = lo + (hi - lo) * k / levels
+        index = (k % 5 == 0)                       # heavier index contour, as on a real map
+        col = ORANGE + (150 if index else 82,)
+        wid = max(1, h // (430 if index else 700))
+        for (x0, y0), (x1, y1) in _contours(f, level):
+            d.line([(x0 * sx, y0 * sy), (x1 * sx, y1 * sy)], fill=col, width=wid)
     return layer
 
 
@@ -301,6 +344,8 @@ def build(w, h, fps, cards, card_seconds, crossfade, style):
     font = ImageFont.truetype(MONO, max(13, int(w * 0.0145)))
     blank = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     mark = extract_mark() if style == "mask" else None
+    TOPO_PAD = 48
+    topo = topo_layer(w, h, TOPO_PAD) if style == "ridge" else None
     # profile puts terrain along the bottom, so the lockup lifts clear of it
     lift = 0.10 if style == "profile" else 0.0
 
@@ -317,7 +362,15 @@ def build(w, h, fps, cards, card_seconds, crossfade, style):
         if gl > 0 and style != "profile":
             frame.alpha_composite(Image.blend(blank, glow, min(1.0, gl * (0.6 if style == "ridge" else 0.9))))
         if style == "ridge":
-            frame.alpha_composite(bg_ridge(w, h, g))
+            # Drift the whole map slowly, so it reads as terrain being panned
+            # over rather than anything animating in place.
+            off = int(TOPO_PAD * (1.0 - g))
+            view = topo.crop((off, off, off + w, off + h))
+            fade = ramp(g, 0.0, 0.20)
+            if fade < 1:
+                view.putalpha(view.getchannel("A").point(
+                    lambda v, a=fade: int(v * a)))
+            frame.alpha_composite(view)
         elif style == "profile":
             frame.alpha_composite(bg_profile(w, h, g))
 
