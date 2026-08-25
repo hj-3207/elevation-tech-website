@@ -280,7 +280,9 @@
       var avail = set.filter(function (r) { return state(r) === 'avail'; }).length;
       var sent  = set.filter(function (r) { return state(r) === 'sent'; }).length;
       var live  = set.filter(function (r) { return state(r) === 'live'; }).length;
-      html += '<div class="la-stat"><b>' + live + ' / ' + sent + '</b><span>' + productName(v) + ' activated / awaiting</span></div>';
+      // One number per box. A combined "2 / 3" makes you work out which is which.
+      html += '<div class="la-stat"><b>' + live + '</b><span>' + productName(v) + ' activated</span></div>';
+      html += '<div class="la-stat"><b>' + sent + '</b><span>' + productName(v) + ' awaiting</span></div>';
       html += '<div class="la-stat"><b>' + avail + '</b><span>' + productName(v) + ' unsold</span></div>';
     });
     el('stats').innerHTML = html;
