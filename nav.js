@@ -36,3 +36,22 @@
     }
   });
 })();
+
+/* Ctrl-click (or Cmd-click) the footer logo to reach the license admin.
+ *
+ * Hidden, not secret. This file is public, so anyone reading it learns the path, and that
+ * is fine: the admin page is gated by Supabase Auth plus row level security, and signed
+ * out the API returns nothing. The point is only to keep an internal tool out of the way
+ * of visitors, without a link in the nav for them to wonder about.
+ *
+ * Delegated from document, so it works on all 12 pages regardless of footer markup, and
+ * on the plain <img> logo which is not a link.
+ */
+(function () {
+  document.addEventListener('click', function (e) {
+    if (!e.ctrlKey && !e.metaKey) return;
+    if (!e.target.closest('.footer-logo')) return;
+    e.preventDefault();
+    window.location.href = 'license-admin.html';
+  });
+})();
