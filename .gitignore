@@ -16,6 +16,12 @@ img/rackviewergif*.gif
 # cost to remove from history.
 brand/*.mp4
 
+# Demo recordings. Over 1 GB between them, and four of the five are past GitHub's hard
+# 100 MB per-file limit, so they cannot be committed at all. They are hosted off-site and
+# embedded. rackviewer-video.mp4 is the exception: 1.3 MB, and the site serves it.
+img/*.mp4
+!img/rackviewer-video.mp4
+
 # The Rack Detector shots (img/rackdetectorscreenshot*.png) are committed as PNG on
 # purpose - do not "fix" this for consistency. Those are flat-colour UI captures, not
 # photographs: JPEG re-encoding came out 2-42% LARGER on every one of them, and softened
