@@ -34,6 +34,7 @@ Needs: pillow, av.
 import argparse
 import math
 import os
+import random
 from fractions import Fraction
 
 import av
@@ -154,37 +155,65 @@ def glow_layer(w, h):
     return layer
 
 
-def ridge_points(w, h, seed_phase, base_frac, amp_frac):
-    """A ridgeline: a few sines at different frequencies, which reads as terrain because
-    real terrain is also broadband. Sampled every 6px and drawn as a polyline."""
-    pts = []
+def _displace(vals, rough, rnd, depth):
+    """Midpoint displacement: repeatedly split each segment and jog the new midpoint by a
+    shrinking random amount."""
+    for _ in range(depth):
+        out = []
+        for a, b in zip(vals, vals[1:]):
+            out.append(a)
+            out.append((a + b) / 2 + rnd.uniform(-rough, rough))
+        out.append(vals[-1])
+        vals, rough = out, rough * 0.54
+    return vals
+
+
+def peak_points(w, h, base_frac, amp_frac, seed=7):
+    """A jagged skyline. Sums of sines give rolling hills because they are smooth at every
+    scale; real ridgelines are self-similar and angular, which is what midpoint displacement
+    produces. Seeded, so the same intro renders identically every time."""
+    rnd = random.Random(seed)
+    # Control heights place the major summits; displacement supplies the crags between.
+    vals = _displace([0.10, 0.62, 0.30, 1.00, 0.38, 0.78, 0.22, 0.55, 0.12],
+                     0.22, rnd, 5)
     amp = h * amp_frac
-    for x in range(0, w + 6, 6):
-        u = x / w
-        y = (h * base_frac
-             - amp * (0.55 * math.sin(u * 5.1 + seed_phase)
-                      + 0.28 * math.sin(u * 11.3 + seed_phase * 1.7)
-                      + 0.17 * math.sin(u * 23.7 + seed_phase * 2.3)))
-        pts.append((x, y))
-    return pts
+    n = len(vals) - 1
+    return [(round(i * w / n), h * base_frac - amp * v) for i, v in enumerate(vals)]
 
 
 def bg_ridge(w, h, g):
-    """Drifting contours. Lines rise slowly and fade at the top, like a map redrawing."""
+    """Contour rings around two summits, plus heavier index contours every fourth ring.
+
+    Parallel wavy lines are not what makes a map read as topographic; nested closed rings
+    around high ground are. Rings creep outward across the clip, so the map feels alive
+    without anything obviously moving.
+    """
     layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    n = 11
-    for i in range(n):
-        k = (i / n + g * 0.12) % 1.0                  # drift upward over the clip
-        y_base = 1.12 - k * 1.25
-        if y_base < -0.05 or y_base > 1.15:
-            continue
-        fade = min(1.0, (1.0 - abs(y_base - 0.55) / 0.95))
-        alpha = int(120 * max(0.0, fade) * ramp(g, 0.0, 0.22))
-        if alpha <= 1:
-            continue
-        pts = ridge_points(w, h, 0.7 * i, y_base, 0.055 + 0.02 * math.sin(i))
-        d.line(pts, fill=ORANGE + (alpha,), width=max(1, h // 420), joint="curve")
+    fade_in = ramp(g, 0.0, 0.22)
+    if fade_in <= 0:
+        return layer
+
+    summits = ((0.28, 0.40, 1.00, 0.0), (0.74, 0.63, 0.78, 1.9))
+    for cx, cy, scale, phase in summits:
+        for k in range(1, 16):
+            rr = (0.035 + k * 0.036 + g * 0.012) * scale      # in units of frame height
+            index = (k % 4 == 0)
+            far = max(0.0, 1.0 - k / 17.0)
+            alpha = int((150 if index else 96) * far * fade_in)
+            if alpha <= 2:
+                continue
+            pts = []
+            for a in range(0, 366, 6):
+                th = math.radians(a)
+                # Irregular radius, so rings read as landform rather than concentric circles.
+                r = rr * (1
+                          + 0.20 * math.sin(3 * th + phase)
+                          + 0.11 * math.sin(7 * th - k * 0.35 + phase)
+                          + 0.06 * math.sin(13 * th + k * 0.2))
+                pts.append((cx * w + r * h * 1.45 * math.cos(th),
+                            cy * h + r * h * math.sin(th)))
+            d.line(pts, fill=ORANGE + (alpha,), width=max(1, h // (420 if index else 620)))
     return layer
 
 
@@ -196,11 +225,11 @@ def bg_profile(w, h, g):
     reveal = ramp(g, 0.02, 0.62, ease_in_out)
     if reveal <= 0:
         return layer
-    pts = ridge_points(w, h, 1.3, 0.80, 0.16)
+    pts = peak_points(w, h, 0.86, 0.30)
     cut = max(2, int(len(pts) * reveal))
     seen = pts[:cut]
     d.polygon(seen + [(seen[-1][0], h), (0, h)], fill=(26, 12, 4, 210))
-    d.line(seen, fill=ORANGE_BRIGHT + (150,), width=max(2, h // 380), joint="curve")
+    d.line(seen, fill=ORANGE_BRIGHT + (165,), width=max(2, h // 380))
     if reveal < 1.0:
         hx, hy = seen[-1]
         d.line([(hx, hy - h * 0.05), (hx, h)], fill=ORANGE_BRIGHT + (60,), width=max(1, h // 800))
@@ -218,8 +247,13 @@ def card_layer(w, h, logo, line, font, p, colour=MUTED, scale=1.0, lift=0.0):
     line. Staggering is what makes it read as composed rather than mechanical.
     """
     layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    if scale != 1.0 and line:
-        font = ImageFont.truetype(MONO, max(11, int(font.size * scale)))
+    tracked = " ".join(line) if line else ""       # letter-spacing, which PIL will not do
+    if line:
+        if scale != 1.0:
+            font = ImageFont.truetype(MONO, max(13, int(font.size * scale)))
+        # Titles are free text, so shrink rather than let a long one run off the frame.
+        while font.size > 12 and font.getlength(tracked) > w * 0.82:
+            font = ImageFont.truetype(MONO, font.size - 1)
 
     rule_off = int(h * 0.055)
     rule_h = max(2, int(h * 0.0028))
@@ -249,8 +283,7 @@ def card_layer(w, h, logo, line, font, p, colour=MUTED, scale=1.0, lift=0.0):
     la = ramp(p, 0.32, 0.58) if line else 0
     if la > 0:
         d = ImageDraw.Draw(layer)
-        tracked = " ".join(line)          # letter-spacing, which PIL will not do for us
-        tw = d.textlength(tracked, font=font)
+        tw = font.getlength(tracked)
         d.text(((w - tw) / 2, logo_bottom + line_off), tracked, font=font,
                fill=colour + (int(255 * la),))
     return layer
@@ -265,7 +298,7 @@ def build(w, h, fps, cards, card_seconds, crossfade, style):
 
     grid = grid_layer(w, h)
     glow = glow_layer(w, h)
-    font = ImageFont.truetype(MONO, max(11, int(w * 0.0105)))
+    font = ImageFont.truetype(MONO, max(13, int(w * 0.0145)))
     blank = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     mark = extract_mark() if style == "mask" else None
     # profile puts terrain along the bottom, so the lockup lifts clear of it
@@ -386,7 +419,7 @@ def main():
     cards = [(load_logo(BRAND_LOGOS[a.logo], h, 0.17, False), a.strap, MUTED, 1.0)]
     if a.product:
         cards.append((load_logo(PRODUCT_LOGOS[a.product], h, 0.26, True),
-                      a.title.upper(), TEXT, 1.6))
+                      a.title.upper(), TEXT, 1.8))
 
     frames = build(a.width, h, a.fps, cards, a.card_seconds, a.crossfade, a.style)
     encode(frames, a.out, a.fps)
