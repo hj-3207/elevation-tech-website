@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Unlinked from the site and kept out of search results. The security here is Supabase
+     Auth plus row level security, NOT this page being hard to find: the repository is
+     public, so treat this file as readable by anyone. It holds only the project URL and
+     the publishable key, both of which already ship inside the Rack Viewer and Rack
+     Detector executables. Signed out, the API returns an empty array. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Licence Admin | Elevation Technology</title>
+<link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+<link rel="stylesheet" href="style.css">
+<style>
+  .la-wrap { max-width: 1400px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .la-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.75rem; }
+  .la-head h1 { font-size: 1.5rem; color: #fff; }
+  .la-msg { display: none; margin-bottom: 1.25rem; padding: 0.85rem 1.1rem; border-radius: 8px;
+    font-family: var(--mono); font-size: 0.8rem; border: 1px solid var(--border); background: var(--card); color: #ddd; }
+  .la-msg.show { display: block; }
+  .la-msg.bad { border-color: #7a2b2b; color: #ffb4b4; }
+  .la-msg.good { border-color: #2b5c2b; color: #b6ecb6; }
+
+  /* Sign in */
+  .la-login { max-width: 380px; margin: 12vh auto; background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px; padding: 2rem; }
+  .la-login h1 { font-size: 1.15rem; color: #fff; margin-bottom: 1.25rem; }
+  .la-field { display: block; margin-bottom: 1rem; }
+  .la-field span { display: block; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  .la-input { width: 100%; padding: 0.65rem 0.8rem; border-radius: 7px; background: #0b0b0b;
+    border: 1px solid var(--border); color: #eee; font-size: 0.9rem; font-family: inherit; }
+  .la-input:focus { outline: none; border-color: var(--orange); }
+
+  /* Summary tiles */
+  .la-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px; background: var(--border); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; margin-bottom: 1.75rem; }
+  .la-stat { background: var(--card); padding: 1.1rem 1.25rem; }
+  .la-stat b { display: block; font-size: 1.5rem; color: #fff; font-weight: 800; }
+  .la-stat span { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); }
+
+  /* Controls */
+  .la-controls { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.5rem; }
+  .la-controls .la-field { margin-bottom: 0; }
+  .la-select { padding: 0.6rem 0.7rem; border-radius: 7px; background: #0b0b0b;
+    border: 1px solid var(--border); color: #eee; font-family: var(--mono); font-size: 0.78rem; }
+  .la-assign { margin-left: auto; display: flex; gap: 0.6rem; align-items: flex-end;
+    background: var(--card); border: 1px solid var(--border-orange); border-radius: 10px; padding: 0.9rem 1rem; }
+
+  /* Table */
+  .la-tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  table.la-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .la-table th { text-align: left; padding: 0.75rem 0.9rem; background: #101010; color: var(--muted);
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .la-table td { padding: 0.7rem 0.9rem; border-bottom: 1px solid #171717; color: #ccc; vertical-align: middle; }
+  .la-table tr:last-child td { border-bottom: none; }
+  .la-table tr:hover td { background: #121212; }
+  .la-code { font-family: var(--mono); color: #fff; white-space: nowrap; }
+  .la-pill { display: inline-block; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; }
+  .la-pill.avail { color: #8a8a8a; }
+  .la-pill.sent  { color: #e0a94a; border-color: #5c4415; }
+  .la-pill.live  { color: #8ddc8d; border-color: #2b5c2b; }
+  .la-mini { background: none; border: 1px solid var(--border); color: #999; border-radius: 6px;
+    padding: 0.25rem 0.5rem; font-family: var(--mono); font-size: 0.66rem; cursor: pointer; }
+  .la-mini:hover { color: #fff; border-color: var(--orange); }
+  .la-note { width: 100%; min-width: 150px; background: transparent; border: 1px solid transparent;
+    color: #bbb; border-radius: 5px; padding: 0.3rem 0.4rem; font-family: inherit; font-size: 0.8rem; }
+  .la-note:hover { border-color: #262626; }
+  .la-note:focus { outline: none; border-color: var(--orange); background: #0b0b0b; color: #eee; }
+  .la-muted { color: #666; }
+  .la-count { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-bottom: 0.75rem; }
+</style>
+</head>
+<body>
+
+<!-- SIGN IN -->
+<div class="la-login" id="login">
+  <h1>Licence Admin</h1>
+  <div class="la-msg" id="loginMsg"></div>
+  <form id="loginForm">
+    <label class="la-field"><span>Email</span>
+      <input class="la-input" type="email" id="email" autocomplete="username" required></label>
+    <label class="la-field"><span>Password</span>
+      <input class="la-input" type="password" id="password" autocomplete="current-password" required></label>
+    <button class="btn btn-primary" type="submit" style="width:100%;">Sign in</button>
+  </form>
+</div>
+
+<!-- ADMIN -->
+<div class="la-wrap" id="app" hidden>
+  <div class="la-head">
+    <h1>Licence Admin</h1>
+    <div>
+      <button class="la-mini" id="refresh">Refresh</button>
+      <button class="la-mini" id="signout">Sign out</button>
+    </div>
+  </div>
+
+  <div class="la-msg" id="msg"></div>
+  <div class="la-stats" id="stats"></div>
+
+  <div class="la-controls">
+    <label class="la-field" style="min-width:260px;"><span>Search</span>
+      <input class="la-input" id="q" type="search" placeholder="code, buyer, email, note"></label>
+    <label class="la-field"><span>Product</span>
+      <select class="la-select" id="fProduct"><option value="">All</option></select></label>
+    <label class="la-field"><span>State</span>
+      <select class="la-select" id="fState">
+        <option value="">All</option>
+        <option value="avail">Available</option>
+        <option value="sent">Sent, not activated</option>
+        <option value="live">Activated</option>
+      </select></label>
+
+    <div class="la-assign">
+      <label class="la-field"><span>Assign next code to</span>
+        <input class="la-input" id="buyer" type="email" placeholder="buyer@example.com" style="min-width:230px;"></label>
+      <label class="la-field"><span>Product</span>
+        <select class="la-select" id="aProduct"></select></label>
+      <button class="btn btn-primary" id="assign" style="padding:0.6rem 1rem;">Assign</button>
+    </div>
+  </div>
+
+  <div class="la-count" id="count"></div>
+  <div class="la-tablewrap">
+    <table class="la-table">
+      <thead><tr>
+        <th>Code</th><th>Product</th><th>State</th><th>Sent to</th><th>Sent</th>
+        <th>Activated by</th><th>Activated</th><th>Notes</th><th></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+/* Licence admin.
+ *
+ * Plain fetch against Supabase, no library. The publishable key below is safe in public:
+ * it is the same key shipped inside the desktop apps, and row level security is what
+ * actually gates the data. Signed out, the table returns an empty array.
+ *
+ * The page can only SELECT and UPDATE. Codes are minted by licensing/gen_codes.py and
+ * loaded by SQL, so nothing here can create or destroy inventory.
+ */
+(function () {
+  var URL_BASE = 'https://baopxmwebqfdubvgjsri.supabase.co';
+  var ANON = 'sb_publishable_54t4NxwLHZqGuGNrDM9TrA_b7F3Dh3B';
+  var STORE = 'la.session';
+
+  // version is a permanent product marker, not a release number: 1001 means Rack Viewer.
+  var PRODUCTS = { 7: 'Rack Detector', 1001: 'Rack Viewer' };
+  function productName(v) { return PRODUCTS[v] || ('version ' + v); }
+
+  var rows = [];
+  var el = function (id) { return document.getElementById(id); };
+
+  /* ---- session ---------------------------------------------------------- */
+  function session() { try { return JSON.parse(localStorage.getItem(STORE)); } catch (e) { return null; } }
+  function saveSession(s) {
+    s.expires_at = Date.now() + ((s.expires_in || 3600) - 60) * 1000;
+    localStorage.setItem(STORE, JSON.stringify(s));
+  }
+  function clearSession() { localStorage.removeItem(STORE); }
+
+  function authFetch(path, opts) {
+    opts = opts || {};
+    var s = session();
+    var run = function (tok) {
+      var h = opts.headers || {};
+      h.apikey = ANON;
+      h.Authorization = 'Bearer ' + tok;
+      h['content-type'] = 'application/json';
+      return fetch(URL_BASE + path, { method: opts.method || 'GET', headers: h, body: opts.body });
+    };
+    if (s && s.expires_at && Date.now() > s.expires_at && s.refresh_token) {
+      return refresh(s.refresh_token).then(function (ok) {
+        if (!ok) throw new Error('session expired');
+        return run(session().access_token);
+      });
+    }
+    return run(s ? s.access_token : '');
+  }
+
+  function refresh(token) {
+    return fetch(URL_BASE + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { apikey: ANON, 'content-type': 'application/json' },
+      body: JSON.stringify({ refresh_token: token })
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.access_token) { saveSession(j); return true; } return false; })
+      .catch(function () { return false; });
+  }
+
+  function say(id, text, kind) {
+    var m = el(id);
+    m.textContent = text;
+    m.className = 'la-msg show' + (kind ? ' ' + kind : '');
+    if (!text) m.className = 'la-msg';
+  }
+
+  /* ---- sign in --------------------------------------------------------- */
+  el('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    say('loginMsg', 'Signing in...', '');
+    fetch(URL_BASE + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { apikey: ANON, 'content-type': 'application/json' },
+      body: JSON.stringify({ email: el('email').value.trim(), password: el('password').value })
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok || !res.j.access_token) {
+          say('loginMsg', res.j.error_description || res.j.msg || 'Sign in failed.', 'bad');
+          return;
+        }
+        saveSession(res.j);
+        show();
+      }).catch(function (err) { say('loginMsg', 'Network error: ' + err.message, 'bad'); });
+  });
+
+  el('signout').addEventListener('click', function () {
+    clearSession();
+    el('app').hidden = true;
+    el('login').style.display = '';
+    say('loginMsg', 'Signed out.', '');
+  });
+
+  /* ---- load ------------------------------------------------------------ */
+  function load() {
+    say('msg', 'Loading...', '');
+    rows = [];
+    var page = function (offset) {
+      return authFetch('/rest/v1/license_keys?select=*&order=version.asc,code.asc&limit=1000&offset=' + offset)
+        .then(function (r) {
+          if (r.status === 401 || r.status === 403) throw new Error('Not authorised. Check the RLS policy matches this account.');
+          if (!r.ok) return r.text().then(function (t) { throw new Error('HTTP ' + r.status + ' ' + t.slice(0, 160)); });
+          return r.json();
+        })
+        .then(function (batch) {
+          rows = rows.concat(batch);
+          if (batch.length === 1000) return page(offset + 1000);
+        });
+    };
+    return page(0).then(function () {
+      if (!rows.length) {
+        say('msg', 'Signed in, but no rows came back. That normally means the RLS policy email does not match this account.', 'bad');
+      } else { say('msg', '', ''); }
+      buildFilters();
+      render();
+    }).catch(function (err) { say('msg', err.message, 'bad'); });
+  }
+
+  function state(r) {
+    if (r.status === 'active') return 'live';
+    return r.issued_to ? 'sent' : 'avail';
+  }
+  var LABEL = { avail: 'Available', sent: 'Sent', live: 'Activated' };
+
+  function buildFilters() {
+    var vers = [];
+    rows.forEach(function (r) { if (vers.indexOf(r.version) < 0) vers.push(r.version); });
+    vers.sort(function (a, b) { return a - b; });
+    var opts = vers.map(function (v) { return '<option value="' + v + '">' + productName(v) + '</option>'; }).join('');
+    el('fProduct').innerHTML = '<option value="">All products</option>' + opts;
+    el('aProduct').innerHTML = opts;
+  }
+
+  function stats() {
+    var vers = [];
+    rows.forEach(function (r) { if (vers.indexOf(r.version) < 0) vers.push(r.version); });
+    vers.sort(function (a, b) { return a - b; });
+    var html = '';
+    vers.forEach(function (v) {
+      var set = rows.filter(function (r) { return r.version === v; });
+      var avail = set.filter(function (r) { return state(r) === 'avail'; }).length;
+      var sent  = set.filter(function (r) { return state(r) === 'sent'; }).length;
+      var live  = set.filter(function (r) { return state(r) === 'live'; }).length;
+      html += '<div class="la-stat"><b>' + live + ' / ' + sent + '</b><span>' + productName(v) + ' activated / awaiting</span></div>';
+      html += '<div class="la-stat"><b>' + avail + '</b><span>' + productName(v) + ' unsold</span></div>';
+    });
+    el('stats').innerHTML = html;
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function day(t) { return t ? String(t).slice(0, 10) : ''; }
+
+  function render() {
+    stats();
+    var q = el('q').value.trim().toLowerCase();
+    var fp = el('fProduct').value, fs = el('fState').value;
+    var shown = rows.filter(function (r) {
+      if (fp && String(r.version) !== fp) return false;
+      if (fs && state(r) !== fs) return false;
+      if (!q) return true;
+      return [r.code, r.issued_to, r.email, r.notes].join(' ').toLowerCase().indexOf(q) >= 0;
+    });
+
+    el('count').textContent = shown.length + ' of ' + rows.length + ' codes';
+    el('rows').innerHTML = shown.slice(0, 400).map(function (r) {
+      var st = state(r);
+      return '<tr>' +
+        '<td class="la-code">' + esc(r.code) + '</td>' +
+        '<td>' + esc(productName(r.version)) + '</td>' +
+        '<td><span class="la-pill ' + st + '">' + LABEL[st] + '</span></td>' +
+        '<td>' + (r.issued_to ? esc(r.issued_to) : '<span class="la-muted">-</span>') + '</td>' +
+        '<td class="la-muted">' + day(r.issued_at) + '</td>' +
+        '<td>' + (r.email ? esc(r.email) : '<span class="la-muted">-</span>') + '</td>' +
+        '<td class="la-muted">' + day(r.activated_at) + '</td>' +
+        '<td><input class="la-note" data-code="' + esc(r.code) + '" value="' + esc(r.notes) + '" placeholder="note"></td>' +
+        '<td><button class="la-mini" data-copy="' + esc(r.code) + '">copy</button></td>' +
+        '</tr>';
+    }).join('');
+
+    if (shown.length > 400) {
+      el('count').textContent += ' (showing first 400, narrow the search to see more)';
+    }
+  }
+
+  /* ---- row actions ----------------------------------------------------- */
+  el('rows').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-copy]');
+    if (!b) return;
+    var code = b.getAttribute('data-copy');
+    (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject())
+      .then(function () { b.textContent = 'copied'; setTimeout(function () { b.textContent = 'copy'; }, 1200); })
+      .catch(function () { say('msg', 'Could not copy. The code is ' + code, 'bad'); });
+  });
+
+  // Notes save on blur, and only when actually changed.
+  el('rows').addEventListener('focusout', function (e) {
+    var i = e.target.closest('.la-note');
+    if (!i) return;
+    var code = i.getAttribute('data-code');
+    var row = rows.filter(function (r) { return r.code === code; })[0];
+    var val = i.value.trim();
+    if (!row || (row.notes || '') === val) return;
+    authFetch('/rest/v1/license_keys?code=eq.' + encodeURIComponent(code), {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ notes: val || null })
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      row.notes = val || null;
+      say('msg', 'Note saved for ' + code + '.', 'good');
+    }).catch(function (err) { say('msg', 'Could not save note: ' + err.message, 'bad'); });
+  });
+
+  /* ---- assign the next unused code ------------------------------------- */
+  el('assign').addEventListener('click', function () {
+    var buyer = el('buyer').value.trim();
+    var ver = el('aProduct').value;
+    if (!buyer) { say('msg', 'Enter the buyer email first.', 'bad'); return; }
+    if (!ver) { say('msg', 'Pick a product.', 'bad'); return; }
+
+    var candidates = rows.filter(function (r) {
+      return String(r.version) === String(ver) && r.status === 'unused' && !r.issued_to;
+    });
+    if (!candidates.length) { say('msg', 'No unsold codes left for ' + productName(Number(ver)) + '. Generate more with gen_codes.py.', 'bad'); return; }
+
+    var code = candidates[0].code;
+    // issued_to=is.null guards the write, so two assignments racing cannot both claim the
+    // same code: the loser updates zero rows and we simply try the next one.
+    authFetch('/rest/v1/license_keys?code=eq.' + encodeURIComponent(code) + '&issued_to=is.null', {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ issued_to: buyer, issued_at: new Date().toISOString() })
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (out) {
+      if (!out.length) { say('msg', 'That code was taken as you clicked. Press Assign again.', 'bad'); return load(); }
+      var saved = out[0];
+      var i = rows.findIndex(function (r) { return r.code === saved.code; });
+      if (i >= 0) rows[i] = saved;
+      el('buyer').value = '';
+      if (navigator.clipboard) navigator.clipboard.writeText(saved.code).catch(function () {});
+      say('msg', saved.code + ' assigned to ' + buyer + ' and copied to your clipboard.', 'good');
+      el('q').value = saved.code;
+      render();
+    }).catch(function (err) { say('msg', 'Could not assign: ' + err.message, 'bad'); });
+  });
+
+  ['q', 'fProduct', 'fState'].forEach(function (id) {
+    el(id).addEventListener('input', render);
+    el(id).addEventListener('change', render);
+  });
+  el('refresh').addEventListener('click', load);
+
+  /* ---- boot ------------------------------------------------------------ */
+  function show() {
+    el('login').style.display = 'none';
+    el('app').hidden = false;
+    load();
+  }
+  var s = session();
+  if (s && s.access_token) {
+    if (s.expires_at && Date.now() > s.expires_at) {
+      refresh(s.refresh_token).then(function (ok) { if (ok) show(); else clearSession(); });
+    } else { show(); }
+  }
+})();
+</script>
+
+</body>
+</html>
