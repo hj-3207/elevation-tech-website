@@ -335,16 +335,16 @@ def card_layer(w, h, logo, line, font, p, colour=MUTED, scale=1.0, lift=0.0, lin
     logo_top = (h - (logo.height + below)) // 2 - int(h * lift)
     logo_bottom = logo_top + logo.height
 
-    a = ramp(p, 0.00, 0.42)
+    a = ramp(p, 0.00, 0.34)
     if a > 0:
-        sc = 0.94 + 0.06 * ease_out(p / 0.36 if p < 0.36 else 1.0)
+        sc = 0.94 + 0.06 * ease_out(p / 0.30 if p < 0.30 else 1.0)
         sw, sh = max(1, int(logo.width * sc)), max(1, int(logo.height * sc))
         lg = logo.resize((sw, sh), Image.LANCZOS)
         if a < 1:
             lg.putalpha(lg.getchannel("A").point(lambda v, a=a: int(v * a)))
         layer.alpha_composite(lg, ((w - sw) // 2, (logo_top + logo.height // 2) - sh // 2))
 
-    dv = ramp(p, 0.22, 0.48)
+    dv = ramp(p, 0.18, 0.38)
     if dv > 0:
         half = int(w * 0.045 * dv)
         if half > 0:
@@ -352,14 +352,14 @@ def card_layer(w, h, logo, line, font, p, colour=MUTED, scale=1.0, lift=0.0, lin
             ImageDraw.Draw(layer).rectangle(
                 [w // 2 - half, y, w // 2 + half, y + rule_h], fill=ORANGE_BRIGHT + (255,))
 
-    la = ramp(p, 0.32, 0.58) if line else 0
+    la = ramp(p, 0.26, 0.46) if line else 0
     if la > 0:
         d = ImageDraw.Draw(layer)
         tw = font.getlength(tracked)
         d.text(((w - tw) / 2, logo_bottom + line_off), tracked, font=font,
                fill=colour + (int(255 * la),))
 
-    l2 = ramp(p, 0.46, 0.74) if line2 else 0
+    l2 = ramp(p, 0.38, 0.56) if line2 else 0
     if l2 > 0:
         d = ImageDraw.Draw(layer)
         tw2 = font2.getlength(tracked2)
