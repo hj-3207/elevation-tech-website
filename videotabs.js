@@ -20,7 +20,15 @@
 
     function poster(tab) {
       var id = tab.getAttribute('data-yt');
-      var label = id ? 'Watch: ' + tab.textContent.trim() : 'Demo video coming soon';
+      // data-name rather than textContent: the label is content, so it should be stated
+      // rather than scraped out of the markup.
+      var name = tab.getAttribute('data-name') || tab.textContent.trim() || 'this demo';
+      var thumb = tab.getAttribute('data-thumb');
+      var label = id ? 'Watch: ' + name : 'Demo video coming soon';
+      // The thumbnail is served from this site, not from YouTube, so an unplayed page
+      // still contacts nobody. It is dimmed so the play control stays legible over it.
+      stage.style.backgroundImage = thumb ? 'url("' + thumb + '")' : '';
+      stage.classList.toggle('has-thumb', !!thumb);
       stage.innerHTML = '<div class="video-placeholder">' +
         '<div class="play">&#9654;</div><span>' + label + '</span></div>';
       stage.setAttribute('data-ready', id ? 'yes' : 'no');
@@ -47,6 +55,8 @@
       f.title = tab.getAttribute('data-title') || tab.textContent.trim();
       f.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
       f.setAttribute('allowfullscreen', '');
+      stage.style.backgroundImage = '';
+      stage.classList.remove('has-thumb');
       stage.innerHTML = '';
       stage.appendChild(f);
     }

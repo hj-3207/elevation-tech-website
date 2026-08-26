@@ -352,7 +352,11 @@ html.lb-open { overflow: hidden; }
   cursor: pointer; transition: all 0.2s; }
 .vtab:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
 .vtab.is-on { color: #fff; border-color: var(--border-orange); background: rgba(204,85,0,0.10); }
-.vtabs .video-wrap { margin-top: 1.35rem; }
+.vtabs .video-wrap { margin-top: 1.35rem; background-size: cover; background-position: center; }
+/* Dim the frame so the play control and label stay legible over a bright
+   screenshot: several of these thumbnails are sunlit meadows. */
+.vtabs .video-wrap.has-thumb .video-placeholder { background: rgba(6,6,6,0.58); color: #e9e9e9; }
+.vtabs .video-wrap.has-thumb .play { background: rgba(6,6,6,0.45); border-color: var(--orange); color: #fff; }
 .vtabs .video-wrap[data-ready="yes"] { cursor: pointer; }
 .vtabs .video-wrap[data-ready="yes"]:hover .play { border-color: var(--orange); color: var(--orange-bright); }
 .vtab-cap { color: var(--muted); font-family: var(--mono); font-size: 0.78rem;
