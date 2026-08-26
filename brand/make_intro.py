@@ -303,7 +303,7 @@ def bg_profile(w, h, g):
 
 # ---------------------------------------------------------------- cards
 
-def card_layer(w, h, logo, line, font, p, colour=MUTED, scale=1.0, lift=0.0):
+def card_layer(w, h, logo, line, font, p, colour=MUTED, scale=1.0, lift=0.0, line2=''):
     """One card's content on transparency. p is 0..1 through that card.
 
     Elements arrive staggered: logo, then the rule drawn outward from the centre, then the
@@ -322,7 +322,16 @@ def card_layer(w, h, logo, line, font, p, colour=MUTED, scale=1.0, lift=0.0):
     rule_h = max(2, int(h * 0.0028))
     line_off = int(h * 0.105)
     line_h = font.size if line else 0
+    # A second line, for an end card that carries the tagline and the address.
+    font2 = ImageFont.truetype(MONO, max(12, int(font.size * 0.95))) if line2 else None
+    tracked2 = " ".join(line2) if line2 else ""
+    if line2:
+        while font2.size > 12 and font2.getlength(tracked2) > w * 0.82:
+            font2 = ImageFont.truetype(MONO, font2.size - 1)
+    gap2 = int(h * 0.042)
     below = (line_off + line_h) if line else (rule_off + rule_h)
+    if line2:
+        below += gap2 + font2.size
     logo_top = (h - (logo.height + below)) // 2 - int(h * lift)
     logo_bottom = logo_top + logo.height
 
@@ -349,6 +358,14 @@ def card_layer(w, h, logo, line, font, p, colour=MUTED, scale=1.0, lift=0.0):
         tw = font.getlength(tracked)
         d.text(((w - tw) / 2, logo_bottom + line_off), tracked, font=font,
                fill=colour + (int(255 * la),))
+
+    l2 = ramp(p, 0.46, 0.74) if line2 else 0
+    if l2 > 0:
+        d = ImageDraw.Draw(layer)
+        tw2 = font2.getlength(tracked2)
+        # Brighter than the tagline: on an end card the address is the thing to act on.
+        d.text(((w - tw2) / 2, logo_bottom + line_off + line_h + gap2), tracked2, font=font2,
+               fill=TEXT + (int(255 * l2),))
     return layer
 
 
@@ -396,13 +413,13 @@ def build(w, h, fps, cards, card_seconds, crossfade, style, terrain=23):
             frame.alpha_composite(bg_profile(w, h, g))
 
         rendered = []
-        for idx, (logo, line, colour, scale) in enumerate(cards):
+        for idx, (logo, line, colour, scale, line2) in enumerate(cards):
             start = idx * step
             p = (T - start) / card_seconds
             if p < 0 or p > 1:
                 rendered.append(None)
                 continue
-            rendered.append((idx, p, card_layer(w, h, logo, line, font, p, colour, scale, lift)))
+            rendered.append((idx, p, card_layer(w, h, logo, line, font, p, colour, scale, lift, line2)))
 
         active = [r for r in rendered if r]
         if style == "mask" and len(active) == 2:
@@ -483,6 +500,7 @@ def main():
                          "names the product, so this only needs the topic.")
     ap.add_argument("--terrain", type=int, default=23,
                     help="seed for the ridge height field; any integer is a different range")
+    ap.add_argument("--url", default="", help="second line on the brand card, e.g. an end-card address")
     ap.add_argument("--card-seconds", type=float, default=3.6)
     ap.add_argument("--crossfade", type=float, default=0.6)
     ap.add_argument("--out", default=os.path.join(HERE, "elevation-intro.mp4"))
@@ -493,12 +511,12 @@ def main():
     # The brand strap is a quiet tagline. The product title is what the viewer came for, so
     # it is brighter and larger. The product lockup takes a bigger share of frame height
     # because its wordmark is small next to the antler above it.
-    cards = [(load_logo(BRAND_LOGOS[a.logo], h, 0.17, False), a.strap, MUTED, 1.0)]
+    cards = [(load_logo(BRAND_LOGOS[a.logo], h, 0.17, False), a.strap, MUTED, 1.0, a.url.upper())]
     if a.product == "both":
-        cards.append((paired_products(a.width), a.title.upper(), TEXT, 1.8))
+        cards.append((paired_products(a.width), a.title.upper(), TEXT, 1.8, ""))
     elif a.product:
         cards.append((load_logo(PRODUCT_LOGOS[a.product], h, 0.26, True),
-                      a.title.upper(), TEXT, 1.8))
+                      a.title.upper(), TEXT, 1.8, ""))
 
     frames = build(a.width, h, a.fps, cards, a.card_seconds, a.crossfade, a.style,
                    a.terrain)
