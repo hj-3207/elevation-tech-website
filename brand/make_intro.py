@@ -103,6 +103,26 @@ def load_logo(path, frame_h, share, recolour):
     return im.resize((max(1, round(im.width * target_h / im.height)), target_h), Image.LANCZOS)
 
 
+def paired_products(frame_w):
+    """Both product logos side by side, for a card that introduces the pair rather than
+    one app. Sized by frame WIDTH, not height: together they are nearly four times as wide
+    as they are tall, so a height-based share would shrink each one to nothing."""
+    ims = []
+    for key in ("viewer", "detector"):          # order the user asked for
+        im = whiten(Image.open(os.path.join(SITE, PRODUCT_LOGOS[key])).convert("RGBA"))
+        ims.append(im)
+    hh = min(i.height for i in ims)             # normalise heights before pairing
+    ims = [i.resize((max(1, round(i.width * hh / i.height)), hh), Image.LANCZOS) for i in ims]
+    gap = int(hh * 0.32)
+    out = Image.new("RGBA", (sum(i.width for i in ims) + gap, hh), (0, 0, 0, 0))
+    x = 0
+    for i in ims:
+        out.alpha_composite(i, (x, 0))
+        x += i.width + gap
+    tw = int(frame_w * 0.70)
+    return out.resize((tw, max(1, round(out.height * tw / out.width))), Image.LANCZOS)
+
+
 def extract_mark():
     """Just the mountain mark from the primary lockup, for the mask transition.
 
@@ -456,7 +476,8 @@ def main():
     ap.add_argument("--style", choices=STYLES, default="grid")
     ap.add_argument("--logo", choices=sorted(BRAND_LOGOS), default="secondary")
     ap.add_argument("--strap", default=DEFAULT_STRAP, help='"" to omit')
-    ap.add_argument("--product", choices=sorted(PRODUCT_LOGOS), default=None)
+    ap.add_argument("--product", choices=sorted(PRODUCT_LOGOS) + ["both"], default=None,
+                    help='"both" puts the two product logos side by side')
     ap.add_argument("--title", default="",
                     help="what the video demonstrates, e.g. SPEED. The product logo already "
                          "names the product, so this only needs the topic.")
@@ -473,7 +494,9 @@ def main():
     # it is brighter and larger. The product lockup takes a bigger share of frame height
     # because its wordmark is small next to the antler above it.
     cards = [(load_logo(BRAND_LOGOS[a.logo], h, 0.17, False), a.strap, MUTED, 1.0)]
-    if a.product:
+    if a.product == "both":
+        cards.append((paired_products(a.width), a.title.upper(), TEXT, 1.8))
+    elif a.product:
         cards.append((load_logo(PRODUCT_LOGOS[a.product], h, 0.26, True),
                       a.title.upper(), TEXT, 1.8))
 
