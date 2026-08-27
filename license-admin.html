@@ -76,6 +76,9 @@
   .la-subhead { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.09em;
     text-transform: uppercase; color: var(--muted); margin: 0 0 0.7rem; }
   .la-pill.promo { color: #d2a1e8; border-color: #4a2b5c; }
+  .la-stat-link { display: block; text-decoration: none; transition: background 0.2s; }
+  .la-stat-link:hover { background: #171717; }
+  .la-stat-link:hover b { color: var(--orange-bright); }
   .la-stat small { display: block; color: #666; font-family: var(--mono);
     font-size: 0.66rem; margin-top: 0.2rem; letter-spacing: 0.04em; }
   .la-count { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-bottom: 0.75rem; }
@@ -279,15 +282,18 @@
   function loadDownloads() {
     return Promise.all(DL_TABLES.map(function (t) {
       return Promise.all([total(t[0]), recent(t[0])]).then(function (out) {
-        return { name: t[1], all: out[0], d30: out[1].d30, d7: out[1].d7 };
+        return { table: t[0], name: t[1], all: out[0], d30: out[1].d30, d7: out[1].d7 };
       });
     })).then(function (out) {
       el('dstats').innerHTML = out.map(function (d) {
         var big = d.all == null ? '--' : d.all;
         var sub = d.d30 == null ? 'no read access'
                                 : ('30d ' + d.d30 + ' &middot; 7d ' + d.d7);
-        return '<div class="la-stat"><b>' + big + '</b><span>' + d.name +
-               ' clicks<small>' + sub + '</small></span></div>';
+        // Clickable: a total does not say whether it was steady or one burst, so each
+        // box opens that product's timestamps.
+        return '<a class="la-stat la-stat-link" href="download-log.html?t=' + d.table +
+               '"><b>' + big + '</b><span>' + d.name +
+               ' clicks<small>' + sub + '</small></span></a>';
       }).join('');
     });
   }
