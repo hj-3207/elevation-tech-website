@@ -73,6 +73,11 @@
   .la-note:hover { border-color: #262626; }
   .la-note:focus { outline: none; border-color: var(--orange); background: #0b0b0b; color: #eee; }
   .la-muted { color: #666; }
+  .la-subhead { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 0.7rem; }
+  .la-pill.promo { color: #d2a1e8; border-color: #4a2b5c; }
+  .la-stat small { display: block; color: #666; font-family: var(--mono);
+    font-size: 0.66rem; margin-top: 0.2rem; letter-spacing: 0.04em; }
   .la-count { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-bottom: 0.75rem; }
 </style>
 </head>
@@ -103,12 +108,16 @@
 
   <div class="la-msg" id="msg"></div>
   <div class="la-stats" id="stats"></div>
+  <div class="la-subhead">Download clicks</div>
+  <div class="la-stats" id="dstats"></div>
 
   <div class="la-controls">
     <label class="la-field" style="min-width:260px;"><span>Search</span>
       <input class="la-input" id="q" type="search" placeholder="code, buyer, email, note"></label>
     <label class="la-field"><span>Product</span>
       <select class="la-select" id="fProduct"><option value="">All</option></select></label>
+    <label class="la-field"><span>Tier</span>
+      <select class="la-select" id="fTier"><option value="">All</option></select></label>
     <label class="la-field"><span>State</span>
       <select class="la-select" id="fState">
         <option value="">All</option>
@@ -130,7 +139,7 @@
   <div class="la-tablewrap">
     <table class="la-table">
       <thead><tr>
-        <th>Code</th><th>Product</th><th>State</th><th>Sent to</th><th>Sent</th>
+        <th>Code</th><th>Product</th><th>Tier</th><th>State</th><th>Sent to</th><th>Sent</th>
         <th>Activated by</th><th>Activated</th><th>Notes</th><th></th>
       </tr></thead>
       <tbody id="rows"></tbody>
@@ -230,6 +239,59 @@
     say('loginMsg', 'Signed out.', '');
   });
 
+  /* ---- download counts -------------------------------------------------
+   * One table per product, because `downloads` has no app column. Totals come from
+   * PostgREST's exact count in the content-range header rather than by pulling rows;
+   * only the last 30 days are actually fetched, and 7d is derived from those.
+   *
+   * These count clicks on the download and store buttons, not installs.
+   */
+  var DL_TABLES = [
+    ['downloads', 'Rack Detector'],
+    ['downloads_rackviewer', 'Rack Viewer'],
+    ['downloads_racktracker', 'Rack Tracker'],
+    ['downloads_rackscorer', 'Rack Scorer']
+  ];
+
+  function total(table) {
+    return authFetch('/rest/v1/' + table + '?select=id&limit=1',
+                     { headers: { Prefer: 'count=exact' } })
+      .then(function (r) {
+        if (!r.ok) return null;
+        var cr = r.headers.get('content-range') || '';
+        var n = cr.split('/')[1];
+        return (!n || n === '*') ? null : parseInt(n, 10);
+      }).catch(function () { return null; });
+  }
+
+  function recent(table) {
+    var since = new Date(Date.now() - 30 * 864e5).toISOString();
+    return authFetch('/rest/v1/' + table + '?select=created_at&created_at=gte.' +
+                     encodeURIComponent(since) + '&limit=20000')
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (rowsIn) {
+        var cut7 = Date.now() - 7 * 864e5;
+        return { d30: rowsIn.length,
+                 d7: rowsIn.filter(function (x) { return +new Date(x.created_at) >= cut7; }).length };
+      }).catch(function () { return { d30: null, d7: null }; });
+  }
+
+  function loadDownloads() {
+    return Promise.all(DL_TABLES.map(function (t) {
+      return Promise.all([total(t[0]), recent(t[0])]).then(function (out) {
+        return { name: t[1], all: out[0], d30: out[1].d30, d7: out[1].d7 };
+      });
+    })).then(function (out) {
+      el('dstats').innerHTML = out.map(function (d) {
+        var big = d.all == null ? '--' : d.all;
+        var sub = d.d30 == null ? 'no read access'
+                                : ('30d ' + d.d30 + ' &middot; 7d ' + d.d7);
+        return '<div class="la-stat"><b>' + big + '</b><span>' + d.name +
+               ' clicks<small>' + sub + '</small></span></div>';
+      }).join('');
+    });
+  }
+
   /* ---- load ------------------------------------------------------------ */
   function load() {
     say('msg', 'Loading...', '');
@@ -252,6 +314,7 @@
       } else { say('msg', '', ''); }
       buildFilters();
       render();
+      loadDownloads();
     }).catch(function (err) { say('msg', err.message, 'bad'); });
   }
 
@@ -268,6 +331,15 @@
     var opts = vers.map(function (v) { return '<option value="' + v + '">' + productName(v) + '</option>'; }).join('');
     el('fProduct').innerHTML = '<option value="">All products</option>' + opts;
     el('aProduct').innerHTML = opts;
+
+    var tiers = [];
+    rows.forEach(function (r) {
+      var t = r.tier || 'pro';
+      if (tiers.indexOf(t) < 0) tiers.push(t);
+    });
+    tiers.sort();
+    el('fTier').innerHTML = '<option value="">All tiers</option>' +
+      tiers.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
   }
 
   function stats() {
@@ -277,13 +349,21 @@
     var html = '';
     vers.forEach(function (v) {
       var set = rows.filter(function (r) { return r.version === v; });
-      var avail = set.filter(function (r) { return state(r) === 'avail'; }).length;
+      // Promo codes are giveaways. Counting them as unsold inventory would inflate
+      // what you think is left to sell.
+      var promo = set.filter(function (r) { return (r.tier || 'pro') !== 'pro'; }).length;
+      var avail = set.filter(function (r) {
+        return state(r) === 'avail' && (r.tier || 'pro') === 'pro';
+      }).length;
       var sent  = set.filter(function (r) { return state(r) === 'sent'; }).length;
       var live  = set.filter(function (r) { return state(r) === 'live'; }).length;
       // One number per box. A combined "2 / 3" makes you work out which is which.
       html += '<div class="la-stat"><b>' + live + '</b><span>' + productName(v) + ' activated</span></div>';
       html += '<div class="la-stat"><b>' + sent + '</b><span>' + productName(v) + ' awaiting</span></div>';
       html += '<div class="la-stat"><b>' + avail + '</b><span>' + productName(v) + ' unsold</span></div>';
+      if (promo) {
+        html += '<div class="la-stat"><b>' + promo + '</b><span>' + productName(v) + ' promo</span></div>';
+      }
     });
     el('stats').innerHTML = html;
   }
@@ -298,10 +378,11 @@
   function render() {
     stats();
     var q = el('q').value.trim().toLowerCase();
-    var fp = el('fProduct').value, fs = el('fState').value;
+    var fp = el('fProduct').value, fs = el('fState').value, ft = el('fTier').value;
     var shown = rows.filter(function (r) {
       if (fp && String(r.version) !== fp) return false;
       if (fs && state(r) !== fs) return false;
+      if (ft && (r.tier || 'pro') !== ft) return false;
       if (!q) return true;
       return [r.code, r.issued_to, r.email, r.notes].join(' ').toLowerCase().indexOf(q) >= 0;
     });
@@ -312,6 +393,9 @@
       return '<tr data-row="' + esc(r.code) + '">' +
         '<td class="la-code">' + esc(r.code) + '</td>' +
         '<td>' + esc(productName(r.version)) + '</td>' +
+        '<td>' + (r.tier && r.tier !== 'pro'
+                   ? '<span class="la-pill promo">' + esc(r.tier) + '</span>'
+                   : '<span class="la-muted">pro</span>') + '</td>' +
         '<td class="c-state"><span class="la-pill ' + st + '">' + LABEL[st] + '</span></td>' +
         '<td class="c-sent">' + (r.issued_to ? esc(r.issued_to) : '<span class="la-muted">-</span>') + '</td>' +
         '<td class="c-when la-muted">' + day(r.issued_at) + '</td>' +
@@ -459,11 +543,11 @@
     claim(0).catch(function (err) { say('msg', 'Could not assign: ' + err.message, 'bad'); });
   });
 
-  ['q', 'fProduct', 'fState'].forEach(function (id) {
+  ['q', 'fProduct', 'fState', 'fTier'].forEach(function (id) {
     el(id).addEventListener('input', render);
     el(id).addEventListener('change', render);
   });
-  el('refresh').addEventListener('click', load);
+  el('refresh').addEventListener('click', function () { load(); loadDownloads(); });
 
   /* ---- boot ------------------------------------------------------------ */
   function show() {
