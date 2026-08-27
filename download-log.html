@@ -11,6 +11,7 @@
 <title>Download Log | Elevation Technology</title>
 <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
 <link rel="stylesheet" href="style.css">
+<script src="admin-auth.js"></script>
 <style>
   .la-wrap { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
   .la-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
@@ -94,17 +95,12 @@
 /* Download click log.
  *
  * Shares the session that license-admin.html put in localStorage, so signing in once
- * covers both pages. The auth helpers are duplicated rather than shared: that page is
- * live and working and cannot be signed-in tested from here, so it seemed a poor trade
- * to refactor it blind. Worth unifying into one admin-auth.js once both are confirmed.
+ * covers both pages. Auth itself lives in admin-auth.js, shared by both.
  *
  * Times display in the browser's own timezone. The stored values are timestamptz, so the
  * conversion is real rather than cosmetic.
  */
 (function () {
-  var URL_BASE = 'https://baopxmwebqfdubvgjsri.supabase.co';
-  var ANON = 'sb_publishable_54t4NxwLHZqGuGNrDM9TrA_b7F3Dh3B';
-  var STORE = 'la.session';
   var PAGE = 200;
 
   var TABLES = [
@@ -120,39 +116,10 @@
   var loaded = [];
   var grandTotal = null;
 
-  function session() { try { return JSON.parse(localStorage.getItem(STORE)); } catch (e) { return null; } }
-  function saveSession(s) {
-    s.expires_at = Date.now() + ((s.expires_in || 3600) - 60) * 1000;
-    localStorage.setItem(STORE, JSON.stringify(s));
-  }
-
-  function refresh(tok) {
-    return fetch(URL_BASE + '/auth/v1/token?grant_type=refresh_token', {
-      method: 'POST', headers: { apikey: ANON, 'content-type': 'application/json' },
-      body: JSON.stringify({ refresh_token: tok })
-    }).then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { if (j && j.access_token) { saveSession(j); return true; } return false; })
-      .catch(function () { return false; });
-  }
-
-  function authFetch(path, opts) {
-    opts = opts || {};
-    var s = session();
-    var run = function (tok) {
-      var h = opts.headers || {};
-      h.apikey = ANON;
-      h.Authorization = 'Bearer ' + tok;
-      h['content-type'] = 'application/json';
-      return fetch(URL_BASE + path, { method: 'GET', headers: h });
-    };
-    if (s && s.expires_at && Date.now() > s.expires_at && s.refresh_token) {
-      return refresh(s.refresh_token).then(function (ok) {
-        if (!ok) throw new Error('Session expired. Sign in on the licence admin page.');
-        return run(session().access_token);
-      });
-    }
-    return run(s ? s.access_token : '');
-  }
+  // Auth lives in admin-auth.js, shared with the other admin pages. Aliased locally so
+  // the rest of this file reads the same as before.
+  var session = LA.session, saveSession = LA.saveSession, clearSession = LA.clearSession,
+      refresh = LA.refresh, authFetch = LA.authFetch;
 
   function say(text, bad) {
     var m = el('msg');

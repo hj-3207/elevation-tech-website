@@ -12,6 +12,7 @@
 <title>License Admin | Elevation Technology</title>
 <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
 <link rel="stylesheet" href="style.css">
+<script src="admin-auth.js"></script>
 <style>
   .la-wrap { max-width: 1400px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
   .la-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.75rem; }
@@ -161,9 +162,6 @@
  * loaded by SQL, so nothing here can create or destroy inventory.
  */
 (function () {
-  var URL_BASE = 'https://baopxmwebqfdubvgjsri.supabase.co';
-  var ANON = 'sb_publishable_54t4NxwLHZqGuGNrDM9TrA_b7F3Dh3B';
-  var STORE = 'la.session';
 
   // version is a permanent product marker, not a release number: 1001 means Rack Viewer.
   var PRODUCTS = { 7: 'Rack Detector', 1001: 'Rack Viewer' };
@@ -172,42 +170,10 @@
   var rows = [];
   var el = function (id) { return document.getElementById(id); };
 
-  /* ---- session ---------------------------------------------------------- */
-  function session() { try { return JSON.parse(localStorage.getItem(STORE)); } catch (e) { return null; } }
-  function saveSession(s) {
-    s.expires_at = Date.now() + ((s.expires_in || 3600) - 60) * 1000;
-    localStorage.setItem(STORE, JSON.stringify(s));
-  }
-  function clearSession() { localStorage.removeItem(STORE); }
-
-  function authFetch(path, opts) {
-    opts = opts || {};
-    var s = session();
-    var run = function (tok) {
-      var h = opts.headers || {};
-      h.apikey = ANON;
-      h.Authorization = 'Bearer ' + tok;
-      h['content-type'] = 'application/json';
-      return fetch(URL_BASE + path, { method: opts.method || 'GET', headers: h, body: opts.body });
-    };
-    if (s && s.expires_at && Date.now() > s.expires_at && s.refresh_token) {
-      return refresh(s.refresh_token).then(function (ok) {
-        if (!ok) throw new Error('session expired');
-        return run(session().access_token);
-      });
-    }
-    return run(s ? s.access_token : '');
-  }
-
-  function refresh(token) {
-    return fetch(URL_BASE + '/auth/v1/token?grant_type=refresh_token', {
-      method: 'POST',
-      headers: { apikey: ANON, 'content-type': 'application/json' },
-      body: JSON.stringify({ refresh_token: token })
-    }).then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { if (j && j.access_token) { saveSession(j); return true; } return false; })
-      .catch(function () { return false; });
-  }
+  // Auth lives in admin-auth.js, shared with the other admin pages. Aliased locally so
+  // the rest of this file reads the same as before.
+  var session = LA.session, saveSession = LA.saveSession, clearSession = LA.clearSession,
+      refresh = LA.refresh, authFetch = LA.authFetch;
 
   function say(id, text, kind) {
     var m = el(id);
@@ -220,19 +186,9 @@
   el('loginForm').addEventListener('submit', function (e) {
     e.preventDefault();
     say('loginMsg', 'Signing in...', '');
-    fetch(URL_BASE + '/auth/v1/token?grant_type=password', {
-      method: 'POST',
-      headers: { apikey: ANON, 'content-type': 'application/json' },
-      body: JSON.stringify({ email: el('email').value.trim(), password: el('password').value })
-    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-      .then(function (res) {
-        if (!res.ok || !res.j.access_token) {
-          say('loginMsg', res.j.error_description || res.j.msg || 'Sign in failed.', 'bad');
-          return;
-        }
-        saveSession(res.j);
-        show();
-      }).catch(function (err) { say('loginMsg', 'Network error: ' + err.message, 'bad'); });
+    LA.signIn(el('email').value.trim(), el('password').value)
+      .then(function () { show(); })
+      .catch(function (err) { say('loginMsg', err.message, 'bad'); });
   });
 
   el('signout').addEventListener('click', function () {
