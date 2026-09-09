@@ -43,15 +43,18 @@ The software line is hunting tools. Two Windows programs and two mobile apps.
 |---|---|---|---|
 | Rack Detector | Windows 10/11 | $100 one-time, free to 10,000 images | OneDrive zip + Stripe |
 | Rack Viewer | Windows 10/11 | Free to view forever; $20 one-time after 10 Keeper Cleanups | OneDrive exe + Stripe |
-| Rack Tracker | Android + iOS | $10/year | Google Play `com.racktracker.app` · App Store `id6807572200` |
-| Rack Scorer | Android | $4.99 one-time, **no free trial** | Google Play `com.rackscorer.app` |
+| Rack Tracker | Android | $10/year | Google Play `com.racktracker.app` |
+| Rack Scorer | Android + iOS | $4.99 one-time, **no free trial** | Google Play `com.rackscorer.app` · App Store `id6807572200` |
 
 Buying Rack Detector includes a Rack Viewer license.
 
-**Rack Tracker shipped on the App Store on 2026-09-08 and is now Android + iOS.**
-Rack Scorer is still Android-only, and its page and `apps.html` say an iOS version is
-"in the works". Keep both halves true: don't let a rewrite spread iOS to Scorer, and
-don't reintroduce "Android only" copy on Tracker.
+**Rack Scorer shipped on the App Store on 2026-09-09 and is now Android + iOS.**
+Rack Tracker is still Android-only, and its page and `apps.html` say an iOS version is
+"in the works" — that line is a placeholder for a build that is not published yet, so
+leave it until the App Store link arrives. Keep both halves true: don't let a rewrite
+spread iOS to Tracker, and don't reintroduce "Android only" copy on Scorer.
+(`id6807572200` was briefly published on Tracker's page in error on 2026-09-08 and
+reverted the next day; it is Scorer's id.)
 
 `apps.html` frames them as a workflow: **Sort → View → Track → Score**. Keep that
 order and those verbs consistent wherever the four are listed together.
@@ -148,9 +151,9 @@ re-uploading creates a new item and breaks every link on the site.
 **The four download counters use four separate Supabase tables.** `downloads` is Rack
 Detector's and has no app column, so every other app writes to its own:
 `downloads_rackviewer`, `downloads_racktracker`, `downloads_rackscorer`. Never merge
-them — it would silently fold one app's clicks into another's count. Rack Tracker is
+them — it would silently fold one app's clicks into another's count. Rack Scorer is
 the one exception, and a deliberate one: its Google Play and App Store buttons both
-write to `downloads_racktracker`, so that figure is clicks for the app rather than per
+write to `downloads_rackscorer`, so that figure is clicks for the app rather than per
 platform. The publishable key in `downloads.js` is safe to expose: RLS permits insert
 only. All of these count clicks, not installs.
 
@@ -199,7 +202,7 @@ main place those keywords live. Do not strip the descriptions too.
 ## Known open items
 
 - No terms page for Rack Tracker or Rack Scorer.
-- Rack Tracker's App Store and Play Store clicks land in one counter table, so the
+- Rack Scorer's App Store and Play Store clicks land in one counter table, so the
   admin cannot split them by platform. A fifth table would be the fix.
 - `rack-scorer.html` embeds its demo with a plain `<iframe>` that loads with the page,
   while the Detector and Viewer tabs wait for a click. Both use `youtube-nocookie`, so

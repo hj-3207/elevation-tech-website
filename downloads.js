@@ -14,7 +14,7 @@
 
    The mobile counters fire on buttons that leave for a store. They still measure intent
    rather than installs, same as the Windows ones measure clicks rather than completed
-   downloads. Rack Tracker ships on both Google Play and the App Store and both buttons
+   downloads. Rack Scorer ships on both Google Play and the App Store and both buttons
    write to the one table, so its number is store clicks for the app, not per platform.
    Splitting them would need a second table; there is no app or platform column.
 */
