@@ -1,8 +1,8 @@
 # Elevation Technology Solutions — website
 
 Hand-written static site. **No build step, no framework, no dependencies, no
-package.json.** Twelve HTML pages plus one shared stylesheet and three small JS
-files. Edit a file, refresh the browser.
+package.json.** Twelve public pages plus two unlinked admin pages, one shared
+stylesheet and six small JS files. Edit a file, refresh the browser.
 
 ## Deploy
 
@@ -37,17 +37,21 @@ real rows into the production tables. Don't click Download buttons while testing
 
 ## The four apps
 
-The software line is hunting tools. Two Windows programs, two Android apps.
+The software line is hunting tools. Two Windows programs and two mobile apps.
 
 | App | Platform | Price | Delivery |
 |---|---|---|---|
 | Rack Detector | Windows 10/11 | $100 one-time, free to 10,000 images | OneDrive zip + Stripe |
 | Rack Viewer | Windows 10/11 | Free to view forever; $20 one-time after 10 Keeper Cleanups | OneDrive exe + Stripe |
-| Rack Tracker | Android | $10/year | Google Play `com.racktracker.app` |
+| Rack Tracker | Android + iOS | $10/year | Google Play `com.racktracker.app` · App Store `id6807572200` |
 | Rack Scorer | Android | $4.99 one-time, **no free trial** | Google Play `com.rackscorer.app` |
 
-Buying Rack Detector includes a Rack Viewer license. iOS versions are stated as
-"in the works" — do not write copy implying an iOS build ships today.
+Buying Rack Detector includes a Rack Viewer license.
+
+**Rack Tracker shipped on the App Store on 2026-09-08 and is now Android + iOS.**
+Rack Scorer is still Android-only, and its page and `apps.html` say an iOS version is
+"in the works". Keep both halves true: don't let a rewrite spread iOS to Scorer, and
+don't reintroduce "Android only" copy on Tracker.
 
 `apps.html` frames them as a workflow: **Sort → View → Track → Score**. Keep that
 order and those verbs consistent wherever the four are listed together.
@@ -67,6 +71,13 @@ single network call in the desktop line, and it is disclosed.
 - `privacy-policy-rackracker.html` — **typo filename, kept deliberately.** Was
   published first and may be linked externally; it redirects to the correct page.
 - `google4f30917507f29334.html` — Search Console verification, do not touch
+- `license-admin.html`, `download-log.html` — internal admin, `noindex`, and linked
+  from nowhere. Reached by **Ctrl-clicking (or Cmd-clicking) the footer logo** on any
+  page; the delegated handler is at the bottom of `nav.js`. Hidden, not secret — the
+  repo is public, so the real gate is Supabase Auth plus RLS, which returns an empty
+  array when signed out. `license-admin.html` can only SELECT and UPDATE; codes are
+  minted offline, so nothing here creates or destroys inventory. `version` is a product
+  marker, not a release number: 7 is Rack Detector, 1001 is Rack Viewer.
 
 ## Conventions
 
@@ -95,14 +106,24 @@ single network call in the desktop line, and it is disclosed.
   `<style>` block.
 
 **Where CSS goes:** shared rules in `style.css`; rules used by exactly one page stay
-in that page's `<style>` block. `apps.html` is the only page with an inline block.
+in that page's `<style>` block. `apps.html` is the only *public* page with an inline
+block; both admin pages carry their own too.
 
-**Shared JS** — three files, each loaded with a plain `<script src>`:
+**Shared JS** — six files, each loaded with a plain `<script src>`:
 
-- `nav.js` — mobile nav toggle. Loaded by all 12 pages.
+- `nav.js` — mobile nav toggle, plus the Ctrl-click route to the admin page. All 12
+  public pages.
+- `lightbox.js` — click a content image to see it full size. All 12 public pages.
+  Opt-in by selector, so logos and tile icons stay unclickable.
 - `carousel.js` — screenshot carousel. `rack-tracker.html`, `rack-scorer.html`.
-- `downloads.js` — download-click counters. `rack-detector.html`,
-  `rack-viewer.html`. **Not** `apps.html`, which has no download buttons.
+- `downloads.js` — store and download click counters. **All four** product pages.
+  **Not** `apps.html`, which has no download buttons.
+- `videotabs.js` — tabbed demo player. `rack-detector.html`, `rack-viewer.html`. It
+  builds the iframe on click, so a visitor who never presses play never contacts
+  YouTube at all. That matters on pages arguing the software collects nothing.
+- `admin-auth.js` — shared Supabase session and token refresh. The two admin pages
+  only. It exists because both had their own copy of the refresh path, and two copies
+  of that goes wrong quietly. Keep it one copy.
 
 ## Things that will bite you
 
@@ -124,10 +145,14 @@ Any new anchor target must be a `section[id]` or carry that rule.
 build **over** the existing file. Renaming keeps the link alive; deleting and
 re-uploading creates a new item and breaks every link on the site.
 
-**The two download counters use separate Supabase tables.** `downloads` is Rack
-Detector's and has no app column, so Rack Viewer writes to `downloads_rackviewer`.
-Never merge them — it would silently fold Viewer clicks into Detector's count. The
-publishable key in `downloads.js` is safe to expose: RLS permits insert only.
+**The four download counters use four separate Supabase tables.** `downloads` is Rack
+Detector's and has no app column, so every other app writes to its own:
+`downloads_rackviewer`, `downloads_racktracker`, `downloads_rackscorer`. Never merge
+them — it would silently fold one app's clicks into another's count. Rack Tracker is
+the one exception, and a deliberate one: its Google Play and App Store buttons both
+write to `downloads_racktracker`, so that figure is clicks for the app rather than per
+platform. The publishable key in `downloads.js` is safe to expose: RLS permits insert
+only. All of these count clicks, not installs.
 
 **Purchase and download buttons belong on product pages only.** `apps.html`
 deliberately links to the product pages instead, so nobody installs before reading
@@ -144,7 +169,8 @@ history, so a deletion commit alone will not remove them.
 Terse, concrete, unglamorous. "No folded paper sheet, no arithmetic, no signal."
 Avoid marketing filler — no "easily", "seamless", "it's a breeze", "powerful".
 Say what the thing does and what it costs. Being straight about limitations is
-part of the voice: the GPU warning, "non-refundable", "Android only for now".
+part of the voice: the GPU warning, "non-refundable", and Rack Scorer's "Android only
+for now".
 
 Prices and trial terms appear in several places per app. When one changes, grep for
 the old figure across every page — `index.html`, `apps.html`, the product page,
@@ -173,9 +199,12 @@ main place those keywords live. Do not strip the descriptions too.
 ## Known open items
 
 - No terms page for Rack Tracker or Rack Scorer.
-- Rack Detector and Rack Viewer demo videos are still `Demo video coming soon`
-  placeholders. Rack Scorer has a real embed (`youtube-nocookie`, chosen so no
-  tracking cookie is set before the visitor hits play).
+- Rack Tracker's App Store and Play Store clicks land in one counter table, so the
+  admin cannot split them by platform. A fifth table would be the fix.
+- `rack-scorer.html` embeds its demo with a plain `<iframe>` that loads with the page,
+  while the Detector and Viewer tabs wait for a click. Both use `youtube-nocookie`, so
+  no tracking cookie is set before play either way, but only the tabs avoid the
+  request entirely.
 - No `sitemap.xml` or `robots.txt`; `index.html` has no meta description.
 - `index.html` lists the apps as Viewer, Detector, Tracker, Scorer, which
   contradicts the Sort → View → Track → Score order `apps.html` teaches.

@@ -12,9 +12,11 @@
    the Detector count. Table definitions live in the Detector repo, in
    licensing/supabase_downloads_admin.sql.
 
-   The Android counters fire on buttons that leave for the Play Store. They still measure
-   intent rather than installs, same as the Windows ones measure clicks rather than
-   completed downloads.
+   The mobile counters fire on buttons that leave for a store. They still measure intent
+   rather than installs, same as the Windows ones measure clicks rather than completed
+   downloads. Rack Tracker ships on both Google Play and the App Store and both buttons
+   write to the one table, so its number is store clicks for the app, not per platform.
+   Splitting them would need a second table; there is no app or platform column.
 */
 var DL_URL = "https://baopxmwebqfdubvgjsri.supabase.co/rest/v1/";
 var DL_KEY = "sb_publishable_54t4NxwLHZqGuGNrDM9TrA_b7F3Dh3B";
