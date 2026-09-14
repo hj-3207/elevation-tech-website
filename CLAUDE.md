@@ -53,8 +53,25 @@ Rack Tracker is still Android-only, and its page and `apps.html` say an iOS vers
 "in the works" — that line is a placeholder for a build that is not published yet, so
 leave it until the App Store link arrives. Keep both halves true: don't let a rewrite
 spread iOS to Tracker, and don't reintroduce "Android only" copy on Scorer.
-(`id6807572200` was briefly published on Tracker's page in error on 2026-09-08 and
-reverted the next day; it is Scorer's id.)
+
+**This has now gone wrong twice, the same way both times.** `id6807572200` was published
+on Tracker's page in error on 2026-09-08 and reverted the next day; it is Scorer's id.
+Then on 2026-09-09, `privacy-policy-racktracker.html` was rewritten to cover the App
+Store — header, payment, cancellation path and sandboxing — and reverted on 2026-09-14.
+Its stated reason, that App Review reads the linked policy on an iOS listing, was sound
+and belongs to **Scorer**, whose policy already covers both stores.
+
+Before adding iOS to anything, check which app actually ships on iOS:
+
+```bash
+grep -c "apps\.apple\.com" rack-tracker.html rack-scorer.html
+```
+
+Tracker returns 0 and Scorer returns 2. A change that gives Tracker an iOS claim while
+that command still prints 0 for it is the mistake, however well the prose reads — the
+privacy policy would be promising an App Review that never happens, for a listing that
+does not exist, while `rack-tracker.html` and `apps.html` still say "Android only for
+now".
 
 `apps.html` frames them as a workflow: **Sort → View → Track → Score**. Keep that
 order and those verbs consistent wherever the four are listed together.
@@ -248,19 +265,19 @@ main place those keywords live. Do not strip the descriptions too.
 
 - No terms page for Rack Tracker or Rack Scorer.
 - Promo codes are loaded by **pasting them into the Load panel on `license-admin.html`**.
-  `load_promo_codes.py`, alongside `gen_codes.py` outside this repo, does the same job as
-  SQL and is the fallback if the page is broken. Store code lists carry no dates, so
-  expiry is chosen at load time, and **the two stores need different settings.** Apple states a rule rather than a date, so iOS batches use
-  "generated on" / `--generated YYYY-MM-DD` and get generation + 28 days at 12:00Z —
-  midday because Apple does not publish what time of day they die. Play states an end
-  date outright, so those
-  use "good until" / `--expires YYYY-MM-DD` and get 23:59:59Z, the end of that day being
-  what "good until the 1st" means. Do not assume Play is also 28 days: the 2026-09-14
-  batch runs to 2027-01-01. Keep code lists and generated SQL out of this repo — they are unredeemed
-  codes and the repo is public. **The codes cannot live in this repo instead of Supabase**
-  — it is public, git history is permanent, and Pages has nothing to write to, so "handed
-  out" could not be recorded at all. Asked and answered on 2026-09-14; the paste box was
-  built to remove the trip to the SQL editor, which was the actual friction.
+  `load_promo_codes.py`, alongside `gen_codes.py` outside this repo, does the same job
+  as SQL and is the fallback if the page is broken. **The codes cannot live in this repo
+  instead of Supabase** — it is public, git history is permanent, and Pages has nothing
+  to write to, so "handed out" could not be recorded at all. Asked and answered on
+  2026-09-14; the paste box was built to remove the trip to the SQL editor, which was
+  the actual friction. Keep code lists and generated SQL out of the repo too.
+- **Promo expiry is set per batch, and the two stores need different settings.** Apple
+  states a rule rather than a date, so iOS batches use "generated on" (`--generated`) and
+  land on generation + 28 days at 12:00Z — midday because Apple does not publish what
+  time of day a code dies. Play states an end date outright, so those use "good until"
+  (`--expires`) and land on 23:59:59Z, the end of that day being what "good until the
+  1st" means. **Do not assume Play is also 28 days:** the 2026-09-14 batch runs to
+  2027-01-01.
 - Rack Scorer's App Store and Play Store clicks land in one counter table, so the
   admin cannot split them by platform. A fifth table would be the fix.
 - `rack-scorer.html` embeds its demo with a plain `<iframe>` that loads with the page,
