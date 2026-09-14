@@ -694,8 +694,15 @@
         var k = rows.findIndex(function (x) { return x.code === saved.code; });
         if (k >= 0) rows[k] = saved;
         el('buyer').value = '';
-        if (navigator.clipboard) navigator.clipboard.writeText(saved.code).catch(function () {});
-        say('msg', saved.code + ' assigned to ' + buyer + ' and copied to your clipboard.', 'good');
+        // For a store code the link is the thing you send. Handing over the bare code
+        // leaves the recipient hunting for the redeem screen, and the code is in the link
+        // anyway. Desktop keys have no link and still copy the code.
+        var link = redeemUrl(saved);
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(link || saved.code).catch(function () {});
+        }
+        say('msg', saved.code + ' assigned to ' + buyer + '. ' +
+                   (link ? 'Redeem link' : 'Code') + ' copied to your clipboard.', 'good');
         el('q').value = saved.code;
         render();
       });

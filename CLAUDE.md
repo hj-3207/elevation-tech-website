@@ -139,6 +139,10 @@ click burns a code against whatever account the browser is signed in to, unrecov
 The `link` button beside each code copies the URL instead, which is what sending one
 actually needs.
 
+**Assign copies the redeem link, not the code,** whenever the product has one — for a
+store code the link is what you send, and the code is inside it anyway. Desktop keys have
+no link and still copy the key itself.
+
 The Assign button hands out the **soonest-expiring** code first, and skips any code whose
 tier is not `pro` on the desktop products — it used to be able to give a Rack Detector
 giveaway code to a paying buyer without the unsold count moving. Sending a promo code on
