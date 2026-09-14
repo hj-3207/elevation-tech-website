@@ -77,12 +77,32 @@
   .la-subhead { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.09em;
     text-transform: uppercase; color: var(--muted); margin: 0 0 0.7rem; }
   .la-pill.promo { color: #d2a1e8; border-color: #4a2b5c; }
+  .la-pill.dead  { color: #ff9c9c; border-color: #7a2b2b; }
+  .la-soon { font-family: var(--mono); font-size: 0.75rem; color: #e0a94a; white-space: nowrap; }
+  .la-codelink { color: #fff; text-decoration: none; border-bottom: 1px dotted #444; }
+  .la-codelink:hover { color: var(--orange-bright); border-bottom-color: var(--orange); }
   .la-stat-link { display: block; text-decoration: none; transition: background 0.2s; }
   .la-stat-link:hover { background: #171717; }
   .la-stat-link:hover b { color: var(--orange-bright); }
   .la-stat small { display: block; color: #666; font-family: var(--mono);
     font-size: 0.66rem; margin-top: 0.2rem; letter-spacing: 0.04em; }
   .la-count { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-bottom: 0.75rem; }
+
+  /* Load panel. Shut by default - it is used once a batch, not every visit. */
+  .la-load { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 1.75rem; }
+  .la-load summary { cursor: pointer; padding: 0.85rem 1.1rem; font-family: var(--mono);
+    font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .la-load summary:hover { color: #fff; }
+  .la-load[open] summary { border-bottom: 1px solid var(--border); color: #fff; }
+  .la-loadbody { padding: 1.1rem; }
+  .la-codes { width: 100%; min-height: 150px; resize: vertical; background: #0b0b0b;
+    border: 1px solid var(--border); border-radius: 7px; color: #eee; padding: 0.7rem 0.8rem;
+    font-family: var(--mono); font-size: 0.78rem; line-height: 1.5; }
+  .la-codes:focus { outline: none; border-color: var(--orange); }
+  .la-loadrow { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end; margin-top: 0.9rem; }
+  .la-loadrow .la-field { margin-bottom: 0; }
+  .la-hint { font-family: var(--mono); font-size: 0.68rem; color: #666; margin-top: 0.85rem; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -115,6 +135,35 @@
   <div class="la-subhead">Download clicks</div>
   <div class="la-stats" id="dstats"></div>
 
+  <!-- Paste straight from Play Console or App Store Connect. This is the only thing on
+       the page that creates rows; see the comment on the loader below. -->
+  <details class="la-load">
+    <summary>Load promo codes</summary>
+    <div class="la-loadbody">
+      <textarea class="la-codes" id="lCodes" spellcheck="false"
+        placeholder="One code per line. A CSV header line is ignored, blank lines and repeats are dropped."></textarea>
+      <div class="la-loadrow">
+        <label class="la-field"><span>Product</span>
+          <select class="la-select" id="lProduct"></select></label>
+        <label class="la-field"><span>Expiry</span>
+          <select class="la-select" id="lMode">
+            <option value="generated">Generated on, +28 days</option>
+            <option value="end">Good until, end of day</option>
+          </select></label>
+        <label class="la-field"><span>Date</span>
+          <input class="la-input" type="date" id="lDate" style="width:auto;"></label>
+        <button class="btn btn-primary" id="lLoad" style="padding:0.6rem 1rem;">Load</button>
+      </div>
+      <div class="la-msg" id="lMsg"></div>
+      <div class="la-hint">
+        Apple states a rule and not a date, so iOS batches want "generated on". Play states an
+        end date outright - use "good until" and the date Play gave you, which is not
+        necessarily 28 days out. Loading the same list twice is safe: codes already here are
+        skipped, not reset.
+      </div>
+    </div>
+  </details>
+
   <div class="la-controls">
     <label class="la-field" style="min-width:260px;"><span>Search</span>
       <input class="la-input" id="q" type="search" placeholder="code, buyer, email, note"></label>
@@ -128,6 +177,7 @@
         <option value="avail">Available</option>
         <option value="sent">Sent, not activated</option>
         <option value="live">Activated</option>
+        <option value="expired">Expired</option>
       </select></label>
 
     <div class="la-assign">
@@ -143,7 +193,7 @@
   <div class="la-tablewrap">
     <table class="la-table">
       <thead><tr>
-        <th>Code</th><th>Product</th><th>Tier</th><th>State</th><th>Sent to</th><th>Sent</th>
+        <th>Code</th><th>Product</th><th>Tier</th><th>State</th><th>Expires</th><th>Sent to</th><th>Sent</th>
         <th>Activated by</th><th>Activated</th><th>Notes</th><th></th>
       </tr></thead>
       <tbody id="rows"></tbody>
@@ -164,8 +214,69 @@
 (function () {
 
   // version is a permanent product marker, not a release number: 1001 means Rack Viewer.
-  var PRODUCTS = { 7: 'Rack Detector', 1001: 'Rack Viewer' };
+  var PRODUCTS = {
+    7: 'Rack Detector',
+    1001: 'Rack Viewer',
+    2001: 'Rack Scorer (Android)',
+    2002: 'Rack Scorer (iOS)'
+  };
   function productName(v) { return PRODUCTS[v] || ('version ' + v); }
+
+  /* Rack Scorer's codes are Play Console and App Store Connect promo codes, redeemed
+   * inside the store. The app makes no network call, so nothing ever reports a redemption
+   * back here. These two products therefore track one thing: a code is in the pool, or it
+   * has been handed to someone. Do not give them an activated state - it could only ever
+   * be typed in by hand, and a hand-typed guess sitting in the same column as a real
+   * activation stops looking like a guess within a week.
+   *
+   * Android and iOS are separate products because the codes are not interchangeable. This
+   * is the opposite call to the download counters, where both stores share one table.
+   */
+  var PROMO_ONLY = { 2001: true, 2002: true };
+  function promoOnly(v) { return !!PROMO_ONLY[v]; }
+
+  /* Redemption links, built from the code rather than stored. A second copy of the code
+   * in a url column is a second thing to keep in step, and it would be wrong the moment
+   * either store changed its format.
+   *
+   * Both forms below are confirmed working against a real code (2026-09-14).
+   *
+   * Apple documents no redemption url for app promo codes at all - their page only says
+   * "you can distribute promo codes by any means" - so this was found by testing. Two
+   * things follow, and both are easy to get wrong later:
+   *
+   *   No app id. The bare ?code= form is what works. A promo code already identifies its
+   *   own app, so there is nothing for an id to disambiguate. Do not "fix" this by adding
+   *   id=6807572200 back.
+   *
+   *   Not ctx=offercodes. Every search result recommends that form, and it is for
+   *   SUBSCRIPTION and in-app-purchase offer codes. Rack Scorer is a one-time paid app,
+   *   so its codes are plain app promo codes - a different mechanism that the offercodes
+   *   url does not handle.
+   */
+  var REDEEM = {
+    2001: function (code) {
+      return 'https://play.google.com/redeem?code=' + encodeURIComponent(code);
+    },
+    2002: function (code) {
+      return 'https://apps.apple.com/redeem?code=' + encodeURIComponent(code);
+    }
+  };
+  function redeemUrl(r) {
+    var f = REDEEM[r.version];
+    return f ? f(r.code) : null;
+  }
+
+  /* Expiry is its own axis, not another value of state. Apple's promo codes die 28 days
+   * after generation and Play codes carry whatever end date you set, so a code can be
+   * unsent and expired - dead inventory you need to notice - or sent and expired, meaning
+   * you posted it and it was never redeemed. One combined field would lose the second.
+   */
+  function expired(r) { return !!r.expires_at && new Date(r.expires_at) < new Date(); }
+  function daysLeft(r) {
+    if (!r.expires_at) return null;
+    return Math.ceil((new Date(r.expires_at) - new Date()) / 864e5);
+  }
 
   var rows = [];
   var el = function (id) { return document.getElementById(id); };
@@ -294,6 +405,17 @@
     el('fProduct').innerHTML = '<option value="">All products</option>' + opts;
     el('aProduct').innerHTML = opts;
 
+    /* The load panel lists the promo products only, and reads PRODUCTS rather than the
+     * rows, so the very first batch has something to pick before any row exists.
+     * Desktop keys are deliberately not loadable here: they come from gen_codes.py, which
+     * knows about tiers, and typing one in by hand is how you get a key no build accepts.
+     */
+    el('lProduct').innerHTML = Object.keys(PRODUCTS).filter(function (v) {
+      return promoOnly(Number(v));
+    }).map(function (v) {
+      return '<option value="' + v + '">' + PRODUCTS[v] + '</option>';
+    }).join('');
+
     var tiers = [];
     rows.forEach(function (r) {
       var t = r.tier || 'pro';
@@ -311,6 +433,20 @@
     var html = '';
     vers.forEach(function (v) {
       var set = rows.filter(function (r) { return r.version === v; });
+
+      // Nothing is sold here and nothing reports back, so "activated" and "unsold" have
+      // no meaning. What matters is what is left to give away, and how much of the pool
+      // quietly died while you were not looking.
+      if (promoOnly(v)) {
+        var pool = set.filter(function (r) { return !r.issued_to && !expired(r); }).length;
+        var gone = set.filter(function (r) { return !!r.issued_to; }).length;
+        var dead = set.filter(function (r) { return !r.issued_to && expired(r); }).length;
+        html += '<div class="la-stat"><b>' + pool + '</b><span>' + productName(v) + ' unused</span></div>';
+        html += '<div class="la-stat"><b>' + gone + '</b><span>' + productName(v) + ' sent</span></div>';
+        html += '<div class="la-stat"><b>' + dead + '</b><span>' + productName(v) + ' expired</span></div>';
+        return;
+      }
+
       // Promo codes are giveaways. Counting them as unsold inventory would inflate
       // what you think is left to sell.
       var promo = set.filter(function (r) { return (r.tier || 'pro') !== 'pro'; }).length;
@@ -337,13 +473,38 @@
   }
   function day(t) { return t ? String(t).slice(0, 10) : ''; }
 
+  /* Clicking one of these REDEEMS the code, against whichever account the browser is
+   * signed in to. That is a code burned and not recoverable, so it opens in a new tab and
+   * says as much on hover. The copy-link button beside it is what you actually want almost
+   * every time - you are sending the link, not following it.
+   */
+  function codeCell(r) {
+    var u = redeemUrl(r);
+    if (!u) return esc(r.code);
+    return '<a href="' + esc(u) + '" target="_blank" rel="noopener" class="la-codelink" ' +
+           'title="Opens the store redemption page. Following this link redeems the code.">' +
+           esc(r.code) + '</a>';
+  }
+
+  // A bare date does not tell you a code is about to die. Anything inside a week says so.
+  function expiryCell(r) {
+    if (!r.expires_at) return '<span class="la-muted">-</span>';
+    if (expired(r)) return '<span class="la-pill dead">expired ' + day(r.expires_at) + '</span>';
+    var d = daysLeft(r);
+    if (d <= 7) return '<span class="la-soon">' + day(r.expires_at) + ' &middot; ' + d + 'd left</span>';
+    return '<span class="la-muted">' + day(r.expires_at) + '</span>';
+  }
+
   function render() {
     stats();
     var q = el('q').value.trim().toLowerCase();
     var fp = el('fProduct').value, fs = el('fState').value, ft = el('fTier').value;
     var shown = rows.filter(function (r) {
       if (fp && String(r.version) !== fp) return false;
-      if (fs && state(r) !== fs) return false;
+      // Expired cuts across the others: a code can be sent and expired, or unsent and
+      // expired, so it filters on the date rather than on state().
+      if (fs === 'expired') { if (!expired(r)) return false; }
+      else if (fs && state(r) !== fs) return false;
       if (ft && (r.tier || 'pro') !== ft) return false;
       if (!q) return true;
       return [r.code, r.issued_to, r.email, r.notes].join(' ').toLowerCase().indexOf(q) >= 0;
@@ -353,20 +514,26 @@
     el('rows').innerHTML = shown.slice(0, 400).map(function (r) {
       var st = state(r);
       return '<tr data-row="' + esc(r.code) + '">' +
-        '<td class="la-code">' + esc(r.code) + '</td>' +
+        '<td class="la-code">' + codeCell(r) + '</td>' +
         '<td>' + esc(productName(r.version)) + '</td>' +
         '<td>' + (r.tier && r.tier !== 'pro'
                    ? '<span class="la-pill promo">' + esc(r.tier) + '</span>'
                    : '<span class="la-muted">pro</span>') + '</td>' +
         '<td class="c-state"><span class="la-pill ' + st + '">' + LABEL[st] + '</span></td>' +
+        '<td class="c-exp">' + expiryCell(r) + '</td>' +
         '<td class="c-sent">' + (r.issued_to ? esc(r.issued_to) : '<span class="la-muted">-</span>') + '</td>' +
         '<td class="c-when la-muted">' + day(r.issued_at) + '</td>' +
-        '<td>' + (r.email ? esc(r.email) : '<span class="la-muted">-</span>') + '</td>' +
-        '<td class="la-muted">' + day(r.activated_at) + '</td>' +
+        // Store codes are redeemed inside the store and never reported back, so these two
+        // stay blank for Rack Scorer by design. An em dash would read as "none yet".
+        '<td>' + (promoOnly(r.version) ? '<span class="la-muted">n/a</span>'
+                   : (r.email ? esc(r.email) : '<span class="la-muted">-</span>')) + '</td>' +
+        '<td class="la-muted">' + (promoOnly(r.version) ? '' : day(r.activated_at)) + '</td>' +
         '<td class="c-notes">' + (r.notes ? esc(r.notes) : '<span class="la-muted">-</span>') + '</td>' +
         '<td class="c-act" style="white-space:nowrap;">' +
           '<button class="la-mini" data-edit>edit</button> ' +
           '<button class="la-mini" data-copy="' + esc(r.code) + '">copy</button>' +
+          (redeemUrl(r) ? ' <button class="la-mini" data-copy="' + esc(redeemUrl(r)) +
+                          '" data-what="link">link</button>' : '') +
         '</td>' +
         '</tr>';
     }).join('');
@@ -382,8 +549,17 @@
     if (!b) return;
     var code = b.getAttribute('data-copy');
     (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject())
-      .then(function () { b.textContent = 'copied'; setTimeout(function () { b.textContent = 'copy'; }, 1200); })
-      .catch(function () { say('msg', 'Could not copy. The code is ' + code, 'bad'); });
+      .then(function () {
+        var was = b.getAttribute('data-what') || 'copy';
+        b.textContent = 'copied';
+        setTimeout(function () { b.textContent = was; }, 1200);
+      })
+      .catch(function () {
+        // The clipboard call fails over file:// and on a denied permission. Showing the
+        // value is the whole fallback - you can still select it out of the banner.
+        var what = b.getAttribute('data-what') === 'link' ? 'link' : 'code';
+        say('msg', 'Could not copy. The ' + what + ' is ' + code, 'bad');
+      });
   });
 
   /* ---- row editing -----------------------------------------------------
@@ -459,6 +635,16 @@
   /* ---- assign the next unsold code --------------------------------------
    * "Unsold" means status is still 'unused' AND issued_to is empty. A code you sent by
    * hand and recorded with the edit button is therefore skipped, which is the whole point.
+   *
+   * Two further exclusions, both of which used to hand out a code that was no good:
+   *
+   *   Promo tiers. The unsold tile has always excluded them, but this pool did not, so a
+   *   Rack Detector giveaway code could go to a paying buyer - losing the sale without
+   *   even moving the count that was supposed to be watching. Sending a promo code on
+   *   purpose is what the row Edit button is for.
+   *
+   *   Expired codes. Apple's expire 28 days after generation. Handing one out looks like
+   *   it worked from this end and fails silently at the buyer's.
    */
   el('assign').addEventListener('click', function () {
     var buyer = el('buyer').value.trim();
@@ -467,10 +653,23 @@
     if (!ver) { say('msg', 'Pick a product.', 'bad'); return; }
 
     var pool = rows.filter(function (r) {
-      return String(r.version) === String(ver) && r.status === 'unused' && !r.issued_to;
+      if (String(r.version) !== String(ver)) return false;
+      if (r.status !== 'unused' || r.issued_to) return false;
+      if (expired(r)) return false;
+      if (!promoOnly(r.version) && (r.tier || 'pro') !== 'pro') return false;
+      return true;
+    }).sort(function (a, b) {
+      // Soonest to expire goes first. Sitting on a code until its date passes wastes it,
+      // and the ones with no date can wait indefinitely by definition.
+      if (!a.expires_at) return b.expires_at ? 1 : 0;
+      if (!b.expires_at) return -1;
+      return new Date(a.expires_at) - new Date(b.expires_at);
     });
     if (!pool.length) {
-      say('msg', 'No unsold codes left for ' + productName(Number(ver)) + '. Generate more with gen_codes.py.', 'bad');
+      var where = promoOnly(Number(ver))
+        ? 'Generate more in Play Console or App Store Connect and load them.'
+        : 'Generate more with gen_codes.py.';
+      say('msg', 'No usable codes left for ' + productName(Number(ver)) + '. ' + where, 'bad');
       return;
     }
 
@@ -503,6 +702,105 @@
     }
 
     claim(0).catch(function (err) { say('msg', 'Could not assign: ' + err.message, 'bad'); });
+  });
+
+  /* ---- loading a batch --------------------------------------------------
+   * This page was SELECT and UPDATE only, deliberately: codes were minted offline and
+   * loaded by SQL, so nothing here could create or destroy inventory. Pasting a list in
+   * gives up half of that, knowingly - the trip to the Supabase SQL editor was the only
+   * part of handing out a promo code that happened off the site.
+   *
+   * The half that matters is kept. There is still no DELETE anywhere on this page, and no
+   * path that can change a code's identity or its expiry. The worst a bad paste can do is
+   * add rows you can see and ignore; it cannot unmake a code you already sent.
+   *
+   * Keeping the codes in Supabase rather than in the repo is not a preference. The repo is
+   * public, git history is permanent, and GitHub Pages has nothing to write to - a code
+   * list committed there would be a free copy of the app for anyone who looked, forever,
+   * and "handed out" could never be recorded in the first place.
+   */
+  var CODE_RE = /^[A-Za-z0-9]{6,64}$/;
+
+  function parseCodes(text) {
+    var out = [], seen = {}, junk = [], first = true;
+    text.split(/\r?\n/).forEach(function (raw) {
+      // Trailing commas and quotes survive a copy out of a spreadsheet.
+      var c = raw.trim().replace(/^["']+|["',]+$/g, '');
+      if (!c) return;
+      if (!CODE_RE.test(c)) {
+        // Play Console's export leads with a "Promotion code" header. Anything else that
+        // is not code-shaped is worth showing you rather than silently dropping.
+        if (first) { first = false; return; }
+        junk.push(c);
+        return;
+      }
+      first = false;
+      if (seen[c]) return;
+      seen[c] = 1;
+      out.push(c);
+    });
+    return { codes: out, junk: junk };
+  }
+
+  function batchExpiry() {
+    var d = el('lDate').value;
+    if (!d) return { err: 'Pick the date first.' };
+    if (el('lMode').value === 'generated') {
+      // Midday, because neither store publishes what time of day a code dies. Midday
+      // cannot be a whole day wrong in either direction.
+      var t = new Date(d + 'T12:00:00Z');
+      t.setUTCDate(t.getUTCDate() + 28);
+      return { iso: t.toISOString() };
+    }
+    // A stated end date is inclusive: good until the 1st means through the 1st.
+    return { iso: new Date(d + 'T23:59:59Z').toISOString() };
+  }
+
+  el('lLoad').addEventListener('click', function () {
+    var parsed = parseCodes(el('lCodes').value);
+    if (!parsed.codes.length) { say('lMsg', 'No codes found in that list.', 'bad'); return; }
+
+    var exp = batchExpiry();
+    if (exp.err) { say('lMsg', exp.err, 'bad'); return; }
+
+    var ver = Number(el('lProduct').value);
+    var when = exp.iso.slice(0, 10);
+    if (new Date(exp.iso) < new Date() &&
+        !confirm('That date has already passed, so all of these load expired. Continue?')) return;
+
+    // The expensive mistake here is not a bad code, it is 100 good codes filed under the
+    // wrong store - an Android link sent to an iPhone just fails. One click to confirm.
+    var warn = parsed.junk.length
+      ? ' ' + parsed.junk.length + ' line(s) will be skipped as not code-shaped.' : '';
+    if (!confirm('Load ' + parsed.codes.length + ' codes as ' + productName(ver) +
+                 ', expiring ' + when + '?' + warn)) return;
+
+    say('lMsg', 'Loading ' + parsed.codes.length + ' codes...', '');
+    var payload = parsed.codes.map(function (c) {
+      return { code: c, version: ver, tier: 'promo', status: 'unused', expires_at: exp.iso };
+    });
+
+    // resolution=ignore-duplicates is the on-conflict-do-nothing the SQL loader used, so
+    // re-pasting a list you already loaded cannot reset a code you have since sent out.
+    authFetch('/rest/v1/license_keys?on_conflict=code', {
+      method: 'POST',
+      headers: { Prefer: 'return=representation,resolution=ignore-duplicates' },
+      body: JSON.stringify(payload)
+    }).then(function (r) {
+      if (r.status === 401 || r.status === 403) {
+        throw new Error('Not authorised to insert. The RLS policy needs an INSERT rule for this account.');
+      }
+      if (!r.ok) return r.text().then(function (t) { throw new Error('HTTP ' + r.status + ' ' + t.slice(0, 200)); });
+      return r.json();
+    }).then(function (out) {
+      var added = out.length, dup = parsed.codes.length - added;
+      var bits = [added + ' added'];
+      if (dup) bits.push(dup + ' already here');
+      if (parsed.junk.length) bits.push(parsed.junk.length + ' skipped');
+      say('lMsg', productName(ver) + ': ' + bits.join(', ') + '.', added ? 'good' : '');
+      el('lCodes').value = '';        // codes are not left sitting in the page
+      return load();
+    }).catch(function (err) { say('lMsg', err.message, 'bad'); });
   });
 
   ['q', 'fProduct', 'fState', 'fTier'].forEach(function (id) {

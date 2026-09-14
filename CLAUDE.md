@@ -78,9 +78,54 @@ single network call in the desktop line, and it is disclosed.
   from nowhere. Reached by **Ctrl-clicking (or Cmd-clicking) the footer logo** on any
   page; the delegated handler is at the bottom of `nav.js`. Hidden, not secret — the
   repo is public, so the real gate is Supabase Auth plus RLS, which returns an empty
-  array when signed out. `license-admin.html` can only SELECT and UPDATE; codes are
-  minted offline, so nothing here creates or destroys inventory. `version` is a product
-  marker, not a release number: 7 is Rack Detector, 1001 is Rack Viewer.
+  array when signed out. `license-admin.html` can SELECT, UPDATE and INSERT, but **never
+  DELETE** — nothing on the site can destroy inventory or alter a code that has been sent.
+  Desktop keys are still minted offline by `gen_codes.py`; the INSERT path exists only for
+  the Rack Scorer promo batches, via the Load panel described below. `version` is a product
+  marker, not a release number: 7 is Rack Detector, 1001 is Rack Viewer, 2001 is Rack
+  Scorer (Android) and 2002 is Rack Scorer (iOS).
+
+**Rack Scorer's codes are store promo codes, and behave unlike the desktop ones.** They
+are minted in Play Console and App Store Connect, redeemed inside the store, and Rack
+Scorer makes no network call, so **no redemption is ever reported back.** Those two
+products track one axis only: a code is in the pool, or it has been handed to someone.
+The Activated columns read `n/a` for them on purpose — do not wire up an activated state
+for Scorer, because it could only ever be typed in by hand, and a hand-typed guess in the
+same column as a real activation stops looking like a guess within a week.
+
+Android and iOS are **two products, not one with a platform column**, because a Play code
+is useless to an iPhone buyer. This is deliberately the opposite call to the download
+counters, where both stores share `downloads_rackscorer`.
+
+`license_keys.expires_at` (timestamptz, nullable) exists for these: Apple's promo codes
+die 28 days after generation, Play codes carry the end date you set. The admin page greys
+out expired codes, flags anything inside a week, and excludes expired codes from the
+Assign pool. Expiry is tracked **separately from state**, since a code can be unsent and
+expired (dead inventory) or sent and expired (posted, never redeemed). Desktop codes
+leave it null and are unaffected.
+
+**Redemption links are built from the code, never stored.** Both are confirmed working
+(2026-09-14):
+
+- Play — `https://play.google.com/redeem?code=…`
+- App Store — `https://apps.apple.com/redeem?code=…`, **no app id and no `ctx`**
+
+Apple documents no redemption URL for app promo codes, so that second one was found by
+testing, and two plausible-looking "corrections" both break it. Adding `id=6807572200` is
+unnecessary — a promo code already identifies its own app. Switching to `ctx=offercodes`,
+which every search result recommends, is wrong: that form is for *subscription and IAP
+offer codes*, and Rack Scorer is a one-time paid app whose codes are plain app promo
+codes. Leave `REDEEM[2002]` in `license-admin.html` as it is.
+
+**Clicking a code in the admin table redeems it.** The links are live anchors, so a stray
+click burns a code against whatever account the browser is signed in to, unrecoverably.
+The `link` button beside each code copies the URL instead, which is what sending one
+actually needs.
+
+The Assign button hands out the **soonest-expiring** code first, and skips any code whose
+tier is not `pro` on the desktop products — it used to be able to give a Rack Detector
+giveaway code to a paying buyer without the unsold count moving. Sending a promo code on
+purpose is what the row Edit button is for.
 
 ## Conventions
 
@@ -202,6 +247,20 @@ main place those keywords live. Do not strip the descriptions too.
 ## Known open items
 
 - No terms page for Rack Tracker or Rack Scorer.
+- Promo codes are loaded by **pasting them into the Load panel on `license-admin.html`**.
+  `load_promo_codes.py`, alongside `gen_codes.py` outside this repo, does the same job as
+  SQL and is the fallback if the page is broken. Store code lists carry no dates, so
+  expiry is chosen at load time, and **the two stores need different settings.** Apple states a rule rather than a date, so iOS batches use
+  "generated on" / `--generated YYYY-MM-DD` and get generation + 28 days at 12:00Z —
+  midday because Apple does not publish what time of day they die. Play states an end
+  date outright, so those
+  use "good until" / `--expires YYYY-MM-DD` and get 23:59:59Z, the end of that day being
+  what "good until the 1st" means. Do not assume Play is also 28 days: the 2026-09-14
+  batch runs to 2027-01-01. Keep code lists and generated SQL out of this repo — they are unredeemed
+  codes and the repo is public. **The codes cannot live in this repo instead of Supabase**
+  — it is public, git history is permanent, and Pages has nothing to write to, so "handed
+  out" could not be recorded at all. Asked and answered on 2026-09-14; the paste box was
+  built to remove the trip to the SQL editor, which was the actual friction.
 - Rack Scorer's App Store and Play Store clicks land in one counter table, so the
   admin cannot split them by platform. A fifth table would be the fix.
 - `rack-scorer.html` embeds its demo with a plain `<iframe>` that loads with the page,
