@@ -13,6 +13,10 @@ Pushing to `main` publishes. Live at:
 https://hj-3207.github.io/elevation-tech-website/
 ```
 
+The one piece of CI is `.github/workflows/keep-supabase-awake.yml`, which keeps the
+Supabase project from pausing. It is not a build step — what Pages serves is still exactly
+what is committed.
+
 **The site is served from a subpath, not a domain root.** Never use
 root-relative paths (`/img/foo.png`) — they resolve to `hj-3207.github.io/img/...`
 and 404. Always relative (`img/foo.png`). This bit the web manifest once already.
@@ -232,6 +236,38 @@ text, real place names, and another hunter's name and photo. Published knowingly
 (decided 2026-07-30). Do not add a "sample data only" disclaimer to that section;
 it would be untrue. If they ever need pulling, note the images persist in git
 history, so a deletion commit alone will not remove them.
+
+**A paused Supabase project looks exactly like a forgotten password.** The free tier
+pauses after about a week of inactivity, and the sign-in on `license-admin.html` then
+fails with the generic **"Sign in failed."** rather than "Invalid login credentials".
+`LA.signIn` reports `error_description || msg || 'Sign in failed.'`, and a paused project
+answers with `{"message":"Bad Gateway"}` — a field that line does not read. So check the
+project is awake before going looking for the credentials (diagnosed 2026-09-24):
+
+```bash
+curl -s https://baopxmwebqfdubvgjsri.supabase.co/auth/v1/health \
+  -H "apikey: $(grep -o 'sb_publishable_[A-Za-z0-9_]*' admin-auth.js)"
+```
+
+Awake returns `200` and a line of GoTrue version JSON; the `apikey` header is required,
+since without it an awake project answers `401` rather than `200`. Paused returns `502`
+from `/auth/v1/*` and a Cloudflare `521` HTML page from `/rest/v1/*`, while the gateway
+still echoes `sb-project-ref`, so DNS and routing look healthy throughout. Restore is a
+button on the project in the Supabase dashboard. Note what the outage costs quietly:
+`downloads.js` swallows its insert failures on purpose, so every store and download click
+for the whole paused window is gone with no error logged anywhere, and the counter totals
+simply have a hole in them.
+
+`.github/workflows/keep-supabase-awake.yml` now runs a real `SELECT` against `downloads`
+four times a day to clear that bar. It has to be a database query: the criterion Supabase
+publishes is "a few user requests to the database each day", so the `/auth/v1/health`
+check above diagnoses a pause but would not prevent one. The query is deliberately signed
+out, so RLS returns `[]` and the job needs no secret. Its second step exists because
+GitHub disables scheduled workflows in a public repo after 60 days without repository
+activity — which would switch the job off during exactly the quiet stretch it covers — so
+past day 45 it commits a stamp file to reset that clock. **It is a stopgap, not the fix.**
+The only documented guarantee is the Pro plan, and no keep-alive helps a buyer who is
+trying to activate during an outage it failed to prevent.
 
 ## Copy voice
 

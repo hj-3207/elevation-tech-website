@@ -1,0 +1,66 @@
+name: Keep Supabase awake
+
+# The Supabase free plan pauses a project that goes a week without "sufficient user
+# database activity"; their docs put the bar at "a few user requests to the database each
+# day over the previous week". This job clears that bar with a real query.
+#
+# It matters well beyond the admin page: license activation for Rack Detector and Rack
+# Viewer runs against this same project, so a paused project means a buyer who has already
+# paid cannot activate. See privacy-policy-rackdetector.html.
+#
+# This is a stopgap and not a guarantee. The only documented guarantee against pausing is
+# the Pro plan. If the licence line keeps selling, buy the guarantee.
+
+on:
+  schedule:
+    # Four times a day. The minute is deliberately off the hour: Actions delays jobs
+    # scheduled on the hour when the queue is busy, and :00 is the busiest minute there is.
+    - cron: '23 1,7,13,19 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Query the database
+        run: |
+          KEY=$(grep -o 'sb_publishable_[A-Za-z0-9_]*' admin-auth.js)
+          if [ -z "$KEY" ]; then
+            echo "::error::No publishable key found in admin-auth.js."
+            exit 1
+          fi
+          URL="https://baopxmwebqfdubvgjsri.supabase.co/rest/v1/downloads?select=id&limit=1"
+          CODE=$(curl -s -o body.txt -w '%{http_code}' --max-time 30 "$URL" -H "apikey: $KEY")
+          echo "HTTP $CODE"
+          cat body.txt
+          echo
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Supabase answered $CODE, not 200. The project may be paused."
+            exit 1
+          fi
+          rm -f body.txt
+
+      - name: Keep this schedule from being disabled
+        run: |
+          # GitHub disables scheduled workflows in a public repo after 60 days with no
+          # repository activity, which would switch this job off during exactly the quiet
+          # stretch it exists to cover. A commit is repository activity, so take out the
+          # cheapest possible insurance well before the deadline.
+          LAST=$(git log -1 --format=%ct)
+          DAYS=$(( ( $(date +%s) - LAST ) / 86400 ))
+          echo "Last commit was $DAYS days ago."
+          if [ "$DAYS" -lt 45 ]; then
+            echo "Well inside the 60-day window, nothing to do."
+            exit 0
+          fi
+          date -u +'%Y-%m-%dT%H:%M:%SZ' > .github/last-keepalive
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/last-keepalive
+          git commit -m 'Touch the repo so the keep-alive schedule stays enabled'
+          git push
