@@ -37,7 +37,7 @@
   });
 })();
 
-/* Ctrl-click (or Cmd-click) the footer logo to reach the license admin.
+/* Five quick taps, or Ctrl-click (Cmd-click), the footer logo to reach the license admin.
  *
  * Hidden, not secret. This file is public, so anyone reading it learns the path, and that
  * is fine: the admin page is gated by Supabase Auth plus row level security, and signed
@@ -48,10 +48,33 @@
  * on the plain <img> logo which is not a link.
  */
 (function () {
+  var logoTaps = 0;
+  var tapReset;
+
   document.addEventListener('click', function (e) {
-    if (!e.ctrlKey && !e.metaKey) return;
-    if (!e.target.closest('.footer-logo')) return;
-    e.preventDefault();
-    window.location.href = 'license-admin.html';
+    var logo = e.target.closest('.footer-logo');
+
+    if (e.ctrlKey || e.metaKey) {
+      if (!logo) return;
+      e.preventDefault();
+      window.location.href = 'license-admin.html';
+      return;
+    }
+
+    if (!logo) {
+      logoTaps = 0;
+      window.clearTimeout(tapReset);
+      return;
+    }
+
+    logoTaps += 1;
+    window.clearTimeout(tapReset);
+    if (logoTaps === 5) {
+      window.location.href = 'license-admin.html';
+      return;
+    }
+    tapReset = window.setTimeout(function () {
+      logoTaps = 0;
+    }, 2500);
   });
 })();
