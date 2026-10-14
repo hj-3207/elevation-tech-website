@@ -97,8 +97,9 @@ single network call in the desktop line, and it is disclosed.
 - `google4f30917507f29334.html` — Search Console verification, do not touch
 - `license-admin.html`, `download-log.html` — internal admin, `noindex`, and linked
   from nowhere. Reached by **Ctrl-clicking (or Cmd-clicking) the footer logo** on desktop
-  or **tapping it five times within 2.5 seconds** on mobile; the delegated handler is at
-  the bottom of `nav.js`. Hidden, not secret — the
+  or **tapping it five times** on mobile, with no gap longer than 2.5 seconds (the timer
+  restarts on each tap, and a tap anywhere else resets the count); the delegated handler
+  is at the bottom of `nav.js`. Hidden, not secret — the
   repo is public, so the real gate is Supabase Auth plus RLS, which returns an empty
   array when signed out. `license-admin.html` can SELECT, UPDATE and INSERT, but **never
   DELETE** — nothing on the site can destroy inventory or alter a code that has been sent.
