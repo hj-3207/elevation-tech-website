@@ -1,8 +1,9 @@
 # Elevation Technology Solutions — website
 
 Hand-written static site. **No build step, no framework, no dependencies, no
-package.json.** Twelve public pages plus two unlinked admin pages, one shared
-stylesheet and six small JS files. Edit a file, refresh the browser.
+package.json.** Twelve hand-written public pages, one generated page
+(`draw-odds.html`, see below), two unlinked admin pages, one shared stylesheet
+and six small JS files. Edit a file, refresh the browser.
 
 ## Deploy
 
@@ -94,6 +95,8 @@ single network call in the desktop line, and it is disclosed.
 - `terms-rack{detector,viewer}.html` — Tracker and Scorer have no terms page yet
 - `privacy-policy-rackracker.html` — **typo filename, kept deliberately.** Was
   published first and may be linked externally; it redirects to the correct page.
+- `draw-odds.html` — Utah big game draw odds tool. **Generated, do not edit here**
+  (see "Draw Odds page" below).
 - `google4f30917507f29334.html` — Search Console verification, do not touch
 - `license-admin.html`, `download-log.html` — internal admin, `noindex`, and linked
   from nowhere. Reached by **Ctrl-clicking (or Cmd-clicking) the footer logo** on desktop
@@ -187,8 +190,9 @@ block; both admin pages carry their own too.
 **Shared JS** — six files, each loaded with a plain `<script src>`:
 
 - `nav.js` — mobile nav toggle, plus the Ctrl-click route to the admin page. All 12
-  public pages.
-- `lightbox.js` — click a content image to see it full size. All 12 public pages.
+  public pages, plus `draw-odds.html`.
+- `lightbox.js` — click a content image to see it full size. All 12 hand-written
+  public pages (not `draw-odds.html`, which has no content images).
   Opt-in by selector, so logos and tile icons stay unclickable.
 - `carousel.js` — screenshot carousel. `rack-tracker.html`, `rack-scorer.html`.
 - `downloads.js` — store and download click counters. **All four** product pages.
@@ -205,7 +209,33 @@ block; both admin pages carry their own too.
 **The nav is duplicated across all 12 pages and must stay identical.** Five links —
 home, about, services, apps, contact — in that order. Every page points at
 `index.html#…`; `index.html` alone uses bare `#…` so it scrolls instead of
-reloading. There is no templating, so changing the nav means changing 12 files.
+reloading. There is no templating, so changing the nav means changing 12 files —
+**plus** `draw-odds.html`, whose nav comes from its template in the Draw Odds
+project (`src/template.html`); change it there and rebuild.
+
+## Draw Odds page (generated)
+
+`draw-odds.html`, `img/drawodds-*.png` and everything in `data/draw-odds/` are
+written by the Draw Odds project, not by hand. Source of truth:
+`OneDrive\Documents\Hunting\DrawOdds` (its `CLAUDE.md` has the full context). To update:
+
+```
+cd <OneDrive>\Documents\Hunting\DrawOdds
+python tools/build_utah.py --site      # rebuilds the page and copies it here
+```
+
+then commit the changes in this repo as usual. The build never touches git.
+
+- The page links `style.css` and `nav.js` like the others; its own page styles are
+  inline. It uses `div.panel` and `.do-container` rather than `section` /
+  `.container`, because `style.css` pads every `section` and caps `.container` at 1080px.
+- About 900 KB, because the draw data is inline so the same page also works opened
+  from disk.
+- `data/draw-odds/` is a **backup** of every year's draw data, about 11 MB. That
+  includes `raw/utah_<year>_*.json`, which utahdraws.com no longer serves once the
+  year passes, so it can't be re-downloaded. Don't delete it.
+- It stores hunters' points in the visitor's browser (localStorage) only and makes no
+  network calls beyond Google Fonts. That's consistent with the site's privacy argument.
 
 **The nav is `position: fixed`,** so anchor targets need to reserve room or they
 land underneath it. `style.css` handles this globally:

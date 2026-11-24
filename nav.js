@@ -1,8 +1,8 @@
 /* Mobile nav toggle, loaded by every page.
 
-   The nav markup is identical on all 12 pages and the link row is plain HTML, so
-   with this script absent the desktop nav still works exactly as before — only
-   the sub-680px dropdown depends on it.
+   The nav markup is identical on all 12 pages (and the generated draw-odds.html)
+   and the link row is plain HTML, so with this script absent the desktop nav
+   still works exactly as before — only the sub-680px dropdown depends on it.
 
    Markup contract: a <nav> containing button.nav-toggle and div.nav-links.
    The .open class on each is what style.css keys the dropdown off. */
