@@ -168,6 +168,12 @@ table.pts tr.me td.est{color:#fff}
 .hunters-tbl td.l,.hunters-tbl th.l{text-align:left}
 .hunters-tbl td:first-child{font-weight:600}
 .na{color:var(--subtle);font-family:var(--mono);font-size:0.78rem}
+/* Projections (next year's guaranteed and split): italic and a step dimmer than
+   actual results, so an estimate never reads as a result. Same in the header. */
+td.is-proj .big{font-style:italic;color:var(--soft);font-weight:700}
+table.main th.is-proj{font-style:italic}
+.proj-key i{color:var(--soft);font-weight:700}
+.m-bar{display:none}
 
 /* WEAPON BUTTONS + BADGES */
 .wtypes-ctl{grid-column:span 2}
@@ -327,6 +333,40 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   .controls .wtypes-ctl,.controls .ctl:nth-child(3),.controls .ctl.checks{grid-column:1/-1}
   .detail-grid{max-width:calc(100vw - 4.75rem)}
 }
+/* PHONES: each hunt becomes a card. The hunt name runs across the top, then four
+   numbers: tags, guaranteed, projected guaranteed, and the hunter's odds. The rest
+   (applicants, split, harvest, trends) is one tap away in the hunt's detail. */
+@media (max-width:680px){
+  .m-bar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:0.6rem;margin:0 0 0.9rem}
+  .m-bar label{display:flex;flex-direction:column;gap:0.3rem;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);flex:1;min-width:140px}
+  .m-bar select{background:var(--bg2);color:var(--text);border:1px solid var(--border-strong);border-radius:6px;padding:0.5rem;font-size:0.85rem;min-height:38px;width:100%}
+  .m-dir{background:var(--bg2);color:var(--text);border:1px solid var(--border-strong);border-radius:6px;min-height:38px;min-width:42px;cursor:pointer}
+  .tbl-wrap{background:none;border:0;border-radius:0;overflow:visible;max-height:none;min-height:0}
+  table.main{min-width:0!important;display:block}
+  table.main>thead{display:none}
+  table.main>tbody{display:block}
+  table.main>tbody>tr.row,table.main>tbody>tr.srow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0.55rem 0.5rem;position:relative;
+    background:var(--card);border:1px solid var(--border);border-radius:10px;padding:0.8rem 0.85rem;margin-bottom:0.5rem}
+  table.main>tbody>tr.row.open{border-color:var(--border-orange);border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0}
+  table.main>tbody>tr.row>td,table.main>tbody>tr.srow>td{display:block;border:0;padding:0;text-align:left;white-space:normal;min-width:0;max-width:none;background:none!important}
+  table.main>tbody>tr>td.k-star{position:absolute;top:0.55rem;right:0.5rem;width:auto}
+  table.main>tbody>tr>td.k-unit{grid-column:1/-1;padding-right:2rem}
+  table.main>tbody>tr>td.k-sp{grid-column:1/-1;padding-right:2rem}
+  table.main>tbody>tr>td.k-sp + td.k-unit{margin-top:-0.3rem}
+  table.main>tbody>tr.row>td:not(.k-star):not(.k-unit):not(.k-tags):not(.k-guar):not(.k-proj):not(.k-mine),
+  table.main>tbody>tr.srow>td.k-psplit{display:none}
+  table.main>tbody>tr>td[data-label]::before{content:attr(data-label);display:block;font-family:var(--mono);font-size:0.54rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;line-height:1.3}
+  table.main>tbody>tr>td[data-label] .big{font-size:0.92rem}
+  table.main>tbody>tr>td[data-label] .small{font-size:0.58rem}
+  table.main>tbody>tr>td.k-mine .pill{font-size:0.78rem}
+  table.main>tbody>tr.srow>td.k-mine:nth-child(n+9){grid-column:span 2}
+  table.main>tbody>tr.grp{display:block}
+  table.main>tbody>tr.grp>td{display:block;border:0;padding:1rem 0.2rem 0.5rem;background:none;white-space:normal}
+  table.main>tbody>tr.detail{display:block;margin-bottom:0.6rem}
+  table.main>tbody>tr.detail>td{display:block;border:1px solid var(--border-orange);border-top:0;border-radius:0 0 10px 10px}
+  table.main>tbody>tr.row.in-grp>td.k-unit{padding-left:0}
+  table.main>tbody>tr>td.empty,table.main>tbody>tr>td.star-empty{display:block;background:var(--card);border:1px solid var(--border);border-radius:10px}
+}
 @media print{
   nav,.grid-bg,.controls,.explain,.star,footer{display:none!important}
   main{padding:0} body{background:#fff;color:#000}
@@ -433,6 +473,13 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   </div>
 
   <div class="summary" id="summary" aria-live="polite"></div>
+  <!-- Phones only: the table becomes cards with no header row, so sorting and the
+       column filters move here. -->
+  <div class="m-bar" id="mBar">
+    <label>Sort <select id="mSort"></select></label>
+    <button type="button" class="m-dir" id="mDir" aria-label="Reverse sort order">▲</button>
+    <label>Filter <select id="mFilter"><option value="">Choose a column…</option></select></label>
+  </div>
   <div class="filter-bar" id="filterBar"></div>
 
   <div class="tbl-wrap" id="mainWrap">
@@ -729,17 +776,17 @@ function columns(st){
   return [
     {key:"star", label:"", cls:"c-star l", sort:false},
     {key:"unit", label:"Hunt", cls:"l", filter:"units"},
-    {key:"tags", label:`${tagYear(st)} tags`, filter:"num"},
+    {key:"tags", label:`${tagYear(st)} tags`, short:`${tagYear(st)} tags`, filter:"num"},
     {key:"apps", label:`${D} applicants`, filter:"num"},
-    {key:"guar", label:`${D} guaranteed at`, filter:"num", unit:"pts"},
+    {key:"guar", label:`${D} guaranteed at`, short:`${D} guaranteed`, filter:"num", unit:"pts"},
     {key:"split", label:`${D} split group`, filter:"num", unit:"pts"},
     {key:"harv", label:`${st.harvestYear} harvest success`, filter:"pct"},
     {key:"dtags", label: st.nextTags ? `Tag change ${D}–${N}` : `Tag change ${D-1}–${D}`, filter:"num"},
     {key:"creep", label:`Point creep ${D-1}–${D}`, filter:"num", unit:"pts"},
     {key:"demand", label:`${D} vs projected`, filter:"num", unit:"pts"},
-    {key:"proj", label:`${N} projected guaranteed`, filter:"num", unit:"pts"},
-    {key:"psplit", label:`${N} projected split`, filter:"num", unit:"pts"},
-    {key:"mine", label:`${prof.name}'s ${N} odds`, filter:"pct"},
+    {key:"proj", label:`${N} projected guaranteed`, short:`${N} projected`, filter:"num", unit:"pts", proj:true},
+    {key:"psplit", label:`${N} projected split`, filter:"num", unit:"pts", proj:true},
+    {key:"mine", label:`${prof.name}'s ${N} odds`, short:`${prof.name}'s odds`, filter:"pct"},
   ].filter(c => ui.showTrends || !TREND_KEYS.includes(c.key));
 }
 // Value used by both sorting and the column filters (percent columns in 0-100).
@@ -786,10 +833,19 @@ function renderHead(cols){
     const on = ui.sort.key === c.key && !(c.key === "unit" && isGrouped());
     const aria = ui.sort.key === c.key ? (ui.sort.dir > 0 ? "ascending" : "descending") : "none";
     const fOn = activeFilters().some(([k]) => k === c.key);
-    return `<th class="${c.cls||""}${fOn ? " f-on" : ""}" scope="col" aria-sort="${aria}"><span class="th-in">` +
+    return `<th class="${c.cls||""}${fOn ? " f-on" : ""}${c.proj ? " is-proj" : ""}" scope="col" aria-sort="${aria}"${c.proj ? ` title="A projection for the ${nextYear(curState())} draw, not a result"` : ""}><span class="th-in">` +
       `<button type="button" class="sbtn" data-sort="${c.key}">${esc(c.label)}${on ? `<span class="arr">${ui.sort.dir > 0 ? "▲" : "▼"}</span>` : ""}</button>` +
       `<button type="button" class="fbtn${fOn ? " on" : ""}" data-filter="${c.key}" aria-label="Filter ${esc(c.label)}" aria-haspopup="dialog">${FUNNEL}</button></span></th>`;
   }).join("");
+}
+
+// Phone sort/filter bar: the same sorting and filters as the header buttons.
+function renderMobileBar(cols){
+  const sortable = cols.filter(c => c.sort !== false);
+  $("#mSort").innerHTML = sortable.map(c => `<option value="${c.key}"${ui.sort.key === c.key ? " selected" : ""}>${esc(c.key === "unit" ? "Hunt (grouped by unit)" : c.label)}</option>`).join("");
+  $("#mDir").textContent = ui.sort.dir > 0 ? "▲" : "▼";
+  $("#mFilter").innerHTML = `<option value="">Choose a column…</option>` +
+    sortable.map(c => `<option value="${c.key}">${esc(c.key === "unit" ? "Units" : c.label)}</option>`).join("");
 }
 
 // ---------- render ----------
@@ -833,11 +889,12 @@ function render(){
     `<span><b>${list.length}</b> hunt${list.length === 1 ? "" : "s"} in <b>${units.size}</b> unit${units.size === 1 ? "" : "s"}</span><span><b>${fmt(totTags)}</b> ${tagYear(st)} ${ui.res === "R" ? "resident" : "nonresident"} tags</span>` +
     `<span><b>${fmt(totApps)}</b> ${st.drawYear} first-choice applicants</span>` +
     (sp.system === "preference" ? `<span>Preference-point draw (no random half)</span>` : `<span>Bonus-point draw (half to top points, half random)</span>`) +
+    `<span class="proj-key"><i>Italic</i> = ${N} projection</span>` +
     (p == null ? `<span>Enter ${esc(prof.name)}'s ${esc(sp.short || sp.label)} points above to see odds.</span>` : `<span>${esc(prof.name)}: <b>${p}</b> pts</span>`) +
     (grouped && list.length ? `<span class="grp-acts"><button type="button" class="link-btn" data-groups="collapse">Collapse all</button><button type="button" class="link-btn" data-groups="expand">Expand all</button></span>` : "");
   renderFilterBar(cols);
 
-  renderHead(cols);
+  renderHead(cols); renderMobileBar(cols);
   if (!list.length){
     $("#tbody").innerHTML = `<tr><td colspan="${cols.length}" class="empty">No hunts match these filters.</td></tr>`;
     return;
@@ -896,11 +953,17 @@ function rowHtml(st, sp, h, a, p, inGroup){
   const name = inGroup
     ? `<div class="unit">${esc(h.weapon)}${badges}</div><div class="meta"><span class="code">${esc(h.code)}</span>${esc(dates)}</div>`
     : `<div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div>${badges ? `<div class="badges">${badges}</div>` : ""}`;
-  return `<tr class="row${open ? " open" : ""}${inGroup ? " in-grp" : ""}" data-code="${esc(h.code)}" tabindex="0" aria-expanded="${open}">
-    <td class="c-star l"><button type="button" class="star" data-star="${esc(id)}" aria-pressed="${starred}" aria-label="${starred ? "Unstar" : "Star"} ${esc(h.unit)} ${esc(h.code)}">★</button></td>
-    <td class="l hunt">${name}</td>
-    <td>${tags}</td><td><span class="big">${fmt(a.apps)}</span></td><td>${guar}</td><td>${split}</td>
-    <td>${hv}</td>${ui.showTrends ? `<td>${trendCell(a.trend, "tags")}</td><td>${trendCell(a.trend, "pts")}</td><td>${demandCell(a.trend)}</td>` : ""}<td>${pGuar}</td><td>${pSplit}</td><td>${mine}</td></tr>`;
+  const cell = {
+    star: `<button type="button" class="star" data-star="${esc(id)}" aria-pressed="${starred}" aria-label="${starred ? "Unstar" : "Star"} ${esc(h.unit)} ${esc(h.code)}">★</button>`,
+    unit: name, tags, apps: `<span class="big">${fmt(a.apps)}</span>`, guar, split, harv: hv,
+    dtags: trendCell(a.trend, "tags"), creep: trendCell(a.trend, "pts"), demand: demandCell(a.trend),
+    proj: pGuar, psplit: pSplit, mine,
+  };
+  // Each cell carries its column key (k-*) and a short label: on phones the row
+  // becomes a card and shows only some cells, each under its label.
+  return `<tr class="row${open ? " open" : ""}${inGroup ? " in-grp" : ""}" data-code="${esc(h.code)}" tabindex="0" aria-expanded="${open}">` +
+    columns(st).map(c => `<td class="k-${c.key}${c.key === "star" ? " c-star l" : c.key === "unit" ? " l hunt" : ""}${c.proj ? " is-proj" : ""}"` +
+      `${c.short ? ` data-label="${esc(c.short)}"` : ""}>${cell[c.key]}</td>`).join("") + `</tr>`;
 }
 // Change over one year, with the two-year change underneath. Orange marks the
 // direction that's worse for applicants: fewer tags, or more points needed.
@@ -1204,7 +1267,7 @@ function renderStarred(st){
   const D = st.drawYear, N = nextYear(st), list = starredHunts(st);
   const heads = ["", "Species", "Hunt", `${tagYear(st)} tags`, `${D} guaranteed at`, `${N} projected guaranteed`, `${N} projected split`]
     .concat(ui.profiles.map(p => `${p.name}'s ${N} odds`));
-  $("#starHead").innerHTML = heads.map((h, i) => `<th class="${i < 3 ? "l" : ""}${i === 0 ? " c-star" : ""}">${esc(h)}</th>`).join("");
+  $("#starHead").innerHTML = heads.map((h, i) => `<th class="${i < 3 ? "l" : ""}${i === 0 ? " c-star" : ""}${i === 5 || i === 6 ? " is-proj" : ""}">${esc(h)}</th>`).join("");
   $("#starSum").innerHTML = list.length
     ? `<b>${list.length}</b> starred hunt${list.length === 1 ? "" : "s"} across every species, with each hunter's ${N} odds at their points for that species. Click a hunt to open it in its species table.`
     : `Starred hunts from every species show up here.`;
@@ -1226,14 +1289,15 @@ function renderStarred(st){
     const pSplit = !m || m.randomOnly || m.all ? `<span class="na">—</span>` : `<span class="big">${m.split} pts</span><span class="small">${fmt(m.k)} of ${fmt(m.n)} draw</span>`;
     const odds = ui.profiles.map(prof => {
       const p = ptsOf(prof, s.key), o = oddsAt(m, p);
-      return `<td>${p == null ? `<span class="na">add points</span>` : o == null ? `<span class="na">—</span>`
+      return `<td class="k-mine" data-label="${esc(prof.name)}'s odds">${p == null ? `<span class="na">add points</span>` : o == null ? `<span class="na">—</span>`
         : `<span class="pill ${oddsClass(o)}">${pct(o)}</span><span class="small">${p} pt${p === 1 ? "" : "s"}</span>`}</td>`;
     }).join("");
     return `<tr class="srow" data-sp="${esc(s.key)}" data-code="${esc(h.code)}" tabindex="0">
-      <td class="c-star l"><button type="button" class="star" data-star="${esc(id)}" aria-pressed="true" aria-label="Unstar ${esc(h.unit)} ${esc(h.code)}">★</button></td>
-      <td class="l sp">${s.icon ? `<img src="${esc(s.icon)}" alt="">` : ""}<span>${esc(s.short || s.label)}</span></td>
-      <td class="l hunt"><div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div></td>
-      <td>${tags}</td><td>${guar}</td><td>${pGuar}</td><td>${pSplit}</td>${odds}</tr>`;
+      <td class="c-star l k-star"><button type="button" class="star" data-star="${esc(id)}" aria-pressed="true" aria-label="Unstar ${esc(h.unit)} ${esc(h.code)}">★</button></td>
+      <td class="l sp k-sp">${s.icon ? `<img src="${esc(s.icon)}" alt="">` : ""}<span>${esc(s.short || s.label)}</span></td>
+      <td class="l hunt k-unit"><div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div></td>
+      <td class="k-tags" data-label="${tagYear(st)} tags">${tags}</td><td class="k-guar" data-label="${D} guaranteed">${guar}</td>
+      <td class="k-proj is-proj" data-label="${N} projected">${pGuar}</td><td class="k-psplit is-proj">${pSplit}</td>${odds}</tr>`;
   }).join("");
 }
 function renderHunter(){
@@ -1379,6 +1443,10 @@ $("#thead").addEventListener("click", e => {
   ui.sort = ui.sort.key === k ? {key:k, dir:-ui.sort.dir} : {key:k, dir: k === "unit" || k === "guar" || k === "split" || k === "proj" || k === "psplit" ? 1 : -1};
   render();
 });
+const defaultDir = k => k === "unit" || k === "guar" || k === "split" || k === "proj" || k === "psplit" ? 1 : -1;
+$("#mSort").onchange = e => { const k = e.target.value; ui.sort = {key: k, dir: defaultDir(k)}; render(); };
+$("#mDir").onclick = () => { ui.sort = {key: ui.sort.key, dir: -ui.sort.dir}; render(); };
+$("#mFilter").onchange = e => { const k = e.target.value; if (k) openFilter(k, e.target); e.target.value = ""; };
 $("#summary").addEventListener("click", e => {
   const b = e.target.closest("[data-groups]"); if (!b) return;
   if (b.dataset.groups === "expand") ui.collapsed.clear();

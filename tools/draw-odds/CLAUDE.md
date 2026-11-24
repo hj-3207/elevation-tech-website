@@ -116,6 +116,12 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - Every column has a **filter button**: min/max for numbers, a unit multi-select for Hunt.
   - The **header row is frozen**: the table scrolls inside its own pane.
   - The table must fit at **1,400 px** width. Check `.tbl-wrap` scrollWidth vs clientWidth after adding anything.
+  - **Projections look different** (added 2026-11-24): the next-year projected guaranteed and split numbers are *italic* and a step dimmer (`td.is-proj`, `th.is-proj`, column flag `proj:true`), with a key in the summary line ("*Italic* = 2027 projection") and a header tooltip. The odds pill is also a next-year figure but keeps its colors; its header says "2027 odds".
+  - **Phones (680 px and under) get cards, not the table** (added 2026-11-24). It's CSS only, on the same rows: every cell has a `k-<column>` class and, for the card's numbers, a `data-label` from the column's `short` label.
+    - **Each card:** hunt name, code and dates across the top, star at the top right, then four numbers: tags, guaranteed, projected guaranteed and the active hunter's odds. Other cells are hidden; tapping the card opens the full detail underneath.
+    - **Sorting and filters:** the header row is hidden, so a phone-only bar (`#mBar`, `renderMobileBar`) has a Sort menu, a direction button and a Filter menu that opens the same popover.
+    - The Starred list uses the same card layout, with one odds box per hunter.
+    - **Keep the card CSS scoped with `>`** (`table.main>tbody>tr.row>td`): the hunt detail has its own tables inside the row, and descendant selectors broke them.
 - **Badges** come from DWR labels:
   - Management buck (rule R657-5-45: 3 points or less on at least one antler, eye guards don't count), Cactus buck, Premium, Restricted (restricted rifle: open or peep sights, no semi-auto, per R657-5-48), HAMSS, and bison Cow only / Hunter's choice.
   - The cactus buck and HAMSS wording is plain-language, unconfirmed against DWR, and says to check the guidebook.
