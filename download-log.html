@@ -66,6 +66,7 @@
   <div class="la-msg" id="msg"></div>
   <div class="vtab-row" id="tabs"></div>
   <div class="la-stats" id="stats"></div>
+  <div id="refs" hidden></div>
 
   <div class="dl-grid">
     <div>
@@ -81,7 +82,7 @@
       <div class="dl-sub">Every click</div>
       <div class="la-tablewrap">
         <table class="la-table">
-          <thead><tr><th>#</th><th>When</th><th>Ago</th></tr></thead>
+          <thead><tr id="rowHead"><th>#</th><th>When</th><th>Ago</th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
       </div>
@@ -107,13 +108,21 @@
     ['downloads', 'Rack Detector'],
     ['downloads_rackviewer', 'Rack Viewer'],
     ['downloads_racktracker', 'Rack Tracker'],
-    ['downloads_rackscorer', 'Rack Scorer']
+    ['downloads_rackscorer', 'Rack Scorer'],
+    // Not a download counter: clicks from draw-odds.html through to the app pages,
+    // with which app and where on the page. Table: tools/draw-odds/referrals_drawodds.sql.
+    ['referrals_drawodds', 'Draw Odds → apps']
   ];
+  var REF_APPS = [['detector', 'Rack Detector'], ['viewer', 'Rack Viewer'], ['tracker', 'Rack Tracker'],
+                  ['scorer', 'Rack Scorer'], ['apps', 'Apps page']];
+  var REF_PLACES = [['top', 'Top row'], ['detail', 'Hunt details'], ['after', 'After the draw']];
 
   var el = function (id) { return document.getElementById(id); };
   var table = (location.search.match(/[?&]t=([a-z_]+)/) || [])[1] || 'downloads';
   if (!TABLES.some(function (t) { return t[0] === table; })) table = 'downloads';
+  var isRef = table === 'referrals_drawodds';
   var loaded = [];
+  var meta = [];        // referrals only: {app, placement} per loaded row
   var grandTotal = null;
 
   // Auth lives in admin-auth.js, shared with the other admin pages. Aliased locally so
@@ -180,19 +189,52 @@
     }).join('') : '<tr><td colspan="2" class="la-mono" style="color:#666;">No clicks recorded yet.</td></tr>';
   }
 
+  // Referrals: clicks per app and per place on the Draw Odds page. The referrals tab
+  // loads every row (see page()), so these totals are complete.
+  function refs() {
+    if (!isRef) return;
+    var n = {};
+    meta.forEach(function (m) { var k = m.app + '|' + m.placement; n[k] = (n[k] || 0) + 1; });
+    var cell = function (v) { return '<td class="la-mono">' + (v || '<span style="color:#555;">0</span>') + '</td>'; };
+    var rows = REF_APPS.map(function (a) {
+      var tot = 0;
+      var cells = REF_PLACES.map(function (p) { var v = n[a[0] + '|' + p[0]] || 0; tot += v; return cell(v); }).join('');
+      return '<tr><td>' + a[1] + '</td>' + cells + '<td class="la-mono" style="color:#fff;">' + tot + '</td></tr>';
+    }).join('');
+    var colTot = REF_PLACES.map(function (p) {
+      return cell(meta.filter(function (m) { return m.placement === p[0]; }).length);
+    }).join('');
+    el('refs').hidden = false;
+    el('refs').innerHTML = '<div class="dl-sub">By app and place on the Draw Odds page, all time</div>' +
+      '<div class="la-tablewrap" style="margin-bottom:2rem;"><table class="la-table"><thead><tr><th>App page</th>' +
+      REF_PLACES.map(function (p) { return '<th>' + p[1] + '</th>'; }).join('') + '<th>Total</th></tr></thead><tbody>' +
+      rows + '<tr><td style="color:#fff;">Total</td>' + colTot + '<td class="la-mono" style="color:#fff;">' + meta.length + '</td></tr>' +
+      '</tbody></table></div>';
+  }
+
+  function refName(list, k) {
+    var x = list.filter(function (y) { return y[0] === k; })[0];
+    return x ? x[1] : k;
+  }
+
   function list() {
+    if (isRef) el('rowHead').innerHTML = '<th>#</th><th>When</th><th>Ago</th><th>App page</th><th>From</th>';
     el('rows').innerHTML = loaded.length ? loaded.map(function (t, i) {
       return '<tr><td class="la-mono" style="color:#666;">' + (i + 1) + '</td>' +
              '<td class="la-mono">' + new Date(t).toLocaleString() + '</td>' +
-             '<td class="la-mono" style="color:#666;">' + ago(t) + '</td></tr>';
-    }).join('') : '<tr><td colspan="3" class="la-mono" style="color:#666;">Nothing yet. Click a download or store button on the site, then reload.</td></tr>';
+             '<td class="la-mono" style="color:#666;">' + ago(t) + '</td>' +
+             (isRef ? '<td>' + refName(REF_APPS, meta[i].app) + '</td><td>' + refName(REF_PLACES, meta[i].placement) + '</td>' : '') +
+             '</tr>';
+    }).join('') : '<tr><td colspan="' + (isRef ? 5 : 3) + '" class="la-mono" style="color:#666;">' +
+      (isRef ? 'Nothing yet. Clicks on the app links on draw-odds.html show up here.' : 'Nothing yet. Click a download or store button on the site, then reload.') + '</td></tr>';
     el('count').textContent = 'showing ' + loaded.length +
       (grandTotal != null ? ' of ' + grandTotal : '') + ' clicks, newest first';
     el('more').hidden = !(grandTotal != null && loaded.length < grandTotal);
   }
 
   function page(offset) {
-    return authFetch('/rest/v1/' + table + '?select=created_at&order=created_at.desc&limit=' +
+    return authFetch('/rest/v1/' + table + '?select=' + (isRef ? 'created_at,app,placement' : 'created_at') +
+                     '&order=created_at.desc&limit=' +
                      PAGE + '&offset=' + offset,
                      { headers: { Prefer: 'count=exact' } })
       .then(function (r) {
@@ -206,8 +248,13 @@
         return r.json();
       })
       .then(function (batch) {
-        batch.forEach(function (x) { loaded.push(+new Date(x.created_at)); });
-        stats(); byDay(); list();
+        batch.forEach(function (x) {
+          loaded.push(+new Date(x.created_at));
+          if (isRef) meta.push({app: x.app, placement: x.placement});
+        });
+        // Referrals load every row so the by-app table is a true total.
+        if (isRef && batch.length === PAGE && grandTotal != null && loaded.length < grandTotal) return page(loaded.length);
+        stats(); byDay(); list(); refs();
       });
   }
 

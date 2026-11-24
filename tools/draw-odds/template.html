@@ -368,11 +368,11 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   <!-- Cross-promotion, part 1 of 3: one quiet row of app icons saying who built this. -->
   <div class="maker-strip">
     <span class="maker-lead">Check out these other useful apps:</span>
-    <a class="maker-app" href="rack-detector.html"><img src="img/menu-detector.png" alt="">Rack Detector</a>
-    <a class="maker-app" href="rack-viewer.html"><img src="img/menu-viewer.png" alt="">Rack Viewer</a>
-    <a class="maker-app" href="rack-tracker.html"><img src="img/menu-tracker.png" alt="">Rack Tracker</a>
-    <a class="maker-app" href="rack-scorer.html"><img src="img/menu-scorer.png" alt="">Rack Scorer</a>
-    <a href="apps.html" class="maker-more">See the apps →</a>
+    <a class="maker-app" href="rack-detector.html" data-ref="detector:top"><img src="img/menu-detector.png" alt="">Rack Detector</a>
+    <a class="maker-app" href="rack-viewer.html" data-ref="viewer:top"><img src="img/menu-viewer.png" alt="">Rack Viewer</a>
+    <a class="maker-app" href="rack-tracker.html" data-ref="tracker:top"><img src="img/menu-tracker.png" alt="">Rack Tracker</a>
+    <a class="maker-app" href="rack-scorer.html" data-ref="scorer:top"><img src="img/menu-scorer.png" alt="">Rack Scorer</a>
+    <a href="apps.html" class="maker-more" data-ref="apps:top">See the apps →</a>
   </div>
 
   <div class="species-tabs" id="speciesTabs" role="group" aria-label="Species"></div>
@@ -457,25 +457,25 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
     <div class="section-eyebrow">After the draw</div>
     <h2 class="after-title">Drew the tag? <span>Get ready for the hunt.</span></h2>
     <div class="after-grid">
-      <a class="after-card" href="rack-detector.html">
+      <a class="after-card" href="rack-detector.html" data-ref="detector:after">
         <span class="after-verb">01 // Sort</span>
         <span class="after-head"><img src="img/menu-detector.png" alt=""><span><b>Rack Detector</b><i>Windows</i></span></span>
         <span class="after-desc">Point it at an SD card of trail-camera photos and it sorts them into per-species folders, so the elk are in the elk folder before you've looked at a frame.</span>
         <span class="after-price">$100 one-time · free for 10,000 images</span>
       </a>
-      <a class="after-card" href="rack-viewer.html">
+      <a class="after-card" href="rack-viewer.html" data-ref="viewer:after">
         <span class="after-verb">02 // View</span>
         <span class="after-head"><img src="img/menu-viewer.png" alt=""><span><b>Rack Viewer</b><i>Windows</i></span></span>
         <span class="after-desc">Rip through a folder of photos and video at arrow-key speed, mark the keepers, and move everything else to the trash in one action.</span>
         <span class="after-price">Free to view · $20 one-time to keep clearing out</span>
       </a>
-      <a class="after-card" href="rack-tracker.html">
+      <a class="after-card" href="rack-tracker.html" data-ref="tracker:after">
         <span class="after-verb">03 // Track</span>
         <span class="after-head"><img src="img/menu-tracker.png" alt=""><span><b>Rack Tracker</b><i>Android</i></span></span>
         <span class="after-desc">Follow individual bulls and bucks across the season: every trail-cam hit, glassing session and shed find, mapped in order. Your data never leaves your phone.</span>
         <span class="after-price">$10 / year · free to start</span>
       </a>
-      <a class="after-card" href="rack-scorer.html">
+      <a class="after-card" href="rack-scorer.html" data-ref="scorer:after">
         <span class="after-verb">04 // Score</span>
         <span class="after-head"><img src="img/menu-scorer.png" alt=""><span><b>Rack Scorer</b><i>Android · iOS</i></span></span>
         <span class="after-desc">Score the rack at the tailgate: Boone &amp; Crockett and Pope &amp; Young style, live gross and net totals, works fully offline.</span>
@@ -864,7 +864,8 @@ function rowHtml(st, sp, h, a, p, inGroup){
   const id = st.state + ":" + h.code, starred = ui.stars.has(id), open = ui.open.has(h.code);
   const nt = a.next;
   let tags = `<span class="big">${fmt(nt[0])}</span>`;
-  if (sp.system === "bonus" && nt[0]) tags += `<span class="small">${fmt(nt[1])} bonus · ${fmt(nt[2])} rand.</span>`;
+  // "random" spelled out unless the trend columns are taking the width
+  if (sp.system === "bonus" && nt[0]) tags += `<span class="small">${fmt(nt[1])} bonus · ${fmt(nt[2])} ${ui.showTrends ? "rand." : "random"}</span>`;
   if (a.nextLoaded){
     const diff = nt[0] - a.tags;
     tags += `<span class="small">${st.drawYear}: ${fmt(a.tags)}${diff ? ` <span class="${diff > 0 ? "up" : "down"}">${diff > 0 ? "+" : ""}${diff}</span>` : ""}</span>`;
@@ -1033,7 +1034,7 @@ function promoHtml(sp, a, p){
   const lead = p != null && o != null && o >= 0.9 ? "Looks like you may draw this one. Get ready with:" : "Getting ready for this hunt?";
   return `<div class="promo"><h3>${esc(lead)}</h3><div class="promo-grid">` + promoFor(sp.key).map(([k, text]) => {
     const app = PROMO_APPS[k];
-    return `<a class="promo-item" href="${app.url}"><img src="${app.icon}" alt=""><span><b>${esc(app.name)}</b><br>${esc(text)}</span></a>`;
+    return `<a class="promo-item" href="${app.url}" data-ref="${k}:detail"><img src="${app.icon}" alt=""><span><b>${esc(app.name)}</b><br>${esc(text)}</span></a>`;
   }).join("") + `</div></div>`;
 }
 
@@ -1180,10 +1181,11 @@ $("#weaponChips").addEventListener("click", e => {
 // ---------- species tabs + hunters ----------
 function renderSpeciesTabs(){
   const st = curState(), sp = curSpecies();
-  $("#speciesTabs").innerHTML = st.species.map(s =>
+  $("#speciesTabs").innerHTML =
+    `<button type="button" class="vtab star-tab${ui.starView ? " is-on" : ""}" data-starview aria-pressed="${ui.starView}"><b aria-hidden="true">★</b><span>Starred</span><span class="cnt">${starredHunts(st).length}</span></button>` +
+    st.species.map(s =>
     `<button type="button" class="vtab${s.key === sp.key && !ui.starView ? " is-on" : ""}" data-species="${esc(s.key)}" aria-pressed="${s.key === sp.key && !ui.starView}">` +
-    (s.icon ? `<img src="${esc(s.icon)}" alt="" onerror="this.remove()">` : "") + `<span>${esc(s.short || s.label)}</span></button>`).join("") +
-    `<button type="button" class="vtab star-tab${ui.starView ? " is-on" : ""}" data-starview aria-pressed="${ui.starView}"><b aria-hidden="true">★</b><span>Starred</span><span class="cnt">${starredHunts(st).length}</span></button>`;
+    (s.icon ? `<img src="${esc(s.icon)}" alt="" onerror="this.remove()">` : "") + `<span>${esc(s.short || s.label)}</span></button>`).join("");
 }
 // Starred hunts in this state, in species-tab order, then by unit and code.
 function starredHunts(st){
@@ -1212,7 +1214,7 @@ function renderStarred(st){
     spOverride = s;
     try { a = analyze(h, ui.res, s.system); } finally { spOverride = null; }
     const id = st.state + ":" + h.code, m = a.model, nt = a.next;
-    const tags = `<span class="big">${fmt(nt[0])}</span>` + (s.system === "bonus" && nt[0] ? `<span class="small">${fmt(nt[1])} bonus · ${fmt(nt[2])} rand.</span>` : "");
+    const tags = `<span class="big">${fmt(nt[0])}</span>` + (s.system === "bonus" && nt[0] ? `<span class="small">${fmt(nt[1])} bonus · ${fmt(nt[2])} random</span>` : "");
     const guar = a.allDrew ? `<span class="big">${a.guar ? a.guar[0] : 0}</span><span class="small">everyone drew</span>`
       : a.guarPts != null ? `<span class="big">${a.guarPts}</span><span class="small">points</span>`
       : a.randomOnly ? `<span class="na">random only</span>` : `<span class="na">—</span>`;
@@ -1271,7 +1273,8 @@ function fillSelects(){
   const src = st.sources || {};
   $("#sources").innerHTML = `Sources: <a href="${esc(src.odds||"#")}" target="_blank" rel="noopener">${esc(st.name)} ${st.drawYear} draw results</a> · <a href="${esc(src.harvest||"#")}" target="_blank" rel="noopener">${st.harvestYear} harvest report</a>` +
     (st.nextTags && src.tags ? ` · <a href="${esc(src.tags)}" target="_blank" rel="noopener">${nextYear(st)} tag numbers</a>` : "") +
-    `. Last year's results don't guarantee next year's. Check the official guidebook before applying.`;
+    `. Last year's results don't guarantee next year's. Check the official guidebook before applying.` +
+    ` Your hunters and points stay in this browser. Clicks on the app links are counted anonymously: which link and when, nothing else.`;
 }
 function dropinNote(st, D){
   return `<li>Nobody leaves a hunt; new people do join it (see drop-in applicants below).</li>`;
@@ -1412,5 +1415,18 @@ fillSelects(); render();
 })();
 </script>
 <script src="nav.js"></script>
+<script src="downloads.js"></script>
+<script>
+// Counting clicks from this page to the app pages. Every app link carries
+// data-ref="<app>:<placement>" (placement: top, detail, after). One anonymous row
+// per click goes to the referrals_drawodds table: which app, where on the page, and
+// when. Nothing about the visitor, their hunters or their points is sent.
+document.addEventListener("click", e => {
+  const a = e.target.closest("a[data-ref]");
+  if (!a || typeof dlCount !== "function") return;
+  const [app, placement] = a.dataset.ref.split(":");
+  dlCount("referrals_drawodds", {app, placement});
+});
+</script>
 </body>
 </html>

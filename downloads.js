@@ -1,4 +1,5 @@
-/* Anonymous download-click counters, loaded by the four product pages. Was duplicated
+/* Anonymous download-click counters, loaded by the four product pages, plus
+   draw-odds.html, which uses dlCount() to count clicks through to the app pages. Was duplicated
    inline; extracted so the endpoint and key live in one place. apps.html does not need it:
    its buttons link to the product pages rather than to a download or a store.
 
@@ -21,17 +22,22 @@
 var DL_URL = "https://baopxmwebqfdubvgjsri.supabase.co/rest/v1/";
 var DL_KEY = "sb_publishable_54t4NxwLHZqGuGNrDM9TrA_b7F3Dh3B";
 
-function dlCount(table) {
+// `row` is optional: the download tables take an empty row (just the timestamp);
+// referrals_drawodds, written from draw-odds.html, takes {app, placement}.
+// keepalive lets the request finish when the click navigates away in the same tab,
+// which the Draw Odds links do.
+function dlCount(table, row) {
   try {
     fetch(DL_URL + table, {
       method: "POST",
+      keepalive: true,
       headers: {
         "apikey": DL_KEY,
         "Authorization": "Bearer " + DL_KEY,
         "Content-Type": "application/json",
         "Prefer": "return=minimal"
       },
-      body: "{}"
+      body: JSON.stringify(row || {})
     }).catch(function () {});
   } catch (e) {}
 }

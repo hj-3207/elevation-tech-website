@@ -207,7 +207,8 @@ block; both admin pages carry their own too.
   public pages (not `draw-odds.html`, which has no content images).
   Opt-in by selector, so logos and tile icons stay unclickable.
 - `carousel.js` — screenshot carousel. `rack-tracker.html`, `rack-scorer.html`.
-- `downloads.js` — store and download click counters. **All four** product pages.
+- `downloads.js` — store and download click counters. **All four** product pages, plus
+  `draw-odds.html`, which uses `dlCount()` to count clicks through to the app pages.
   **Not** `apps.html`, which has no download buttons.
 - `videotabs.js` — tabbed demo player. `rack-detector.html`, `rack-viewer.html`. It
   builds the iframe on click, so a visitor who never presses play never contacts
@@ -259,8 +260,10 @@ generator, so there's still no build step on deploy: Pages serves the committed 
   - The parsed tables.
 
   Don't delete any of it by hand.
-- It stores hunters' points in the visitor's browser (localStorage) only and makes no
-  network calls beyond Google Fonts. That's consistent with the site's privacy argument.
+- It stores hunters' points in the visitor's browser (localStorage) only. Its one call
+  besides Google Fonts is an anonymous click count when someone follows an app link
+  (`referrals_drawodds`: which app, where on the page, when). The page says so in its
+  sources line. See `tools/draw-odds/CLAUDE.md`.
 
 **The nav is `position: fixed`,** so anchor targets need to reserve room or they
 land underneath it. `style.css` handles this globally:
@@ -283,6 +286,10 @@ the one exception, and a deliberate one: its Google Play and App Store buttons b
 write to `downloads_rackscorer`, so that figure is clicks for the app rather than per
 platform. The publishable key in `downloads.js` is safe to expose: RLS permits insert
 only. All of these count clicks, not installs.
+
+A fifth table, `referrals_drawodds`, is not a download counter: it counts clicks from
+`draw-odds.html` to the app pages, with `app` and `placement` columns. Its SQL is
+`tools/draw-odds/referrals_drawodds.sql`, and `download-log.html` has a tab for it.
 
 **Purchase and download buttons belong on product pages only.** `apps.html`
 deliberately links to the product pages instead, so nobody installs before reading

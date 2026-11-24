@@ -103,7 +103,7 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - Weapon-type buttons sit at the top: Archery, Muzzleloader, Any Legal Weapon, Multi-Season, HAMSS. They allow more than one.
 - **Hunters (profiles):** each has a name and points per species. They're saved in **localStorage** only, separate per browser, device and address, with Export/Import of JSON. No real family data is embedded; the owner's sheets hold private points.
   - The default hunter is named **"Hunter"** (it was "Me"; browsers that already saved "Me" keep it).
-- **Starred tab** (added 2026-11-24): a "★ Starred" button after the species buttons, with a count. It replaces the filters and table with one list of every starred hunt across species (`starredHunts`, `renderStarred`).
+- **Starred tab** (added 2026-11-24): a "★ Starred" button before the species buttons (first, at the far left), with a count. It replaces the filters and table with one list of every starred hunt across species (`starredHunts`, `renderStarred`).
   - **Columns:** species, hunt, tags, guaranteed, projected guaranteed and split, then one 2027-odds column **per hunter**, each at that hunter's points for the hunt's species. It has its own residency toggle.
   - **Actions:** clicking a row switches to that species, clears search and filters, and opens the hunt. The ★ unstars it.
   - **Mechanics:** `analyze()` reads drop-in rates through `curSpecies()`, so `renderStarred` sets `spOverride` while it analyzes each species' hunts. Stars are stored as `UT:<code>`.
@@ -133,6 +133,12 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   3. **"After the draw" section** (`.after-draw`): four cards in Sort → View → Track → Score order with the `apps.html` verbs, a one-line pitch and the price. **Prices are duplicated here**, so update them when a product page's price changes.
   - **Declined:** a pop-up (annoying, and it lands before the tool has given anything), a sidebar (the table needs the full width), and a "you'll draw" toast (held in reserve).
   - Icons are the 64px `img/menu-*.png` used by the nav dropdown. None of this shows when printing.
+- **Click counters to the apps** (built 2026-11-24). Every app link on the page carries `data-ref="<app>:<placement>"`: the top row (`top`, including "See the apps" as app `apps`), the hunt-detail grid (`detail`) and the After the draw cards (`after`).
+  - **How it records:** one document click listener at the end of the template calls `dlCount("referrals_drawodds", {app, placement})` from the site's `downloads.js` (so the key lives in one place), with `keepalive` because these links navigate in the same tab.
+  - **The table:** `referrals_drawodds(id, created_at, app, placement)`, with check constraints on both values. Anyone may insert; only the admin may read. `tools/draw-odds/referrals_drawodds.sql` creates it and copies the admin read rule from the `downloads` table, so no email is in the repo. **It must be run once in the Supabase SQL editor**; until then the inserts fail silently and nothing breaks.
+  - **Where to see counts:** `download-log.html`, tab "Draw Odds → apps": a table by app page × placement (all rows are loaded, so it's a true total), plus every click.
+  - **Disclosure:** the sources line at the bottom of the page says hunters and points stay in the browser and that app-link clicks are counted anonymously. Adding a new app link means adding a `data-ref`, and a new app or placement value means changing the table's check constraint.
+  - **Testing:** over `file://` the insert fails on CORS (harmless). Over `http://localhost` it writes real rows. To test the tagging, stub `window.fetch` in a temp copy.
 - **Copy voice:** plain, concrete, and honest about limitations, like the website.
 
 ## Yearly / seasonal tasks
@@ -158,17 +164,6 @@ There's no test suite. Checks are done by:
 
 ## Backlog / ideas (owner agreed to "later")
 
-- **QUEUED, next up: click counters from Draw Odds to each app.** The owner wants to know how many clicks Draw Odds sends to each paid app's page. Not built yet.
-  - **Links to tag:** the maker row, the hunt-detail suggestions, and the After the draw cards.
-  - **Suggested approach:** add `?from=draw-odds` (or a per-placement value like `draw-odds-detail`) to those links, then record a row per click.
-  - **How it fits the existing counters:** `downloads.js` writes one row per click to a separate Supabase table per app, with insert-only RLS and the publishable key. See "The four download counters" in the root `CLAUDE.md` and never merge those tables.
-  - **Two options:**
-    - A new table, e.g. `referrals_drawodds(app, placement, created_at)`, written from the Draw Odds page when a promo link is clicked.
-    - Or the product pages read `?from=` and record it.
-  - **Before building:**
-    - Check the privacy policies still describe it accurately. They disclose anonymous, timestamped click counting.
-    - The download-log admin page may want a view of these counts.
-    - Over `http://localhost` the counters write real rows; test over `file://`.
 - Shareable view: species, residency, search and filters in the URL.
 - A real Draw Odds app icon to replace the dice placeholder (`img/drawodds-icon.png`).
 - Possibly calibrate pronghorn and general deer differently, since drop-ins didn't help there.
