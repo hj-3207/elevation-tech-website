@@ -290,7 +290,10 @@ only. All of these count clicks, not installs.
 A fifth table, `referrals_drawodds`, is not a download counter: it counts clicks from
 `draw-odds.html` to the app pages, with `app` and `placement` columns. Its SQL is
 `tools/draw-odds/referrals_drawodds.sql`, and `download-log.html` has a tab for it.
-`license-admin.html` shows a "Draw Odds > app clicks" row under the download boxes: one
+`license-admin.html` has two tabs (added 2026-11-24): **Codes** (inventory boxes, the
+promo-code loader, the codes table) and **Statistics** (download clicks, Draw Odds clicks).
+The tab is kept in the URL hash (`#codes` / `#stats`), then localStorage (`la:tab`);
+the download log's back link goes to `#stats`. The Statistics tab shows a "Draw Odds > app clicks" row under the download boxes: one
 all-time box per app (`loadReferrals`), each linking to that tab. The table was created
 on 2026-11-24.
 

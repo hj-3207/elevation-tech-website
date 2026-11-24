@@ -87,6 +87,7 @@
   .la-stat small { display: block; color: #666; font-family: var(--mono);
     font-size: 0.66rem; margin-top: 0.2rem; letter-spacing: 0.04em; }
   .la-count { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-bottom: 0.75rem; }
+  .la-tabs { justify-content: flex-start; margin: 0 0 1.75rem; }
 
   /* Load panel. Shut by default - it is used once a batch, not every visit. */
   .la-load { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
@@ -130,12 +131,24 @@
     </div>
   </div>
 
+  <!-- Two tabs: license and promo codes, and click statistics. The choice is kept in
+       the URL hash (#codes / #stats) so the download log can link straight back. -->
+  <div class="vtab-row la-tabs" role="tablist">
+    <button class="vtab" type="button" role="tab" id="tabBtn-codes" data-tab="codes" aria-controls="tab-codes">Codes</button>
+    <button class="vtab" type="button" role="tab" id="tabBtn-stats" data-tab="stats" aria-controls="tab-stats">Statistics</button>
+  </div>
+
   <div class="la-msg" id="msg"></div>
+
+  <div id="tab-stats" role="tabpanel" aria-labelledby="tabBtn-stats" hidden>
+    <div class="la-subhead">Download clicks</div>
+    <div class="la-stats" id="dstats"></div>
+    <div class="la-subhead">Draw Odds &gt; app clicks</div>
+    <div class="la-stats" id="rstats"></div>
+  </div>
+
+  <div id="tab-codes" role="tabpanel" aria-labelledby="tabBtn-codes">
   <div class="la-stats" id="stats"></div>
-  <div class="la-subhead">Download clicks</div>
-  <div class="la-stats" id="dstats"></div>
-  <div class="la-subhead">Draw Odds &gt; app clicks</div>
-  <div class="la-stats" id="rstats"></div>
 
   <!-- Paste straight from Play Console or App Store Connect. This is the only thing on
        the page that creates rows; see the comment on the loader below. -->
@@ -201,6 +214,7 @@
       <tbody id="rows"></tbody>
     </table>
   </div>
+  </div><!-- /tab-codes -->
 </div>
 
 <script>
@@ -398,6 +412,30 @@
       }).join('');
     });
   }
+
+  /* ---- tabs ------------------------------------------------------------ */
+  // Codes or Statistics. The hash wins (the download log links back to #stats), then
+  // the last tab used in this browser, then Codes.
+  function showTab(name, push) {
+    if (name !== 'stats') name = 'codes';
+    ['codes', 'stats'].forEach(function (n) {
+      el('tab-' + n).hidden = n !== name;
+      var b = el('tabBtn-' + n);
+      b.classList.toggle('is-on', n === name);
+      b.setAttribute('aria-selected', String(n === name));
+    });
+    try { localStorage.setItem('la:tab', name); } catch (e) {}
+    if (push && location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+  }
+  document.querySelectorAll('.la-tabs [data-tab]').forEach(function (b) {
+    b.addEventListener('click', function () { showTab(b.dataset.tab, true); });
+  });
+  window.addEventListener('hashchange', function () { showTab(location.hash.slice(1), false); });
+  (function () {
+    var h = location.hash.slice(1), saved = null;
+    try { saved = localStorage.getItem('la:tab'); } catch (e) {}
+    showTab(h === 'codes' || h === 'stats' ? h : saved, false);
+  })();
 
   /* ---- load ------------------------------------------------------------ */
   function load() {
