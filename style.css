@@ -211,7 +211,15 @@
    the tiles never get too narrow to read on a tablet. */
 .apps-grid.four { grid-template-columns: repeat(4, 1fr); }
 
+/* A tile that spans the whole row under the others, icon beside the text. Used
+   for Draw Odds, which sits outside the four-app workflow. */
+.app-tile.wide { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 1.5rem; min-height: 0; }
+.app-tile.wide .app-tile-icon { margin-bottom: 0; flex: none; }
+.app-tile.wide .app-tile-tag { max-width: 760px; }
+.app-tile.wide .app-tile-status { margin-top: 0.8rem; }
+
 @media (max-width: 1100px) { .apps-grid.four { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .app-tile.wide { flex-direction: column; align-items: flex-start; gap: 0; } .app-tile.wide .app-tile-icon { margin-bottom: 1.1rem; } }
 @media (max-width: 900px) { .apps-grid, .apps-grid.four { grid-template-columns: 1fr; } }
 
 /* ===== RACK DETECTOR PAGE ===== */

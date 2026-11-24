@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Apps | Elevation Technology</title>
-<meta name="description" content="Four purpose-built hunting tools from Elevation Technology Solutions: Rack Detector sorts trail-camera photos by species, Rack Viewer culls them down to the keepers, Rack Tracker maps individual animals across seasons, and Rack Scorer scores the rack. Windows, Android and iOS.">
+<meta name="description" content="Purpose-built hunting tools from Elevation Technology Solutions: Rack Detector sorts trail-camera photos by species, Rack Viewer culls them down to the keepers, Rack Tracker maps individual animals across seasons, and Rack Scorer scores the rack. Windows, Android and iOS. Plus Draw Odds, a free web tool for Utah big game draw odds.">
 <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="shortcut icon" href="favicon.ico" />
@@ -95,6 +95,16 @@
   .hero-farrow { display: none; }
 }
 @media (max-width: 390px) { .hero-fflow { grid-template-columns: 1fr; } }
+
+/* Draw Odds: a free web tool used before the hunt, deliberately kept out of the
+   Sort -> View -> Track -> Score flow above, so it gets its own card below the
+   trust strip instead of a fifth step. Same card look as .hero-fcard, laid out
+   in a row. */
+.hero-pre { display: flex; align-items: center; gap: 1.25rem; max-width: 760px; margin: 2rem auto 0; padding: 1.2rem 1.4rem; background: var(--card); border: 1px solid var(--border); border-radius: 10px; text-decoration: none; text-align: left; transition: border-color 0.25s, background 0.25s, transform 0.25s; }
+.hero-pre:hover { border-color: var(--border-orange); background: var(--card2); transform: translateY(-3px); }
+.hero-pre img { width: 46px; height: 46px; border-radius: 9px; flex: none; }
+.hero-pre-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.8rem; margin-bottom: 0.3rem; }
+@media (max-width: 600px) { .hero-pre { flex-direction: column; align-items: flex-start; } }
 </style>
 </head>
 <body>
@@ -168,6 +178,19 @@
       <span>No account</span>
       <span>Your data never leaves your device</span>
     </div>
+    <!-- Draw Odds sits outside the workflow on purpose: it is used before the
+         hunt, when you apply. Its description matches the app-row lead below. -->
+    <a class="hero-pre" href="#drawodds">
+      <img src="img/drawodds-icon.png" alt="">
+      <span>
+        <span class="hero-pre-head">
+          <span class="hero-fverb">Before the hunt</span>
+          <span class="hero-fname">Draw Odds</span>
+          <span class="hero-fplat">Web · Free</span>
+        </span>
+        <span class="hero-fdesc">See what it took to draw every Utah limited-entry and once-in-a-lifetime hunt, where the tags split, and your own odds for next year's draw at the points you hold.</span>
+      </span>
+    </a>
   </div>
 </section>
 
@@ -282,6 +305,32 @@
       </div>
     </div>
 
+    <!-- DRAW ODDS (before the hunt; not part of the Sort/View/Track/Score flow) -->
+    <div class="app-row" id="drawodds">
+      <div>
+        <div class="app-row-head">
+          <div class="app-row-icon"><img src="img/drawodds-icon.png" alt="Draw Odds"></div>
+          <div>
+            <h2>Draw Odds</h2>
+            <span class="app-badge">Web · Free</span>
+          </div>
+        </div>
+        <p class="app-row-tag">See what it took to draw every Utah limited-entry and once-in-a-lifetime hunt, where the tags split, and your own odds for next year's draw at the points you hold.</p>
+        <ul class="app-points">
+          <li>Every Utah limited-entry and once-in-a-lifetime big game hunt, plus general-season buck deer: tags, applicants, guaranteed points, the split group and harvest success</li>
+          <li>Next year's guaranteed points and your odds, worked out the way the draw actually runs: half the tags to the top points, the rest drawn with one entry per bonus point plus one</li>
+          <li>Five years of draw history per hunt. Save points for each hunter in your family; they stay in your browser</li>
+        </ul>
+        <p class="app-price"><strong>Free</strong> · runs in your browser, nothing to install, no account · Utah for now</p>
+        <div class="rd-buttons">
+          <a href="draw-odds.html" class="btn btn-primary">Open Draw Odds →</a>
+        </div>
+      </div>
+      <div class="app-row-media">
+        <img src="img/drawodds-screenshot.jpg" alt="The Draw Odds table for Manti limited-entry elk: tags, applicants, guaranteed points, split group, harvest success, projected guaranteed points and a hunter's odds for each hunt" class="rd-elk">
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -289,7 +338,7 @@
 <section id="compare" style="background: var(--bg2);">
   <div class="container">
     <div class="section-eyebrow">Side by side</div>
-    <div class="section-title">All four at a glance</div>
+    <div class="section-title">All five at a glance</div>
     <div class="divider"></div>
     <div class="cmp-wrap">
       <table class="cmp">
@@ -331,6 +380,13 @@
             <td>No free trial</td>
             <td>$4.99 one-time</td>
           </tr>
+          <tr>
+            <td class="app"><a href="draw-odds.html">Draw Odds</a></td>
+            <td>Web browser</td>
+            <td>Past draw results and your odds for next year's draw, by hunt (Utah)</td>
+            <td>Free to use</td>
+            <td>Free</td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -344,6 +400,7 @@
       <a href="rack-viewer.html" class="btn btn-outline">Rack Viewer →</a>
       <a href="rack-tracker.html" class="btn btn-outline">Rack Tracker →</a>
       <a href="rack-scorer.html" class="btn btn-outline">Rack Scorer →</a>
+      <a href="draw-odds.html" class="btn btn-outline">Draw Odds →</a>
     </div>
   </div>
 </section>

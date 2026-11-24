@@ -81,6 +81,17 @@ now".
 `apps.html` frames them as a workflow: **Sort → View → Track → Score**. Keep that
 order and those verbs consistent wherever the four are listed together.
 
+**Draw Odds is the fifth app and deliberately not part of that workflow.** It's a
+free web tool used *before* the hunt, when you apply for tags (the owner's call,
+2026-11-24).
+- **Never a fifth step:** don't give it a step number or verb, or an arrow in the flow.
+- **Where it's listed:**
+  - `apps.html`: its own `.hero-pre` card under the trust strip, an `#drawodds` app-row after Rack Scorer, a row in the comparison table ("All five at a glance"), and a button.
+  - `index.html`: a full-width `.app-tile.wide` under the four tiles.
+- **Same sentence:** its hero card and app-row lead share one sentence, like the others. The index tile adds "Before the hunt:".
+- **Icon:** `img/drawodds-icon.png`, a white die on burnt orange. It's a placeholder the owner chose for now.
+- **Facts the copy states:** free, runs in the browser, no account, Utah only for now. Its buttons open the tool itself; there's no product page and nothing to download.
+
 Every app is offline-first and stores data on the user's own device. That claim is
 the core marketing argument of the whole site, so **do not weaken it, and do not
 state it where it isn't true.** Rack Viewer's one-time license activation is the
@@ -231,9 +242,14 @@ then commit the changes in this repo as usual. The build never touches git.
   `.container`, because `style.css` pads every `section` and caps `.container` at 1080px.
 - About 900 KB, because the draw data is inline so the same page also works opened
   from disk.
-- `data/draw-odds/` is a **backup** of every year's draw data, about 11 MB. That
-  includes `raw/utah_<year>_*.json`, which utahdraws.com no longer serves once the
-  year passes, so it can't be re-downloaded. Don't delete it.
+- `data/draw-odds/` is a **backup** of the draw data, kept on a **rolling 5 years**. The build
+  removes older years. It's about 36 MB and holds:
+  - `raw/utah_<year>_*.json`: utahdraws.com results. The site stops serving them once
+    the year passes, so they can't be re-downloaded.
+  - DWR's odds and harvest PDFs: kept in case DWR stops publishing them.
+  - The parsed tables.
+
+  Don't delete any of it by hand.
 - It stores hunters' points in the visitor's browser (localStorage) only and makes no
   network calls beyond Google Fonts. That's consistent with the site's privacy argument.
 
