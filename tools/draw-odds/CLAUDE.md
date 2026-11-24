@@ -102,6 +102,11 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - **No state dropdown** while there's one state.
   - Weapon-type buttons sit at the top: Archery, Muzzleloader, Any Legal Weapon, Multi-Season, HAMSS. They allow more than one.
 - **Hunters (profiles):** each has a name and points per species. They're saved in **localStorage** only, separate per browser, device and address, with Export/Import of JSON. No real family data is embedded; the owner's sheets hold private points.
+  - The default hunter is named **"Hunter"** (it was "Me"; browsers that already saved "Me" keep it).
+- **Starred tab** (added 2026-11-24): a "★ Starred" button after the species buttons, with a count. It replaces the filters and table with one list of every starred hunt across species (`starredHunts`, `renderStarred`).
+  - **Columns:** species, hunt, tags, guaranteed, projected guaranteed and split, then one 2027-odds column **per hunter**, each at that hunter's points for the hunt's species. It has its own residency toggle.
+  - **Actions:** clicking a row switches to that species, clears search and filters, and opens the hunt. The ★ unstars it.
+  - **Mechanics:** `analyze()` reads drop-in rates through `curSpecies()`, so `renderStarred` sets `spOverride` while it analyzes each species' hunts. Stars are stored as `UT:<code>`.
 - **Table:**
   - Columns: Hunt · 2026 tags · 2026 applicants · 2026 guaranteed at · 2026 split group · 2025 harvest success · [trend columns] · 2027 projected guaranteed · 2027 projected split · **<Name>'s 2027 odds (far right)**.
   - Every header carries its year.
@@ -117,7 +122,7 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
 - **Hunt detail view:** shows the 2026 table by point level with 2027 estimates, the year-by-year table (5 draws plus the 2027 projection), each hunter's 2027 odds, the random-draw entry count, notes, season dates, harvest and the projection text.
 - **Notes at the bottom:**
   - "How the numbers are calculated", which is collapsible.
-  - "About the 2027 projections", which covers the assumptions, the guaranteed = split + 1 example, and drop-in applicants with the per-bonus-tag rate table, examples and backtest.
+  - "About the 2027 projections", **collapsed by default** to a faded preview of its first few lines with a "Read more ↓" button (`.assume-wrap`). It covers the assumptions, the guaranteed = split + 1 example, and drop-in applicants with the per-bonus-tag rate table, examples and backtest.
 - **On the rest of the site:** Draw Odds is listed as the fifth app, **outside** the Sort → View → Track → Score workflow. See the root `CLAUDE.md`.
 - **Advertising the paid apps** (added 2026-11-24). The page is free, and the owner wants it to show off the paid apps without being annoying. The owner chose three placements:
   1. **Maker row** (`.maker-strip`): one quiet row under the intro, "Check out these other useful apps:", then each app's icon and name as a link, then "See the apps →". The owner picked this icon row over a featured card or a dismissible bar.

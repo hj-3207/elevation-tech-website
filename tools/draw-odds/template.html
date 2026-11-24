@@ -123,6 +123,22 @@ table.main th .arr{font-size:0.6rem;margin-left:0.3rem}
 table.main th.l,table.main td.l{text-align:left}
 table.main td.hunt{white-space:normal;min-width:160px;max-width:260px}
 .c-star{width:34px;padding-right:0!important}
+.controls[hidden],.summary[hidden],.filter-bar[hidden],.tbl-wrap[hidden],.star-view[hidden]{display:none!important}
+.vtab.star-tab{color:var(--soft)}
+.vtab.star-tab b{color:var(--orange);font-size:0.95rem;line-height:1}
+.vtab.star-tab .cnt{color:var(--subtle)}
+.star-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem 1.5rem;margin-bottom:1rem}
+.star-sum{color:var(--muted);font-size:0.86rem;line-height:1.6;max-width:760px}
+.star-sum b{color:var(--text)}
+.star-head .seg{width:auto}
+.star-wrap{min-height:0}
+table.star-tbl{min-width:760px}
+.star-tbl td.sp{white-space:nowrap}
+.star-tbl td.sp img{width:26px;height:auto;vertical-align:middle;margin-right:0.5rem;opacity:0.85}
+.star-tbl td.sp span{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--soft)}
+.star-tbl tbody tr.srow{cursor:pointer}
+.star-tbl tbody tr.srow:hover td{background:var(--hover)}
+.star-empty{color:var(--muted);text-align:left!important;white-space:normal!important;padding:1.5rem 1rem!important}
 tr.row{cursor:pointer;transition:background 0.15s}
 tr.row td{transition:background 0.15s}
 tr.row:hover td{background:var(--hover)}
@@ -249,7 +265,10 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 .explain li b{display:block;color:#fff;font-size:0.92rem;font-weight:800;margin-bottom:0.2rem}
 .explain li b::before{content:'› ';color:var(--orange)}
 @media (max-width:760px){.explain ul{grid-template-columns:1fr}}
-.assume{margin-top:1.75rem;border-left:2px solid var(--orange);padding:0.25rem 0 0.25rem 1.1rem;max-width:860px}
+.assume-wrap{margin-top:1.75rem;max-width:860px}
+.assume-wrap:not(.open) .assume{max-height:10.5rem;overflow:hidden;-webkit-mask-image:linear-gradient(#000 45%,transparent);mask-image:linear-gradient(#000 45%,transparent)}
+.assume-more{margin:0.5rem 0 0 1.1rem;color:var(--orange-bright)}
+.assume{border-left:2px solid var(--orange);padding:0.25rem 0 0.25rem 1.1rem;max-width:860px}
 .assume h2{font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--orange);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.6rem}
 .assume p,.assume li{color:var(--muted);font-size:0.86rem;line-height:1.7}
 .assume ul{list-style:none;margin:0.35rem 0 0.6rem}
@@ -393,10 +412,27 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
     </div>
   </div>
 
+  <!-- "Starred" tab: every starred hunt, across species, in one list. -->
+  <div class="star-view" id="starView" hidden>
+    <div class="star-head">
+      <p class="star-sum" id="starSum"></p>
+      <div class="seg" role="group" aria-label="Residency">
+        <button type="button" data-res="R" aria-pressed="true">Resident</button>
+        <button type="button" data-res="N" aria-pressed="false">Nonres</button>
+      </div>
+    </div>
+    <div class="tbl-wrap star-wrap">
+      <table class="main star-tbl">
+        <thead><tr id="starHead"></tr></thead>
+        <tbody id="starBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="summary" id="summary" aria-live="polite"></div>
   <div class="filter-bar" id="filterBar"></div>
 
-  <div class="tbl-wrap">
+  <div class="tbl-wrap" id="mainWrap">
     <table class="main" id="tbl">
       <thead><tr id="thead"></tr></thead>
       <tbody id="tbody"></tbody>
@@ -408,7 +444,11 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
     <ul id="explainList"></ul>
   </details>
 
-  <div class="assume" id="assume"></div>
+  <!-- Collapsed by default to a short preview; the button expands it. -->
+  <div class="assume-wrap">
+    <div class="assume" id="assume"></div>
+    <button type="button" class="link-btn assume-more" id="assumeMore" aria-controls="assume" aria-expanded="false">Read more ↓</button>
+  </div>
 
   <!-- Cross-promotion, part 3 of 3: the paid apps in their Sort -> View -> Track ->
        Score order (same verbs as apps.html). Prices and claims must match the
@@ -484,9 +524,9 @@ const newId = () => "p" + Date.now().toString(36) + Math.random().toString(36).s
 
 function loadProfiles(){
   let ps = store.get("profiles", null);
-  if (!Array.isArray(ps) || !ps.length) ps = [{id: newId(), name: "Me", pts: store.get("points", {}) || {}}];
+  if (!Array.isArray(ps) || !ps.length) ps = [{id: newId(), name: "Hunter", pts: store.get("points", {}) || {}}];
   const out = ps.map(cleanProfile).filter(Boolean);
-  return out.length ? out : [{id: newId(), name: "Me", pts: {}}];
+  return out.length ? out : [{id: newId(), name: "Hunter", pts: {}}];
 }
 function cleanProfile(p){
   if (!p || typeof p !== "object") return null;
@@ -507,7 +547,8 @@ const ui = {
   showTrends: store.get("showTrends", false),   // tag change, point creep, vs projected
   sort: {key:"unit", dir:1},
   filters: {},            // column key -> {min, max} ; "unit" -> {units:[...]}
-  open: new Set(), collapsed: new Set()
+  open: new Set(), collapsed: new Set(),
+  starView: store.get("starView", false)   // the "Starred" tab: starred hunts from every species
 };
 if (!ui.profiles.some(p => p.id === ui.active)) ui.active = ui.profiles[0].id;
 let storageOk = true;
@@ -516,7 +557,8 @@ saveProfiles();
 
 
 const curState = () => STATES.find(s => s.state === ui.state) || STATES[0];
-const curSpecies = () => { const st = curState(); return st.species.find(s => s.key === ui.species) || st.species[0]; };
+let spOverride = null;
+const curSpecies = () => { if (spOverride) return spOverride; const st = curState(); return st.species.find(s => s.key === ui.species) || st.species[0]; };
 const activeProfile = () => ui.profiles.find(p => p.id === ui.active) || ui.profiles[0];
 const ptsOf = (prof, spKey) => { const v = prof.pts[ui.state + ":" + (spKey || curSpecies().key)]; return v == null ? null : v; };
 const nextYear = st => st.nextYear || st.drawYear + 1;
@@ -757,6 +799,9 @@ function render(){
   $("#subtitle").innerHTML = `Results from the <b>${st.drawYear} draw</b>, harvest from the <b>${st.harvestYear} season</b>, and projections for the <b>${N} draw</b>. ` +
     (st.nextTags ? `<b>${N} tag numbers are loaded.</b>` : `${N} tag numbers aren't out yet, so projections use ${st.drawYear} tags.`);
   renderSpeciesTabs(); renderWeaponChips(); renderHunter(); renderExplain(st, sp);
+  $("#starView").hidden = !ui.starView;
+  [".controls", "#summary", "#filterBar", "#mainWrap"].forEach(s => { $(s).hidden = ui.starView; });
+  if (ui.starView){ $("#eyebrow").textContent = "Starred hunts"; renderStarred(st); return; }
   const cols = columns(st);
   const q = ui.q.trim().toLowerCase();
 
@@ -1136,8 +1181,55 @@ $("#weaponChips").addEventListener("click", e => {
 function renderSpeciesTabs(){
   const st = curState(), sp = curSpecies();
   $("#speciesTabs").innerHTML = st.species.map(s =>
-    `<button type="button" class="vtab${s.key === sp.key ? " is-on" : ""}" data-species="${esc(s.key)}" aria-pressed="${s.key === sp.key}">` +
-    (s.icon ? `<img src="${esc(s.icon)}" alt="" onerror="this.remove()">` : "") + `<span>${esc(s.short || s.label)}</span></button>`).join("");
+    `<button type="button" class="vtab${s.key === sp.key && !ui.starView ? " is-on" : ""}" data-species="${esc(s.key)}" aria-pressed="${s.key === sp.key && !ui.starView}">` +
+    (s.icon ? `<img src="${esc(s.icon)}" alt="" onerror="this.remove()">` : "") + `<span>${esc(s.short || s.label)}</span></button>`).join("") +
+    `<button type="button" class="vtab star-tab${ui.starView ? " is-on" : ""}" data-starview aria-pressed="${ui.starView}"><b aria-hidden="true">★</b><span>Starred</span><span class="cnt">${starredHunts(st).length}</span></button>`;
+}
+// Starred hunts in this state, in species-tab order, then by unit and code.
+function starredHunts(st){
+  const out = [];
+  for (const s of st.species){
+    const hs = s.hunts.filter(h => ui.stars.has(st.state + ":" + h.code));
+    hs.sort((a, b) => a.unit.localeCompare(b.unit) || seasonStart(a).localeCompare(seasonStart(b)) || a.code.localeCompare(b.code));
+    hs.forEach(h => out.push({s, h}));
+  }
+  return out;
+}
+function renderStarred(st){
+  const D = st.drawYear, N = nextYear(st), list = starredHunts(st);
+  const heads = ["", "Species", "Hunt", `${tagYear(st)} tags`, `${D} guaranteed at`, `${N} projected guaranteed`, `${N} projected split`]
+    .concat(ui.profiles.map(p => `${p.name}'s ${N} odds`));
+  $("#starHead").innerHTML = heads.map((h, i) => `<th class="${i < 3 ? "l" : ""}${i === 0 ? " c-star" : ""}">${esc(h)}</th>`).join("");
+  $("#starSum").innerHTML = list.length
+    ? `<b>${list.length}</b> starred hunt${list.length === 1 ? "" : "s"} across every species, with each hunter's ${N} odds at their points for that species. Click a hunt to open it in its species table.`
+    : `Starred hunts from every species show up here.`;
+  if (!list.length){
+    $("#starBody").innerHTML = `<tr><td colspan="${heads.length}" class="star-empty">No starred hunts yet. Click the <b style="color:var(--orange)">★</b> next to any hunt in a species table to add it here.</td></tr>`;
+    return;
+  }
+  $("#starBody").innerHTML = list.map(({s, h}) => {
+    let a;
+    spOverride = s;
+    try { a = analyze(h, ui.res, s.system); } finally { spOverride = null; }
+    const id = st.state + ":" + h.code, m = a.model, nt = a.next;
+    const tags = `<span class="big">${fmt(nt[0])}</span>` + (s.system === "bonus" && nt[0] ? `<span class="small">${fmt(nt[1])} bonus · ${fmt(nt[2])} rand.</span>` : "");
+    const guar = a.allDrew ? `<span class="big">${a.guar ? a.guar[0] : 0}</span><span class="small">everyone drew</span>`
+      : a.guarPts != null ? `<span class="big">${a.guarPts}</span><span class="small">points</span>`
+      : a.randomOnly ? `<span class="na">random only</span>` : `<span class="na">—</span>`;
+    const pGuar = !m ? `<span class="na">—</span>` : m.randomOnly ? `<span class="na">random only</span>`
+      : `<span class="big">${m.guarPts}</span><span class="small">${m.all ? "all would draw" : "points"}</span>`;
+    const pSplit = !m || m.randomOnly || m.all ? `<span class="na">—</span>` : `<span class="big">${m.split} pts</span><span class="small">${fmt(m.k)} of ${fmt(m.n)} draw</span>`;
+    const odds = ui.profiles.map(prof => {
+      const p = ptsOf(prof, s.key), o = oddsAt(m, p);
+      return `<td>${p == null ? `<span class="na">add points</span>` : o == null ? `<span class="na">—</span>`
+        : `<span class="pill ${oddsClass(o)}">${pct(o)}</span><span class="small">${p} pt${p === 1 ? "" : "s"}</span>`}</td>`;
+    }).join("");
+    return `<tr class="srow" data-sp="${esc(s.key)}" data-code="${esc(h.code)}" tabindex="0">
+      <td class="c-star l"><button type="button" class="star" data-star="${esc(id)}" aria-pressed="true" aria-label="Unstar ${esc(h.unit)} ${esc(h.code)}">★</button></td>
+      <td class="l sp">${s.icon ? `<img src="${esc(s.icon)}" alt="">` : ""}<span>${esc(s.short || s.label)}</span></td>
+      <td class="l hunt"><div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div></td>
+      <td>${tags}</td><td>${guar}</td><td>${pGuar}</td><td>${pSplit}</td>${odds}</tr>`;
+  }).join("");
 }
 function renderHunter(){
   const st = curState(), sp = curSpecies(), prof = activeProfile();
@@ -1201,8 +1293,16 @@ function dropinSummary(N){
 }
 function resetView(){ ui.open.clear(); ui.collapsed.clear(); ui.wtypes.clear(); delete ui.filters.unit; closeFilter(false); }
 
+$("#assumeMore").onclick = () => {
+  const w = $(".assume-wrap"), open = w.classList.toggle("open");
+  $("#assumeMore").setAttribute("aria-expanded", String(open));
+  $("#assumeMore").textContent = open ? "Show less ↑" : "Read more ↓";
+  if (!open) w.scrollIntoView({block: "nearest"});
+};
 $("#speciesTabs").addEventListener("click", e => {
+  if (e.target.closest("[data-starview]")){ ui.starView = true; store.set("starView", true); closeFilter(false); render(); return; }
   const b = e.target.closest("[data-species]"); if (!b) return;
+  ui.starView = false; store.set("starView", false);
   ui.species = b.dataset.species; store.set("species", ui.species); resetView(); fillSelects(); render();
 });
 $("#q").oninput = e => { ui.q = e.target.value; render(); };
@@ -1287,6 +1387,21 @@ $("#tbody").addEventListener("click", e => {
   if (g){ const u = g.dataset.unit; ui.collapsed.has(u) ? ui.collapsed.delete(u) : ui.collapsed.add(u); render(); return; }
   const tr = e.target.closest("tr.row"); if (!tr) return;
   const c = tr.dataset.code; ui.open.has(c) ? ui.open.delete(c) : ui.open.add(c); render();
+});
+$("#starBody").addEventListener("click", e => {
+  const s = e.target.closest("[data-star]");
+  if (s){ ui.stars.delete(s.dataset.star); store.set("stars", [...ui.stars]); render(); return; }
+  const tr = e.target.closest("tr.srow"); if (!tr) return;
+  const code = tr.dataset.code;
+  ui.starView = false; store.set("starView", false);
+  ui.species = tr.dataset.sp; store.set("species", ui.species);
+  resetView(); ui.q = ""; $("#q").value = ""; ui.onlyRun = false; ui.onlyStar = false; store.set("onlyStar", false); ui.filters = {};
+  ui.open.add(code); fillSelects(); render();
+  const row = document.querySelector(`#tbody tr.row[data-code="${CSS.escape(code)}"]`);
+  if (row){ row.scrollIntoView({block: "start"}); row.focus({preventScroll: true}); }
+});
+$("#starBody").addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.srow")){ e.preventDefault(); e.target.click(); }
 });
 $("#tbody").addEventListener("keydown", e => {
   if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.row, tr.grp")){ e.preventDefault(); e.target.click(); }
