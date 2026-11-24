@@ -57,6 +57,22 @@
   }
   .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.04); }
 
+  /* Apps dropdown. "apps" itself stays a plain link to apps.html; hovering it (or
+     tabbing into it) shows a list of every app page. .nav-menu starts at the
+     bottom of the link and its padding-top bridges the gap, so the pointer can
+     travel down to the list without it closing. The links are duplicated in all
+     12 pages' nav plus tools/draw-odds/template.html, like the rest of the nav. */
+  .nav-item { position: relative; }
+  .nav-item > a { display: block; }   /* same box as the other nav links, incl. the phone menu */
+  .nav-menu { display: none; position: absolute; top: 100%; right: 0; padding-top: 0.6rem; z-index: 110; }
+  .has-menu:hover .nav-menu, .has-menu:focus-within .nav-menu { display: block; }
+  .nav-menu-in { min-width: 220px; padding: 0.4rem; background: rgba(13,13,13,0.98); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 16px 40px rgba(0,0,0,0.6); position: relative; }
+  .nav-menu-in::before { content: ''; position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(90deg, transparent, var(--orange), transparent); opacity: 0.6; }
+  .nav-links .nav-menu a { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 0.7rem; font-size: 0.95rem; letter-spacing: 0.02em; color: #999; white-space: nowrap; }
+  .nav-links .nav-menu a:hover, .nav-links .nav-menu a:focus-visible { color: #fff; background: rgba(204,85,0,0.10); }
+  .nav-menu img { width: 22px; height: 22px; border-radius: 5px; flex: none; }
+  .nav-links .nav-menu a.nav-menu-sep { margin-top: 0.3rem; border-top: 1px solid var(--border); border-radius: 0 0 4px 4px; padding-top: 0.75rem; }
+
   /* Hamburger toggle. Hidden on desktop; below 680px it is the only nav control,
      where .nav-links becomes a dropdown panel. Driven by nav.js — the three spans
      are the bars, and .open crosses them into an X. */
@@ -186,6 +202,12 @@
     }
     .nav-links.open { display: flex; }
     .nav-links a { padding: 0.7rem 0.5rem; font-size: 1.05rem; }
+    /* In the phone menu there's no hover: list the app pages under "apps", indented. */
+    .nav-menu { display: block; position: static; padding: 0 0 0.4rem 1rem; }
+    .nav-menu-in { min-width: 0; padding: 0; background: none; border: 0; box-shadow: none; }
+    .nav-menu-in::before { display: none; }
+    .nav-links .nav-menu a { padding: 0.5rem 0.5rem; font-size: 0.92rem; }
+    .nav-links .nav-menu a.nav-menu-sep { margin-top: 0; border-top: 0; padding-top: 0.5rem; }
     .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
     .services-grid { grid-template-columns: 1fr; }
     footer { flex-direction: column; gap: 1rem; text-align: center; }

@@ -46,7 +46,8 @@
 
 <!-- Site nav. Identical on all 12 pages except that index.html uses bare
      fragments for its own sections. Keep the five links and their order in
-     sync when editing any one copy. Toggle behaviour lives in nav.js. -->
+     sync when editing any one copy. Toggle behaviour lives in nav.js. The
+     apps link carries a dropdown of every app page (styles in style.css). -->
 <nav>
   <a href="index.html#home" class="nav-logo"><img src="TechLogoSecondary-White.png" alt="Elevation Technology Solutions"></a>
   <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-links">
@@ -56,7 +57,16 @@
     <a href="index.html#home">home</a>
     <a href="index.html#about">about</a>
     <a href="index.html#services">services</a>
-    <a href="apps.html">apps</a>
+    <div class="nav-item has-menu">
+      <a href="apps.html">apps</a>
+      <div class="nav-menu"><div class="nav-menu-in">
+        <a href="rack-detector.html"><img src="img/menu-detector.png" alt="">Rack Detector</a>
+        <a href="rack-viewer.html"><img src="img/menu-viewer.png" alt="">Rack Viewer</a>
+        <a href="rack-tracker.html"><img src="img/menu-tracker.png" alt="">Rack Tracker</a>
+        <a href="rack-scorer.html"><img src="img/menu-scorer.png" alt="">Rack Scorer</a>
+        <a href="draw-odds.html" class="nav-menu-sep"><img src="img/menu-drawodds.png" alt="">Draw Odds</a>
+      </div></div>
+    </div>
     <a href="index.html#contact">contact</a>
   </div>
 </nav>

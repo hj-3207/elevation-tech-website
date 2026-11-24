@@ -225,6 +225,12 @@ reloading. There is no templating, so changing the nav means changing 12 files â
 **plus** `draw-odds.html`, whose nav comes from `tools/draw-odds/template.html`;
 change it there and rebuild.
 
+**The "apps" link has a dropdown** (added 2026-11-24). "apps" itself is still a plain link to
+`apps.html`.
+- **How it opens:** on hover or keyboard focus, `.has-menu` shows a list linking every app page: Detector, Viewer, Tracker, Scorer (workflow order), then Draw Odds below a divider. On phones the list sits indented under "apps" in the open menu.
+- **Styles:** `style.css` (search "Apps dropdown"). The icons are small 64px copies, `img/menu-*.png`, so the nav doesn't pull ~110 KB of full-size icons onto every page.
+- **Adding an app** means adding a link to this list in all 12 pages plus the Draw Odds template, along with its `apps.html` and `index.html` entries.
+
 ## Draw Odds page (generated)
 
 `draw-odds.html` is **generated** from `tools/draw-odds/` (template plus Python build
