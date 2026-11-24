@@ -165,11 +165,10 @@ table.pts tr.me td.est{color:#fff}
 .hunters-tbl td.l,.hunters-tbl th.l{text-align:left}
 .hunters-tbl td:first-child{font-weight:600}
 .na{color:var(--subtle);font-family:var(--mono);font-size:0.78rem}
-/* Projections (next year's guaranteed and split): italic and a step dimmer than
-   actual results, so an estimate never reads as a result. Same in the header. */
-td.is-proj .big{font-style:italic;color:var(--soft);font-weight:700}
+/* Projections (next year's guaranteed and split): italic, so an estimate never
+   reads as a result. Same in the header. */
+td.is-proj .big{font-style:italic}
 table.main th.is-proj{font-style:italic}
-.proj-key i{color:var(--soft);font-weight:700}
 .m-bar{display:none}
 
 /* WEAPON BUTTONS + BADGES */
@@ -415,8 +414,6 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
     <a href="apps.html" class="maker-more" data-ref="apps:top">See the apps →</a>
   </div>
 
-  <div class="species-tabs" id="speciesTabs" role="group" aria-label="Species"></div>
-
   <div class="panel hunters" role="region" aria-label="Hunters and points">
     <div class="panel-head">
       <span class="lbl">Hunter</span>
@@ -436,6 +433,8 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
       </span>
     </div>
   </div>
+
+  <div class="species-tabs" id="speciesTabs" role="group" aria-label="Species"></div>
 
   <div class="panel controls" role="region" aria-label="Filters">
     <div class="ctl wtypes-ctl"><span class="lbl" id="wtLbl">Weapon</span><div class="wchips" id="weaponChips" role="group" aria-labelledby="wtLbl"></div></div>
@@ -830,7 +829,7 @@ function renderHead(cols){
     const on = ui.sort.key === c.key && !(c.key === "unit" && isGrouped());
     const aria = ui.sort.key === c.key ? (ui.sort.dir > 0 ? "ascending" : "descending") : "none";
     const fOn = activeFilters().some(([k]) => k === c.key);
-    return `<th class="${c.cls||""}${fOn ? " f-on" : ""}${c.proj ? " is-proj" : ""}" scope="col" aria-sort="${aria}"${c.proj ? ` title="A projection for the ${nextYear(curState())} draw, not a result"` : ""}><span class="th-in">` +
+    return `<th class="${c.cls||""}${fOn ? " f-on" : ""}${c.proj ? " is-proj" : ""}" scope="col" aria-sort="${aria}"><span class="th-in">` +
       `<button type="button" class="sbtn" data-sort="${c.key}">${esc(c.label)}${on ? `<span class="arr">${ui.sort.dir > 0 ? "▲" : "▼"}</span>` : ""}</button>` +
       `<button type="button" class="fbtn${fOn ? " on" : ""}" data-filter="${c.key}" aria-label="Filter ${esc(c.label)}" aria-haspopup="dialog">${FUNNEL}</button></span></th>`;
   }).join("");
@@ -852,8 +851,7 @@ function render(){
   document.title = st.name + " Draw Odds | Elevation Technology";
   $("#title").innerHTML = `${esc(st.name)} <span>Draw Odds</span>`;
   $("#eyebrow").textContent = sp.label;
-  $("#subtitle").innerHTML = `Results from the <b>${st.drawYear} draw</b>, harvest from the <b>${st.harvestYear} season</b>, and projections for the <b>${N} draw</b>. ` +
-    (st.nextTags ? `<b>${N} tag numbers are loaded.</b>` : `${N} tag numbers aren't out yet, so projections use ${st.drawYear} tags.`);
+  $("#subtitle").innerHTML = `Results from the <b>${st.drawYear} draw</b>, harvest from the <b>${st.harvestYear} season</b>, and projections for the <b>${N} draw</b>.`;
   renderSpeciesTabs(); renderWeaponChips(); renderHunter(); renderExplain(st, sp);
   $("#starView").hidden = !ui.starView;
   [".controls", "#summary", "#filterBar", "#mainWrap"].forEach(s => { $(s).hidden = ui.starView; });
@@ -886,7 +884,6 @@ function render(){
     `<span><b>${list.length}</b> hunt${list.length === 1 ? "" : "s"} in <b>${units.size}</b> unit${units.size === 1 ? "" : "s"}</span><span><b>${fmt(totTags)}</b> ${tagYear(st)} ${ui.res === "R" ? "resident" : "nonresident"} tags</span>` +
     `<span><b>${fmt(totApps)}</b> ${st.drawYear} first-choice applicants</span>` +
     (sp.system === "preference" ? `<span>Preference-point draw (no random half)</span>` : `<span>Bonus-point draw (half to top points, half random)</span>`) +
-    `<span class="proj-key"><i>Italic</i> = ${N} projection</span>` +
     (p == null ? `<span>Enter ${esc(prof.name)}'s ${esc(sp.short || sp.label)} points above to see odds.</span>` : `<span>${esc(prof.name)}: <b>${p}</b> pts</span>`) +
     (grouped && list.length ? `<span class="grp-acts"><button type="button" class="link-btn" data-groups="collapse">Collapse all</button><button type="button" class="link-btn" data-groups="expand">Expand all</button></span>` : "");
   renderFilterBar(cols);
@@ -1335,7 +1332,9 @@ function fillSelects(){
     `<p>When the top point group is bigger than the bonus tags, only some of that group draws, so guaranteed is shown as their points + 1. Example: 10 people at 25 points and 8 bonus tags means 8 of the 10 draw, and guaranteed shows 26, even if nobody holds 26 yet. The same rule applies to the ${D} guaranteed column.</p>` +
     `<p>Real pools move. Hunts that gain tags or look easier tend to pull applicants in, and hunts that creep tend to lose them. Treat the projections as a starting point, not a guarantee.</p>`;
   const src = st.sources || {};
-  $("#sources").innerHTML = `Sources: <a href="${esc(src.odds||"#")}" target="_blank" rel="noopener">${esc(st.name)} ${st.drawYear} draw results</a> · <a href="${esc(src.harvest||"#")}" target="_blank" rel="noopener">${st.harvestYear} harvest report</a>` +
+  // Which tags the projections use: a note at the bottom, not in the intro.
+  const tagNote = st.nextTags ? `Projections use the released ${nextYear(st)} tag numbers. ` : `${nextYear(st)} tag numbers aren't out yet, so projections use ${st.drawYear} tags. `;
+  $("#sources").innerHTML = tagNote + `Sources: <a href="${esc(src.odds||"#")}" target="_blank" rel="noopener">${esc(st.name)} ${st.drawYear} draw results</a> · <a href="${esc(src.harvest||"#")}" target="_blank" rel="noopener">${st.harvestYear} harvest report</a>` +
     (st.nextTags && src.tags ? ` · <a href="${esc(src.tags)}" target="_blank" rel="noopener">${nextYear(st)} tag numbers</a>` : "") +
     `. Last year's results don't guarantee next year's. Check the official guidebook before applying.` +
     ` Your hunters and points stay in this browser. Clicks on the app links are counted anonymously: which link and when, nothing else.`;

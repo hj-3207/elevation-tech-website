@@ -116,7 +116,7 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - Every column has a **filter button**: min/max for numbers, a unit multi-select for Hunt.
   - The **header row is frozen**: the table scrolls inside its own pane.
   - The table must fit at **1,400 px** width. Check `.tbl-wrap` scrollWidth vs clientWidth after adding anything.
-  - **Projections look different** (added 2026-11-24): the next-year projected guaranteed and split numbers are *italic* and a step dimmer (`td.is-proj`, `th.is-proj`, column flag `proj:true`), with a key in the summary line ("*Italic* = 2027 projection") and a header tooltip. The odds pill is also a next-year figure but keeps its colors; its header says "2027 odds".
+  - **Projections look different** (added 2026-11-24): the next-year projected guaranteed and split numbers are *italic* (`td.is-proj`, `th.is-proj`, column flag `proj:true`), with italic headers. The owner chose italics only: no dimmer color, no key in the summary line, no tooltip. The odds pill is also a next-year figure but keeps its colors; its header says "2027 odds".
   - **Phones (680 px and under) get cards, not the table** (added 2026-11-24). It's CSS only, on the same rows: every cell has a `k-<column>` class and, for the card's numbers, a `data-label` from the column's `short` label.
     - **Each card:** hunt name, code and dates across the top, star at the top right, then four numbers: tags, guaranteed, projected guaranteed and the active hunter's odds. Other cells are hidden; tapping the card opens the full detail underneath.
     - **Sorting and filters:** the header row is hidden, so a phone-only bar (`#mBar`, `renderMobileBar`) has a Sort menu, a direction button and a Filter menu that opens the same popover.
@@ -145,6 +145,8 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - **Where to see counts:** `download-log.html`, tab "Draw Odds → apps": a table by app page × placement (all rows are loaded, so it's a true total), plus every click.
   - **Disclosure:** the sources line at the bottom of the page says hunters and points stay in the browser and that app-link clicks are counted anonymously. Adding a new app link means adding a `data-ref`, and a new app or placement value means changing the table's check constraint.
   - **Testing:** over `file://` the insert fails on CORS (harmless). Over `http://localhost` it writes real rows. To test the tagging, stub `window.fetch` in a temp copy.
+- **Tag-number note:** "2027 tag numbers aren't out yet, so projections use 2026 tags" (or "Projections use the released 2027 tag numbers") is at the **bottom**, starting the sources line. The owner moved it out of the intro.
+- **Order at the top:** intro, app icon row, **Hunter panel**, then the species buttons, then the filters. The owner moved the Hunter panel above the species buttons.
 - **Copy voice:** plain, concrete, and honest about limitations, like the website.
 
 ## Yearly / seasonal tasks
