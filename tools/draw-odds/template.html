@@ -261,6 +261,36 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 .assume-tbl th:first-child,.assume-tbl td:first-child{text-align:left}
 .assume-tbl th{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
 .assume-tbl tr.tot td{color:var(--text);font-weight:700;border-bottom:0}
+/* Cross-promotion of the paid apps: maker strip, hunt-detail suggestions, After the draw */
+.maker-strip{color:var(--muted);font-size:0.84rem;line-height:1.7;max-width:860px;margin:-1.25rem 0 1.9rem}
+.maker-strip a{color:var(--soft);text-decoration:none;border-bottom:1px solid var(--border-strong)}
+.maker-strip a:hover{color:#fff;border-color:var(--orange)}
+.maker-strip a.maker-more{color:var(--orange-bright);border:0;font-family:var(--mono);font-size:0.74rem;letter-spacing:0.04em;margin-left:0.3rem;white-space:nowrap}
+.promo{margin-top:1.4rem;padding-top:1.1rem;border-top:1px solid var(--border)}
+.detail a.promo-item{color:var(--muted)}   /* not the orange .detail a link color */
+.promo-item{display:flex;align-items:flex-start;gap:0.8rem;padding:0.7rem 0.8rem;margin-top:0.5rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);font-size:0.84rem;line-height:1.55;text-decoration:none;transition:border-color 0.2s,background 0.2s}
+.promo-item:hover{border-color:var(--border-orange);background:var(--card2)}
+.promo-item img{width:30px;height:30px;border-radius:6px;flex:none;margin-top:0.1rem}
+.promo-item b{color:#fff;font-weight:700}
+.promo-item i{font-style:normal;font-family:var(--mono);font-size:0.64rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--subtle);margin-left:0.3rem}
+.promo-go{margin-left:auto;color:var(--orange);align-self:center;padding-left:0.4rem}
+.after-draw{margin-top:3rem;padding-top:2.5rem;border-top:1px solid var(--border)}
+.after-title{font-size:clamp(1.5rem,2.6vw,2.1rem);font-weight:900;color:#fff;letter-spacing:-0.02em;line-height:1.15;margin-bottom:1.5rem}
+.after-title span{color:var(--orange)}
+.after-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.after-card{background:var(--card);padding:1.4rem 1.3rem;text-decoration:none;display:flex;flex-direction:column;gap:0.6rem;position:relative;transition:background 0.2s}
+.after-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:0;transition:opacity 0.3s}
+.after-card:hover{background:var(--hover)} .after-card:hover::before{opacity:1}
+.after-verb{font-family:var(--mono);font-size:0.64rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--orange)}
+.after-head{display:flex;align-items:center;gap:0.7rem}
+.after-head img{width:36px;height:36px;border-radius:8px}
+.after-head b{display:block;color:#fff;font-weight:800;font-size:1rem}
+.after-head i{font-style:normal;font-family:var(--mono);font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.after-desc{color:var(--muted);font-size:0.84rem;line-height:1.6;flex:1}
+.after-price{font-family:var(--mono);font-size:0.7rem;color:var(--soft);letter-spacing:0.02em}
+@media (max-width:1000px){.after-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.after-grid{grid-template-columns:1fr}}
+@media print{.maker-strip,.promo,.after-draw{display:none!important}}
 .sources{color:var(--subtle);font-family:var(--mono);font-size:0.72rem;line-height:1.8;margin-top:1.75rem}
 .sources a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border-strong)}
 .sources a:hover{color:var(--orange-bright);border-color:var(--orange)}
@@ -314,6 +344,11 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   <h1 class="page-title" id="title">Draw <span>Odds</span></h1>
   <div class="divider"></div>
   <p class="page-sub" id="subtitle"></p>
+  <!-- Cross-promotion, part 1 of 3: one quiet line saying who built this. -->
+  <p class="maker-strip">Free from Elevation Technology Solutions, makers of
+    <a href="rack-detector.html">Rack Detector</a>, <a href="rack-viewer.html">Rack Viewer</a>,
+    <a href="rack-tracker.html">Rack Tracker</a> and <a href="rack-scorer.html">Rack Scorer</a>.
+    <a href="apps.html" class="maker-more">See the apps →</a></p>
 
   <div class="species-tabs" id="speciesTabs" role="group" aria-label="Species"></div>
 
@@ -368,6 +403,40 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   </details>
 
   <div class="assume" id="assume"></div>
+
+  <!-- Cross-promotion, part 3 of 3: the paid apps in their Sort -> View -> Track ->
+       Score order (same verbs as apps.html). Prices and claims must match the
+       product pages; grep for them here when a price changes. -->
+  <div class="after-draw" role="region" aria-label="Apps for after the draw">
+    <div class="section-eyebrow">After the draw</div>
+    <h2 class="after-title">Drew the tag? <span>Get ready for the hunt.</span></h2>
+    <div class="after-grid">
+      <a class="after-card" href="rack-detector.html">
+        <span class="after-verb">01 // Sort</span>
+        <span class="after-head"><img src="img/menu-detector.png" alt=""><span><b>Rack Detector</b><i>Windows</i></span></span>
+        <span class="after-desc">Point it at an SD card of trail-camera photos and it sorts them into per-species folders, so the elk are in the elk folder before you've looked at a frame.</span>
+        <span class="after-price">$100 one-time · free for 10,000 images</span>
+      </a>
+      <a class="after-card" href="rack-viewer.html">
+        <span class="after-verb">02 // View</span>
+        <span class="after-head"><img src="img/menu-viewer.png" alt=""><span><b>Rack Viewer</b><i>Windows</i></span></span>
+        <span class="after-desc">Rip through a folder of photos and video at arrow-key speed, mark the keepers, and move everything else to the trash in one action.</span>
+        <span class="after-price">Free to view · $20 one-time to keep clearing out</span>
+      </a>
+      <a class="after-card" href="rack-tracker.html">
+        <span class="after-verb">03 // Track</span>
+        <span class="after-head"><img src="img/menu-tracker.png" alt=""><span><b>Rack Tracker</b><i>Android</i></span></span>
+        <span class="after-desc">Follow individual bulls and bucks across the season: every trail-cam hit, glassing session and shed find, mapped in order. Your data never leaves your phone.</span>
+        <span class="after-price">$10 / year · free to start</span>
+      </a>
+      <a class="after-card" href="rack-scorer.html">
+        <span class="after-verb">04 // Score</span>
+        <span class="after-head"><img src="img/menu-scorer.png" alt=""><span><b>Rack Scorer</b><i>Android · iOS</i></span></span>
+        <span class="after-desc">Score the rack at the tailgate: Boone &amp; Crockett and Pope &amp; Young style, live gross and net totals, works fully offline.</span>
+        <span class="after-price">$4.99 one-time</span>
+      </a>
+    </div>
+  </div>
 
   <p class="sources" id="sources"></p>
 </div>
@@ -851,7 +920,7 @@ function detailHtml(st, sp, h, a, p, ncol){
       <dt>Tags</dt><dd>${tagLine}</dd>
       <dt>${esc(st.harvestYear)} harvest</dt><dd>${hv ? `${hv[3].toFixed(1)}% · ${fmt(hv[2])} harvested by ${fmt(hv[1])} hunters afield (${fmt(hv[0])} permits)` : "No harvest record for this hunt #"}</dd>
       <dt>${N} projection</dt><dd>${projText(a, st)}</dd>
-    </dl></div>
+    </dl>${promoHtml(sp, a, p)}</div>
   </div></td></tr>`;
 }
 
@@ -878,6 +947,38 @@ function trendHtml(st, sp, h, a){
     (m && !m.randomOnly ? `<tr class="proj-row"><td>${nextYear(st)} proj.</td><td>${fmt(a.next[0])}</td><td class="na">—</td><td>${m.guarPts}</td><td>${m.all ? "—" : `${m.split} <span class="na">(${fmt(m.k)} of ${fmt(m.n)})</span>`}</td></tr>` : "");
   return `<h3>Year by year (${ui.res === "R" ? "residents" : "nonresidents"})</h3>
     <table class="pts trend"><thead><tr><th>Draw</th><th>Tags</th><th>Applicants</th><th>Guaranteed</th><th>Split (drew)</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+
+// Cross-promotion, part 2 of 3: one or two of the paid apps that fit the species
+// in this hunt, worded for it. Only claims what each app supports (apps.html):
+// Scorer: elk, mule deer, whitetail, bighorn, pronghorn, bear, lion.
+// Tracker: elk, mule deer, whitetail, bighorn, bear. Detector IDs elk and deer.
+// Moose, bison and goat fit none of those, so they get Rack Viewer only.
+const PROMO_APPS = {
+  detector: {name: "Rack Detector", url: "rack-detector.html", icon: "img/menu-detector.png", plat: "Windows"},
+  viewer:   {name: "Rack Viewer",   url: "rack-viewer.html",   icon: "img/menu-viewer.png",   plat: "Windows · free to view"},
+  tracker:  {name: "Rack Tracker",  url: "rack-tracker.html",  icon: "img/menu-tracker.png",  plat: "Android"},
+  scorer:   {name: "Rack Scorer",   url: "rack-scorer.html",   icon: "img/menu-scorer.png",   plat: "Android · iOS"},
+};
+const promoFor = key => {
+  const animal = {"le-elk": "bulls", "le-deer": "bucks", "gs-deer": "bucks", "desert-bighorn": "rams", "rocky-bighorn": "rams", "pronghorn": "bucks"}[key];
+  const one = {"le-elk": "bull", "le-deer": "buck", "gs-deer": "buck", "desert-bighorn": "ram", "rocky-bighorn": "ram", "pronghorn": "buck"}[key];
+  const tracker = ["tracker", `Keep track of the ${animal} you're seeing on this unit: every trail-cam hit, glassing session and shed find, mapped in order across the season.`];
+  const scorer  = ["scorer", `Score your ${one} at the tailgate, Boone & Crockett and Pope & Young style, with live gross and net totals. Works offline.`];
+  const viewer  = ["viewer", `Scouting with trail cameras? Go through the photos and video at arrow-key speed and keep only the ones worth keeping.`];
+  if (key === "le-elk" || key === "le-deer" || key === "gs-deer" || key === "desert-bighorn" || key === "rocky-bighorn") return [tracker, scorer];
+  if (key === "pronghorn") return [scorer, viewer];
+  return [viewer];
+};
+function promoHtml(sp, a, p){
+  const items = promoFor(sp.key);
+  if (!items.length) return "";
+  const o = oddsAt(a.model, p);
+  const lead = p != null && o != null && o >= 0.9 ? "Looks like you'll draw this one. Get ready:" : "Getting ready for this hunt?";
+  return `<div class="promo"><h3>${esc(lead)}</h3>` + items.map(([k, text]) => {
+    const app = PROMO_APPS[k];
+    return `<a class="promo-item" href="${app.url}"><img src="${app.icon}" alt=""><span><b>${esc(app.name)}</b> <i>${esc(app.plat)}</i><br>${esc(text)}</span><span class="promo-go" aria-hidden="true">→</span></a>`;
+  }).join("") + `</div>`;
 }
 
 function projText(a, st){

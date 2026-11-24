@@ -336,7 +336,9 @@ for now".
 
 Prices and trial terms appear in several places per app. When one changes, grep for
 the old figure across every page — `index.html`, `apps.html`, the product page,
-and the comparison table all carry them.
+and the comparison table all carry them. So does **`tools/draw-odds/template.html`**
+(its "After the draw" cards); edit it there and rebuild, don't grep-replace in the
+generated `draw-odds.html`.
 
 On `apps.html`, each app's **hero step card and its app-block lead paragraph carry
 the same sentence, by design** — one canonical description per app. Change both
