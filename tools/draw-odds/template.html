@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Draw Odds | Elevation Technology</title>
+<meta name="description" content="Big game draw odds by hunt: points that guaranteed a tag last year, the split group, random-draw odds, and harvest success.">
+<link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="shortcut icon" href="favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="manifest" href="site.webmanifest" />
+<link rel="stylesheet" href="style.css">
+<style>
+/* Page styles for draw-odds.html. The nav, grid background, footer and base
+   tokens come from style.css like every other page; these rules come after it
+   and override it where they overlap. Avoid <section> and .container here:
+   style.css pads every section and caps .container at 1080px. */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --orange:#CC5500; --orange-bright:#e06010; --orange-glow:rgba(204,85,0,0.25);
+  --orange-tint:rgba(204,85,0,0.08); --orange-tint-2:rgba(204,85,0,0.16);
+  --bg:#080808; --bg2:#0d0d0d; --card:#111111; --card2:#161616; --hover:#141414;
+  --border:rgba(255,255,255,0.07); --border-strong:rgba(255,255,255,0.14); --border-orange:rgba(204,85,0,0.3);
+  --text:#e5e5e5; --white:#fff; --soft:#aaa; --muted:#777; --subtle:#444;
+  --bar-bg:#1d1d1d; --bar-rand:#8a8a8a;
+  --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+
+/* PAGE */
+main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
+.do-container{max-width:1380px;margin:0 auto}
+.section-eyebrow{display:inline-flex;align-items:center;gap:0.6rem;font-family:var(--mono);font-size:0.7rem;color:var(--orange);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:1rem}
+.section-eyebrow::before{content:'//';color:var(--subtle)}
+.page-title{font-size:clamp(2.2rem,5vw,3.4rem);font-weight:900;color:#fff;letter-spacing:-0.02em;line-height:1.05}
+.page-title span{color:var(--orange)}
+.divider{width:40px;height:2px;background:var(--orange);margin:1.1rem 0 1.25rem;border-radius:1px}
+.page-sub{color:var(--muted);font-family:var(--mono);font-size:0.84rem;line-height:1.85;max-width:760px;margin-bottom:2.25rem}
+.page-sub b{color:var(--soft);font-weight:400}
+
+/* CONTROLS */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.35rem;position:relative;overflow:hidden;margin-bottom:1rem}
+.controls{display:grid;gap:1rem 1.1rem;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));align-items:end}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:0.6}
+.ctl label,.ctl .lbl{display:block;font-family:var(--mono);font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem}
+.ctl select,.ctl input[type=text],.ctl input[type=number]{width:100%;min-width:0;background:var(--bg2);border:1px solid var(--border-strong);border-radius:6px;padding:0.55rem 0.75rem;min-height:40px;color:var(--text);transition:border-color 0.2s}
+.ctl select:hover,.ctl input:hover{border-color:rgba(255,255,255,0.22)}
+.ctl select:focus,.ctl input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-tint-2)}
+.ctl select option{background:var(--card);color:var(--text)}
+.ctl input[type=number]{font-family:var(--mono)}
+.ctl input::placeholder{color:var(--subtle)}
+.seg{display:flex;border:1px solid var(--border-strong);border-radius:6px;overflow:hidden;background:var(--bg2)}
+.seg button{flex:1;border:0;background:none;padding:0.5rem 0.4rem;cursor:pointer;min-height:38px;font-family:var(--mono);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);transition:all 0.2s}
+.seg button:hover{color:#fff}
+.seg button[aria-pressed=true]{background:var(--orange);color:#fff;font-weight:600}
+.ctl.checks{display:flex;flex-direction:column;gap:0.45rem}
+.checks label{display:flex;gap:0.6rem;align-items:center;font-family:var(--sans);font-size:0.86rem;letter-spacing:0;text-transform:none;color:var(--soft);margin:0;cursor:pointer}
+.checks input{accent-color:var(--orange);width:16px;height:16px}
+
+.summary{display:flex;flex-wrap:wrap;align-items:center;gap:0.4rem 1.4rem;color:var(--muted);font-family:var(--mono);font-size:0.74rem;letter-spacing:0.03em;margin:1.5rem 0.15rem 0.75rem}
+.summary b{color:#fff;font-weight:600}
+
+/* SPECIES (same look as the site's .vtab buttons) */
+.species-tabs{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem}
+.vtab{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);background:transparent;
+  border:1px solid var(--border-strong);border-radius:6px;padding:0.6rem 1.05rem;cursor:pointer;transition:all 0.2s}
+.vtab:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
+.vtab.is-on{color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
+.vtab{display:inline-flex;align-items:center;gap:0.55rem;min-height:40px}
+.vtab img{height:20px;width:auto;opacity:0.55;transition:opacity 0.2s}
+.vtab:hover img,.vtab.is-on img{opacity:1}
+
+/* HUNTERS */
+.panel-head{display:flex;flex-wrap:wrap;align-items:center;gap:0.6rem 1rem;margin-bottom:1rem}
+.lbl{font-family:var(--mono);font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em}
+.chips{display:flex;flex-wrap:wrap;gap:0.4rem}
+.chip{font-family:var(--sans);font-size:0.86rem;font-weight:600;color:var(--soft);background:var(--bg2);border:1px solid var(--border-strong);border-radius:999px;padding:0.35rem 0.95rem;cursor:pointer;transition:all 0.2s}
+.chip:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
+.chip.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.chip.add{font-family:var(--mono);font-size:0.7rem;font-weight:400;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);border-style:dashed}
+.hunter-body{display:grid;grid-template-columns:200px 1fr;gap:1rem 1.25rem;align-items:end}
+.pts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:0.6rem}
+.pt{display:flex;flex-direction:column;gap:0.35rem}
+.pt span{font-family:var(--mono);font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt input{width:100%;background:var(--bg2);border:1px solid var(--border-strong);border-radius:6px;padding:0.45rem 0.6rem;min-height:38px;font-family:var(--mono);font-size:0.95rem;color:#fff}
+.pt input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-tint-2)}
+.pt input::placeholder{color:var(--subtle)}
+.pt.cur span{color:var(--orange)}
+.pt.cur input{border-color:var(--border-orange)}
+.hunter-actions{display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem 1rem;margin-top:0.9rem;align-items:center}
+.note{color:var(--subtle);font-family:var(--mono);font-size:0.68rem}
+.acts{display:flex;gap:1rem}
+.link-btn{background:none;border:0;cursor:pointer;font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:0.2rem 0}
+.link-btn:hover{color:#fff}
+.link-btn.danger:hover{color:var(--orange-bright)}
+.link-btn:disabled{opacity:0.35;cursor:default}
+@media (max-width:680px){.hunter-body{grid-template-columns:1fr}}
+
+/* TABLE */
+/* The table scrolls inside its own pane so the header row can stay frozen at the
+   top while you scroll (sticky can't follow the page through an overflow box). */
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:auto;max-width:100%;
+  max-height:calc(100vh - 120px);max-height:calc(100dvh - 120px);min-height:360px;overscroll-behavior:contain}
+table.main{border-collapse:separate;border-spacing:0;width:100%;min-width:1080px;font-variant-numeric:tabular-nums}
+table.main th,table.main td{padding:0.75rem 0.42rem;border-bottom:1px solid var(--border);text-align:right;vertical-align:top;white-space:nowrap}
+table.main tbody tr:last-child td{border-bottom:0}
+table.main th{position:sticky;top:0;z-index:3;background:var(--bg2);font-family:var(--mono);font-size:0.6rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;line-height:1.4;white-space:normal;vertical-align:bottom;border-bottom:1px solid var(--border-strong)}
+table.main th button{all:unset;cursor:pointer;display:inline-block;transition:color 0.2s}
+.th-in{display:inline-flex;align-items:flex-end;gap:0.3rem}
+th.l .th-in{flex-direction:row}
+table.main th .fbtn{color:var(--subtle);padding:2px 3px;border-radius:3px;line-height:0;flex-shrink:0}
+table.main th .fbtn:hover{color:#fff;background:rgba(255,255,255,0.06)}
+table.main th .fbtn.on{color:var(--orange)}
+table.main th button:hover{color:#fff}
+table.main th button:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+table.main th[aria-sort=ascending],table.main th[aria-sort=descending]{color:var(--orange)}
+table.main th .arr{font-size:0.6rem;margin-left:0.3rem}
+table.main th.l,table.main td.l{text-align:left}
+table.main td.hunt{white-space:normal;min-width:160px;max-width:260px}
+.c-star{width:34px;padding-right:0!important}
+tr.row{cursor:pointer;transition:background 0.15s}
+tr.row td{transition:background 0.15s}
+tr.row:hover td{background:var(--hover)}
+tr.row td:first-child{position:relative}
+tr.row td:first-child::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--orange);opacity:0;transition:opacity 0.2s}
+tr.row:hover td:first-child::before,tr.row.open td:first-child::before{opacity:1}
+tr.row.open td{background:var(--orange-tint);border-bottom-color:transparent}
+tr.row:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+.unit{font-weight:700;color:#fff;font-size:0.95rem}
+.meta{color:var(--muted);font-size:0.8rem;margin-top:0.15rem}
+.code{font-family:var(--mono);font-size:0.72rem;color:var(--muted)}
+.star{background:none;border:0;cursor:pointer;font-size:1.05rem;line-height:1;color:var(--subtle);padding:2px;transition:color 0.2s}
+.star:hover{color:var(--soft)}
+.star[aria-pressed=true]{color:var(--orange)}
+.big{font-weight:800;font-size:0.98rem;color:#fff}
+.small{color:var(--muted);font-family:var(--mono);font-size:0.66rem;display:block;margin-top:0.2rem;letter-spacing:0.02em}
+.pill{display:inline-block;border-radius:4px;padding:0.15rem 0.5rem;font-family:var(--mono);font-weight:600;font-size:0.8rem;border:1px solid transparent}
+.p-good{background:var(--orange);color:#fff}
+.p-mid{background:var(--orange-tint);color:var(--orange-bright);border-color:var(--border-orange)}
+.p-bad{background:transparent;color:var(--muted);border-color:var(--border-strong)}
+.up{color:var(--orange-bright)} .down{color:var(--soft)}
+table.pts td.est{color:var(--orange-bright)}
+table.pts tr.me td.est{color:#fff}
+.hunters-tbl td.l,.hunters-tbl th.l{text-align:left}
+.hunters-tbl td:first-child{font-weight:600}
+.na{color:var(--subtle);font-family:var(--mono);font-size:0.78rem}
+
+/* WEAPON BUTTONS + BADGES */
+.wtypes-ctl{grid-column:span 2}
+.wchips{display:flex;flex-wrap:wrap;gap:0.35rem}
+.wchip{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);background:var(--bg2);border:1px solid var(--border-strong);border-radius:6px;padding:0 0.75rem;min-height:40px;cursor:pointer;transition:all 0.2s}
+.wchip:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
+.wchip.on{color:#fff;background:var(--orange);border-color:var(--orange)}
+.badge{display:inline-block;font-family:var(--mono);font-size:0.58rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--orange-bright);border:1px solid var(--border-orange);background:var(--orange-tint);border-radius:3px;padding:0.1rem 0.4rem;margin-left:0.45rem;vertical-align:0.12em;white-space:nowrap;cursor:help}
+.badges{margin-top:0.3rem}
+.badges .badge{margin:0 0.3rem 0 0}
+dd .badge{margin:0 0.35rem 0 0;cursor:default}
+.fp-search{width:100%;background:var(--bg2);border:1px solid var(--border-strong);border-radius:6px;padding:0.4rem 0.55rem;color:#fff;margin-bottom:0.6rem}
+.fp-search:focus{outline:none;border-color:var(--orange)}
+.fp-list label[hidden]{display:none}
+
+/* GROUPS */
+tr.grp td{background:var(--bg2);border-bottom:1px solid var(--border-strong);padding:0.6rem 0.8rem;cursor:pointer;text-align:left}
+tr.grp:hover td{background:var(--card2)}
+tr.grp:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+tr.grp .caret{display:inline-block;color:var(--orange);margin:0 0.55rem 0 0.35rem;transition:transform 0.2s;font-size:0.8rem}
+tr.grp.closed .caret{transform:rotate(-90deg)}
+.grp-name{font-weight:800;color:#fff;font-size:1rem;letter-spacing:-0.01em}
+.grp-meta{font-family:var(--mono);font-size:0.68rem;color:var(--muted);margin-left:0.9rem;letter-spacing:0.03em}
+tr.row.in-grp td.hunt{padding-left:1.6rem}
+tr.row.in-grp .unit{font-weight:600;font-size:0.9rem;color:var(--text)}
+.grp-acts{display:inline-flex;gap:1rem;margin-left:auto}
+
+/* FILTERS */
+.filter-bar{display:flex;flex-wrap:wrap;gap:0.45rem 0.6rem;align-items:center;margin:0 0.15rem 0.75rem}
+.filter-bar:empty{display:none}
+.fchip{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.03em;color:#fff;background:var(--orange-tint-2);border:1px solid var(--border-orange);border-radius:999px;padding:0.3rem 0.75rem;cursor:pointer}
+.fchip:hover{border-color:var(--orange)}
+.fchip span{color:var(--orange-bright);margin-left:0.25rem}
+.fpop{position:absolute;z-index:150;width:250px;background:var(--card2);border:1px solid var(--border-orange);border-radius:8px;padding:0.9rem 1rem;box-shadow:0 18px 50px rgba(0,0,0,0.6)}
+.fpop[hidden]{display:none}
+.fp-title{font-family:var(--mono);font-size:0.64rem;color:var(--orange);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.7rem}
+.fp-range{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem}
+.fp-range label{font-family:var(--mono);font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;display:flex;flex-direction:column;gap:0.35rem}
+.fp-range input{background:var(--bg2);border:1px solid var(--border-strong);border-radius:6px;padding:0.4rem 0.55rem;font-family:var(--mono);font-size:0.9rem;color:#fff;width:100%}
+.fp-range input:focus{outline:none;border-color:var(--orange)}
+.fp-list{display:flex;flex-direction:column;gap:0.4rem;max-height:260px;overflow:auto}
+.fp-list label{display:flex;gap:0.55rem;align-items:center;font-size:0.86rem;color:var(--soft);cursor:pointer}
+.fp-list input{accent-color:var(--orange)}
+.fp-acts{display:flex;justify-content:space-between;align-items:center;margin-top:0.85rem}
+.fp-done{font-family:var(--mono);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.08em;background:var(--orange);color:#fff;border:0;border-radius:4px;padding:0.4rem 0.8rem;cursor:pointer}
+.fp-done:hover{background:var(--orange-bright)}
+table.pts.trend td:first-child{font-family:var(--mono);font-size:0.78rem}
+table.pts.trend tr.proj-row td{color:var(--orange-bright);border-top:1px dashed var(--border-orange)}
+.dm{display:inline-block;font-family:var(--mono);font-size:0.58rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;border-radius:3px;padding:0.05rem 0.35rem;border:1px solid transparent}
+.dm-in{color:#fff;background:var(--orange);border-color:var(--orange)}
+.dm-out{color:#fff;border-color:rgba(255,255,255,0.45)}
+.dm-norm{color:var(--muted);border-color:var(--border-strong)}
+.t-worse{color:var(--orange-bright)!important} .t-better{color:#fff} .t-flat{color:var(--muted)}
+.small .t-worse,.small .t-better,.small .t-flat{font-weight:600}
+.dlt{font-family:var(--mono);font-size:0.68rem;margin-left:0.2rem}
+.dlt.up{color:var(--orange-bright)} .dlt.down{color:var(--soft)}
+.hat{color:var(--muted);font-size:0.8rem;line-height:1.6;margin-top:0.7rem}
+.hat b{color:#fff}
+
+/* DETAIL */
+tr.detail td{background:var(--bg2);padding:1.25rem 1.35rem 1.5rem;text-align:left;white-space:normal;border-bottom:1px solid var(--border-strong)}
+.detail-grid{display:grid;grid-template-columns:minmax(300px,560px) 1fr;gap:1.25rem 2.25rem;position:sticky;left:1.35rem}
+@media (max-width:860px){.detail-grid{grid-template-columns:1fr}}
+.detail h3{font-family:var(--mono);font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--orange);margin:0 0 0.75rem;display:flex;gap:0.5rem}
+.detail h3::before{content:'//';color:var(--subtle)}
+table.pts{border-collapse:collapse;width:100%;font-size:0.84rem;font-variant-numeric:tabular-nums}
+table.pts th,table.pts td{padding:0.3rem 0.55rem;border-bottom:1px solid var(--border);text-align:right}
+table.pts th{font-family:var(--mono);font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;vertical-align:bottom}
+table.pts td{color:var(--soft)}
+table.pts td:first-child{color:#fff;font-weight:700}
+table.pts td.bar{width:38%;text-align:left}
+table.pts tr.me td{background:var(--orange-tint-2);color:#fff;font-weight:700}
+table.pts tr.split td{box-shadow:inset 0 -2px 0 var(--orange)}
+.barbox{height:8px;background:var(--bar-bg);border-radius:2px;overflow:hidden;display:flex}
+.barbox i{display:block;height:100%}
+.barbox i.b{background:var(--orange)} .barbox i.r{background:var(--bar-rand)}
+.legend{display:flex;flex-wrap:wrap;gap:0.5rem 1.1rem;font-family:var(--mono);font-size:0.66rem;color:var(--muted);margin:0.65rem 0 0;letter-spacing:0.03em}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:0.4rem;vertical-align:-1px;background:var(--orange)}
+.legend span.r::before{background:var(--bar-rand)}
+.legend span.s::before{background:none;border-bottom:2px solid var(--orange);height:5px}
+dl.facts{display:grid;grid-template-columns:auto 1fr;gap:0.45rem 1.1rem;margin:0;font-size:0.88rem}
+dl.facts dt{color:var(--muted);font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;padding-top:0.15rem}
+dl.facts dd{margin:0;color:var(--text);line-height:1.6}
+.detail a{color:var(--orange-bright);text-decoration:none}
+.detail a:hover{color:#fff}
+.empty{padding:3rem 1rem;text-align:center!important;color:var(--muted);font-family:var(--mono);font-size:0.8rem}
+
+/* HOW IT WORKS */
+.explain{margin-top:2.5rem;background:var(--card);border:1px solid var(--border-orange);border-radius:12px;padding:1.5rem 1.75rem;position:relative;overflow:hidden}
+.explain::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--orange),transparent)}
+.explain summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:0.72rem;color:var(--orange);letter-spacing:0.12em;text-transform:uppercase;display:flex;align-items:center;gap:0.6rem}
+.explain summary::-webkit-details-marker{display:none}
+.explain summary::before{content:'//';color:var(--subtle)}
+.explain summary::after{content:'+';margin-left:auto;color:var(--muted);font-size:1rem}
+.explain[open] summary::after{content:'–'}
+.explain ul{list-style:none;margin-top:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:1.1rem 2.25rem}
+.explain li{color:var(--muted);font-size:0.86rem;line-height:1.7}
+.explain li b{display:block;color:#fff;font-size:0.92rem;font-weight:800;margin-bottom:0.2rem}
+.explain li b::before{content:'› ';color:var(--orange)}
+@media (max-width:760px){.explain ul{grid-template-columns:1fr}}
+.assume{margin-top:1.75rem;border-left:2px solid var(--orange);padding:0.25rem 0 0.25rem 1.1rem;max-width:860px}
+.assume h2{font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--orange);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.6rem}
+.assume p,.assume li{color:var(--muted);font-size:0.86rem;line-height:1.7}
+.assume ul{list-style:none;margin:0.35rem 0 0.6rem}
+.assume li::before{content:'› ';color:var(--orange)}
+.assume p+p{margin-top:0.6rem}
+.assume b{color:var(--text)}
+.assume-tbl{border-collapse:collapse;margin:0.6rem 0 0.8rem;font-size:0.82rem;font-variant-numeric:tabular-nums}
+.assume-tbl th,.assume-tbl td{padding:0.3rem 0.9rem 0.3rem 0;border-bottom:1px solid var(--border);text-align:right;color:var(--muted)}
+.assume-tbl th:first-child,.assume-tbl td:first-child{text-align:left}
+.assume-tbl th{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
+.assume-tbl tr.tot td{color:var(--text);font-weight:700;border-bottom:0}
+.sources{color:var(--subtle);font-family:var(--mono);font-size:0.72rem;line-height:1.8;margin-top:1.75rem}
+.sources a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border-strong)}
+.sources a:hover{color:var(--orange-bright);border-color:var(--orange)}
+
+
+@media (max-width:680px){
+  main{padding:7.5rem 1rem 3rem}
+  .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .panel{padding:1rem}
+  .controls .wtypes-ctl,.controls .ctl:nth-child(3),.controls .ctl.checks{grid-column:1/-1}
+  .detail-grid{max-width:calc(100vw - 4.75rem)}
+}
+@media print{
+  nav,.grid-bg,.controls,.explain,.star,footer{display:none!important}
+  main{padding:0} body{background:#fff;color:#000}
+  .tbl-wrap{border:0;overflow:visible;background:none;max-height:none} table.main{min-width:0;font-size:11px}
+  .big,.unit,.page-title{color:#000}
+}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<nav>
+  <a href="index.html#home" class="nav-logo"><img src="TechLogoSecondary-White.png" alt="Elevation Technology Solutions"></a>
+  <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-links">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="nav-links">
+    <a href="index.html#home">home</a>
+    <a href="index.html#about">about</a>
+    <a href="index.html#services">services</a>
+    <a href="apps.html">apps</a>
+    <a href="index.html#contact">contact</a>
+  </div>
+</nav>
+
+<main>
+<div class="do-container">
+  <div class="section-eyebrow" id="eyebrow">Draw Odds</div>
+  <h1 class="page-title" id="title">Draw <span>Odds</span></h1>
+  <div class="divider"></div>
+  <p class="page-sub" id="subtitle"></p>
+
+  <div class="species-tabs" id="speciesTabs" role="group" aria-label="Species"></div>
+
+  <div class="panel hunters" role="region" aria-label="Hunters and points">
+    <div class="panel-head">
+      <span class="lbl">Hunter</span>
+      <div class="chips" id="profileChips"></div>
+    </div>
+    <div class="hunter-body">
+      <div class="ctl name-ctl"><label for="profName">Name</label><input id="profName" type="text" maxlength="30" autocomplete="off"></div>
+      <div class="pts-grid" id="ptsGrid"></div>
+    </div>
+    <div class="hunter-actions">
+      <span class="note" id="ptsNote">Enter the points you'll hold when you apply. Saved in this browser.</span>
+      <span class="acts">
+        <button type="button" class="link-btn" id="exportBtn">Export</button>
+        <button type="button" class="link-btn" id="importBtn">Import</button>
+        <button type="button" class="link-btn danger" id="delProfBtn">Delete hunter</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+      </span>
+    </div>
+  </div>
+
+  <div class="panel controls" role="region" aria-label="Filters">
+    <div class="ctl wtypes-ctl"><span class="lbl" id="wtLbl">Weapon</span><div class="wchips" id="weaponChips" role="group" aria-labelledby="wtLbl"></div></div>
+    <div class="ctl"><span class="lbl" id="resLbl">Residency</span>
+      <div class="seg" role="group" aria-labelledby="resLbl">
+        <button type="button" data-res="R" aria-pressed="true">Resident</button>
+        <button type="button" data-res="N" aria-pressed="false">Nonres</button>
+      </div></div>
+    <div class="ctl"><label for="q">Search unit or hunt #</label><input id="q" type="text" placeholder="Manti, Boulder, EB3006…" autocomplete="off"></div>
+    <div class="ctl checks">
+      <label><input type="checkbox" id="onlyRun"> Within 1 point of guaranteed</label>
+      <label><input type="checkbox" id="onlyStar"> Starred hunts only</label>
+      <label><input type="checkbox" id="showTrends"> Show trend columns</label>
+    </div>
+  </div>
+
+  <div class="summary" id="summary" aria-live="polite"></div>
+  <div class="filter-bar" id="filterBar"></div>
+
+  <div class="tbl-wrap">
+    <table class="main" id="tbl">
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <details class="explain">
+    <summary>How the numbers are calculated</summary>
+    <ul id="explainList"></ul>
+  </details>
+
+  <div class="assume" id="assume"></div>
+
+  <p class="sources" id="sources"></p>
+</div>
+</main>
+
+<div class="fpop" id="fpop" role="dialog" aria-modal="false" hidden></div>
+
+<footer>
+  <div class="footer-logo"><img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions"></div>
+  <p class="footer-links">&copy; 2026 Elevation Technology Solutions &nbsp;·&nbsp; <a href="apps.html">More Apps</a></p>
+</footer>
+
+<script>
+const STATES = /*__DATA__*/[];
+
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const fmt = n => n == null ? "—" : Math.round(n).toLocaleString();
+// Percent with enough precision that small odds still show a real number (0.23%, 0.0041%).
+function pct(x){
+  if (x == null || !isFinite(x)) return "—";
+  if (x <= 0) return "0%";
+  if (x >= 1) return "100%";
+  const v = x * 100;
+  if (v < 1) return (+v.toPrecision(2)).toString() + "%";
+  if (v < 10 || v > 99) return v.toFixed(1) + "%";
+  return v.toFixed(0) + "%";
+}
+const FUNNEL = `<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path fill="currentColor" d="M1.5 2h13l-5 6.2V13l-3 1.5V8.2z"/></svg>`;
+
+// ---------- saved in this browser (hunters, stars, view) ----------
+const store = {
+  get(k, d){ try { const v = localStorage.getItem("drawodds:" + k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem("drawodds:" + k, JSON.stringify(v)); return true; } catch(e){ return false; } }
+};
+const newId = () => "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+function loadProfiles(){
+  let ps = store.get("profiles", null);
+  if (!Array.isArray(ps) || !ps.length) ps = [{id: newId(), name: "Me", pts: store.get("points", {}) || {}}];
+  const out = ps.map(cleanProfile).filter(Boolean);
+  return out.length ? out : [{id: newId(), name: "Me", pts: {}}];
+}
+function cleanProfile(p){
+  if (!p || typeof p !== "object") return null;
+  const pts = {};
+  if (p.pts && typeof p.pts === "object")
+    for (const [k, v] of Object.entries(p.pts)) if (v !== null && v !== "" && isFinite(v)) pts[String(k)] = Math.max(0, Math.min(99, Math.floor(+v)));
+  return {id: typeof p.id === "string" ? p.id : newId(), name: String(p.name || "Hunter").slice(0, 30), pts};
+}
+
+const ui = {
+  state: store.get("state", STATES[0] && STATES[0].state),
+  species: store.get("species", null),
+  res: store.get("res", "R"),
+  profiles: loadProfiles(),
+  active: store.get("activeProfile", null),
+  stars: new Set(store.get("stars", [])),
+  wtypes: new Set(), q: "", onlyRun: false, onlyStar: store.get("onlyStar", false),
+  showTrends: store.get("showTrends", false),   // tag change, point creep, vs projected
+  sort: {key:"unit", dir:1},
+  filters: {},            // column key -> {min, max} ; "unit" -> {units:[...]}
+  open: new Set(), collapsed: new Set()
+};
+if (!ui.profiles.some(p => p.id === ui.active)) ui.active = ui.profiles[0].id;
+let storageOk = true;
+const saveProfiles = () => { storageOk = store.set("profiles", ui.profiles) && store.set("activeProfile", ui.active); };
+saveProfiles();
+
+
+const curState = () => STATES.find(s => s.state === ui.state) || STATES[0];
+const curSpecies = () => { const st = curState(); return st.species.find(s => s.key === ui.species) || st.species[0]; };
+const activeProfile = () => ui.profiles.find(p => p.id === ui.active) || ui.profiles[0];
+const ptsOf = (prof, spKey) => { const v = prof.pts[ui.state + ":" + (spKey || curSpecies().key)]; return v == null ? null : v; };
+const nextYear = st => st.nextYear || st.drawYear + 1;
+const tagYear = st => st.nextTags ? nextYear(st) : st.drawYear;
+
+// ---------- last year's draw ----------
+// row: [points, applicants, drew (all rounds), drew in bonus/max-point round]
+function analyze(h, res, system, light){
+  const rows = (h.rows[res] || []).filter(r => r[1] > 0).sort((a,b) => b[0]-a[0]);
+  const q = h.quota[res] || [0,0,0];
+  const a = {rows, tags:q[0], bonusTags:q[1], randTags:q[2], system};
+  a.apps = rows.reduce((s,r) => s + r[1], 0);
+  a.drew = rows.reduce((s,r) => s + r[2], 0);
+  a.bonusDrew = rows.reduce((s,r) => s + r[3], 0);
+  a.guar = null; a.split = null; a.allDrew = false;
+  // Tags for the upcoming draw: the new numbers once loaded, otherwise last year's.
+  a.next = (h.next && h.next[res]) || q;
+  a.nextLoaded = !!(h.next && h.next[res]);
+  if (!rows.length){ a.model = null; return a; }
+
+  if (system === "bonus"){
+    let idx = -1;
+    for (let i = rows.length - 1; i >= 0; i--) if (rows[i][3] > 0){ idx = i; break; }
+    if (idx >= 0){
+      const low = rows[idx];
+      if (low[3] < low[1]){ a.split = low; a.guar = rows[idx-1] || null; }
+      else { a.guar = low; a.split = rows[idx+1] || null; if (!a.split) a.allDrew = true; }
+    }
+  } else {
+    let i = rows.length - 1;
+    while (i >= 0 && rows[i][2] / rows[i][1] < 0.9) i--;
+    if (i === rows.length - 1){ a.guar = rows[i]; a.allDrew = true; }
+    else { a.split = rows[i+1]; a.guar = i >= 0 ? rows[i] : null; }
+  }
+  a.guarPts = a.guar ? a.guar[0] : a.split ? a.split[0] + 1 : null;
+  a.randomOnly = system === "bonus" && a.bonusTags === 0 && a.randTags > 0;
+  a.topGroup = a.guar ? rows.filter(r => r[0] >= a.guar[0]).reduce((s,r) => s + r[1], 0) : 0;
+  if (light) return a;
+  const di = dropinFor(res);
+  const adj = di && di.use ? withDropins(nextPool(rows), a.next[1], di.d) : null;
+  a.model = drawModel(adj ? adj.pool : nextPool(rows), a.next[1], a.next[2]);
+  a.model.dropins = adj ? adj.added : 0;
+  a.trend = trend(h, res, system, a);
+  return a;
+}
+
+// Tags and guaranteed points for an earlier draw (rows from DWR's PDFs).
+function pastDraw(rows, res, system){
+  if (!rows || !rows.length) return null;
+  const tot = rows.reduce((s, r) => s + r[2], 0), bon = rows.reduce((s, r) => s + r[3], 0);
+  const x = analyze({rows: {[res]: rows}, quota: {[res]: [tot, bon, tot - bon]}}, res, system, true);
+  return {tags: tot, guar: x.tags ? x.guarPts : null};
+}
+// Year-over-year changes. Tags compare permits drawn (the PDFs don't give
+// quotas) unless next year's official numbers are loaded, then quota vs quota.
+function trend(h, res, system, a){
+  const st = curState(), D = st.drawYear;
+  const p1 = pastDraw(h.hist && h.hist[D-1] && h.hist[D-1][res], res, system);
+  const p2 = pastDraw(h.hist && h.hist[D-2] && h.hist[D-2][res], res, system);
+  const diff = (x, y) => x == null || y == null ? null : x - y;
+  const t = {from1: D-1, from2: D-2, to: D, isNew: !p1 && !p2};
+  if (a.nextLoaded){
+    t.to = D + 1; t.from1 = D; t.from2 = D - 1;
+    t.tags1 = a.next[0] - a.tags;
+    t.tags2 = p1 ? a.next[0] - p1.tags : null;
+  } else {
+    t.tags1 = p1 ? a.drew - p1.tags : null;
+    t.tags2 = p2 ? a.drew - p2.tags : null;
+  }
+  t.pts1 = diff(a.guarPts, p1 && p1.guar);
+  t.pts2 = diff(a.guarPts, p2 && p2.guar);
+  // The spreadsheet check: project this year from last year's results the same
+  // way the next-year projection works (returning applicants + typical drop-ins),
+  // then compare with what it actually took. Uses this year's real bonus/random
+  // tag split so a tag change isn't counted as people moving.
+  const prev = h.hist && h.hist[D-1] && h.hist[D-1][res];
+  if (prev && prev.length && a.guarPts != null && !a.randomOnly && a.tags){
+    const pool = nextPool(prev.filter(r => r[1] > 0).sort((x, y) => y[0] - x[0]));
+    const di = dropinFor(res);
+    const adj = di && di.use ? withDropins(pool, a.bonusTags, di.d) : null;
+    const pm = drawModel(adj ? adj.pool : pool, a.bonusTags, a.randTags);
+    if (pm.guarPts != null && !pm.randomOnly){
+      t.projected = pm.guarPts; t.miss = a.guarPts - pm.guarPts; t.dropins = adj ? adj.added : 0;
+    }
+  }
+  return t;
+}
+
+// ---------- next draw ----------
+// Everyone who didn't draw comes back with one more point; the same number of
+// new applicants start at 0. Assumes nobody switches hunts or quits applying.
+function nextPool(rows){
+  const m = new Map();
+  rows.forEach(r => { const u = r[1] - r[2]; if (u > 0) m.set(r[0]+1, (m.get(r[0]+1) || 0) + u); });
+  const zero = rows.find(r => r[0] === 0);
+  if (zero) m.set(0, (m.get(0) || 0) + zero[1]);
+  return [...m.entries()].sort((x,y) => y[0]-x[0]);
+}
+
+// Utah's draw: bonus tags go to the highest points first (ties at the split are
+// random). The random tags then go to everyone left, each holding one entry plus
+// one per bonus point. Tags are drawn one at a time and a winner's other entries
+// leave the hat, so the chance isn't simply entries x tags / total. Drawing
+// weighted entries without replacement has the standard threshold solution:
+// P(draw | w entries) = 1 - e^(-w*tau), with tau set so expected winners = tags.
+// Drop-ins: people who show up with high points that last year's pool can't
+// explain (switching from other hunts, point-only buyers returning). The build
+// measures them per species from five years of draws, as extra applicants at
+// 1, 2, 3 and 4+ points above the projected split per bonus tag, and only turns
+// them on where backtesting showed they improve the projection.
+const dropinFor = res => { const sp = curSpecies(); return sp && sp.dropin ? sp.dropin[res] : null; };
+function withDropins(pool, bonusTags, d){
+  if (!d || !bonusTags) return null;
+  let left = bonusTags, split = null;
+  for (const [p, c] of pool){
+    if (c <= 0) continue;
+    if (left > 0 && c <= left){ left -= c; continue; }
+    split = p; break;
+  }
+  if (split == null) return null;
+  const m = new Map(pool); let added = 0;
+  d.forEach((rate, i) => { if (rate > 0){ const n = rate * bonusTags; m.set(split + i + 1, (m.get(split + i + 1) || 0) + n); added += n; } });
+  return {pool: [...m.entries()].sort((x, y) => y[0] - x[0]), added};
+}
+
+function drawModel(pool, bonusTags, randTags){
+  const m = {pool, bonusTags, randTags, split: null, guar: null, k: 0, n: 0, tau: 0, randomOnly: bonusTags === 0};
+  let left = bonusTags; const rest = [];
+  for (const [p, c] of pool){
+    if (m.randomOnly){ rest.push([p, c]); continue; }
+    if (m.split == null && left > 0 && c <= left){ left -= c; m.guar = p; continue; }
+    if (m.split == null){ m.split = p; m.k = left; m.n = c; left = 0; if (c > m.k) rest.push([p, c - m.k]); continue; }
+    rest.push([p, c]);
+  }
+  m.rest = rest;
+  m.entries = rest.reduce((s, [p, c]) => s + c * (p + 1), 0);
+  m.all = !m.randomOnly && m.split == null;
+  m.guarPts = m.randomOnly ? null : m.guar != null ? m.guar : (m.split != null ? m.split + 1 : 0);
+  const restN = rest.reduce((s, x) => s + x[1], 0);
+  if (randTags <= 0 || !restN) m.tau = 0;
+  else if (randTags >= restN) m.tau = Infinity;
+  else {
+    const f = t => rest.reduce((s, [p, c]) => s + c * (1 - Math.exp(-(p + 1) * t)), 0);
+    let lo = 0, hi = 1;
+    while (f(hi) < randTags) hi *= 2;
+    for (let i = 0; i < 60; i++){ const mid = (lo + hi) / 2; f(mid) < randTags ? lo = mid : hi = mid; }
+    m.tau = hi;
+  }
+  m.randAt = p => m.tau === Infinity ? 1 : 1 - Math.exp(-(p + 1) * m.tau);
+  return m;
+}
+function oddsAt(m, p){
+  if (!m || p == null) return null;
+  if (m.randomOnly) return m.randAt(p);
+  if (m.all || p > m.split) return 1;
+  if (p === m.split) return m.k / m.n + (1 - m.k / m.n) * m.randAt(p);
+  return m.randAt(p);
+}
+
+// ---------- columns, sorting, filtering ----------
+// Trend columns are hidden unless "Show trend columns" is checked.
+const TREND_KEYS = ["dtags", "creep", "demand"];
+function columns(st){
+  const D = st.drawYear, N = nextYear(st), prof = activeProfile();
+  return [
+    {key:"star", label:"", cls:"c-star l", sort:false},
+    {key:"unit", label:"Hunt", cls:"l", filter:"units"},
+    {key:"tags", label:`${tagYear(st)} tags`, filter:"num"},
+    {key:"apps", label:`${D} applicants`, filter:"num"},
+    {key:"guar", label:`${D} guaranteed at`, filter:"num", unit:"pts"},
+    {key:"split", label:`${D} split group`, filter:"num", unit:"pts"},
+    {key:"harv", label:`${st.harvestYear} harvest success`, filter:"pct"},
+    {key:"dtags", label: st.nextTags ? `Tag change ${D}–${N}` : `Tag change ${D-1}–${D}`, filter:"num"},
+    {key:"creep", label:`Point creep ${D-1}–${D}`, filter:"num", unit:"pts"},
+    {key:"demand", label:`${D} vs projected`, filter:"num", unit:"pts"},
+    {key:"proj", label:`${N} projected guaranteed`, filter:"num", unit:"pts"},
+    {key:"psplit", label:`${N} projected split`, filter:"num", unit:"pts"},
+    {key:"mine", label:`${prof.name}'s ${N} odds`, filter:"pct"},
+  ].filter(c => ui.showTrends || !TREND_KEYS.includes(c.key));
+}
+// Value used by both sorting and the column filters (percent columns in 0-100).
+function colVal(h, a, key, p){
+  switch(key){
+    case "tags": return a.next[0];
+    case "apps": return a.apps;
+    case "guar": return a.guarPts;
+    case "split": return a.split ? a.split[0] : null;
+    case "harv": return h.harvest ? h.harvest[3] : null;
+    case "dtags": return a.trend ? a.trend.tags1 : null;
+    case "creep": return a.trend ? a.trend.pts1 : null;
+    case "demand": return a.trend && a.trend.miss != null ? a.trend.miss : null;
+    case "mine": { const o = oddsAt(a.model, p); return o == null ? null : o * 100; }
+    case "proj": return a.model ? a.model.guarPts : null;
+    case "psplit": return a.model && !a.model.randomOnly && !a.model.all ? a.model.split : null;
+  }
+  return null;
+}
+function sortVal(h, a, key, p){
+  if (key === "unit") return (h.unit + " " + h.weapon).toLowerCase();
+  const v = colVal(h, a, key, p);
+  return v == null ? (ui.sort.dir > 0 ? Infinity : -Infinity) : v;
+}
+const activeFilters = () => Object.entries(ui.filters).filter(([k, f]) => k === "unit" ? f.units && f.units.length : f.min != null || f.max != null);
+function passFilters(h, a, p){
+  for (const [k, f] of activeFilters()){
+    if (k === "unit"){ if (!f.units.includes(h.unit)) return false; continue; }
+    const v = colVal(h, a, k, p);
+    if (v == null) return false;
+    if (f.min != null && v < f.min) return false;
+    if (f.max != null && v > f.max) return false;
+  }
+  return true;
+}
+// Grouped by unit unless sorted by another column or a number filter is set.
+// Weapon buttons, search and the unit picker keep the grouping.
+const isGrouped = () => ui.sort.key === "unit" && ui.sort.dir === 1 && !activeFilters().some(([k]) => k !== "unit");
+const oddsClass = v => v >= 0.5 ? "p-good" : v >= 0.1 ? "p-mid" : "p-bad";
+
+function renderHead(cols){
+  $("#thead").innerHTML = cols.map(c => {
+    if (c.sort === false) return `<th class="${c.cls||""}" scope="col"></th>`;
+    const on = ui.sort.key === c.key && !(c.key === "unit" && isGrouped());
+    const aria = ui.sort.key === c.key ? (ui.sort.dir > 0 ? "ascending" : "descending") : "none";
+    const fOn = activeFilters().some(([k]) => k === c.key);
+    return `<th class="${c.cls||""}${fOn ? " f-on" : ""}" scope="col" aria-sort="${aria}"><span class="th-in">` +
+      `<button type="button" class="sbtn" data-sort="${c.key}">${esc(c.label)}${on ? `<span class="arr">${ui.sort.dir > 0 ? "▲" : "▼"}</span>` : ""}</button>` +
+      `<button type="button" class="fbtn${fOn ? " on" : ""}" data-filter="${c.key}" aria-label="Filter ${esc(c.label)}" aria-haspopup="dialog">${FUNNEL}</button></span></th>`;
+  }).join("");
+}
+
+// ---------- render ----------
+function render(){
+  const st = curState(), sp = curSpecies(), prof = activeProfile(), p = ptsOf(prof);
+  const N = nextYear(st);
+  document.title = st.name + " Draw Odds | Elevation Technology";
+  $("#title").innerHTML = `${esc(st.name)} <span>Draw Odds</span>`;
+  $("#eyebrow").textContent = sp.label;
+  $("#subtitle").innerHTML = `Results from the <b>${st.drawYear} draw</b>, harvest from the <b>${st.harvestYear} season</b>, and projections for the <b>${N} draw</b>. ` +
+    (st.nextTags ? `<b>${N} tag numbers are loaded.</b>` : `${N} tag numbers aren't out yet, so projections use ${st.drawYear} tags.`);
+  renderSpeciesTabs(); renderWeaponChips(); renderHunter(); renderExplain(st, sp);
+  const cols = columns(st);
+  const q = ui.q.trim().toLowerCase();
+
+  let list = sp.hunts.map(h => ({h, a: analyze(h, ui.res, sp.system)}))
+    .filter(({a}) => a.tags > 0 || a.apps > 0 || a.next[0] > 0)
+    .filter(({h}) => !ui.wtypes.size || ui.wtypes.has(h.wtype))
+    .filter(({h}) => !q || (h.unit + " " + h.code + " " + h.weapon + " " + (h.notes || []).map(n => n[0]).join(" ")).toLowerCase().includes(q))
+    .filter(({h}) => !ui.onlyStar || ui.stars.has(st.state + ":" + h.code))
+    .filter(({a}) => {
+      if (!ui.onlyRun || p == null) return true;
+      const g = a.model ? a.model.guarPts : a.guarPts;
+      return g != null && g <= p + 1;
+    })
+    .filter(({h, a}) => passFilters(h, a, p));
+
+  const k = ui.sort.key, d = ui.sort.dir;
+  list.sort((x,y) => {
+    const vx = sortVal(x.h, x.a, k, p), vy = sortVal(y.h, y.a, k, p);
+    return (vx < vy ? -1 : vx > vy ? 1 : 0) * d || x.h.unit.localeCompare(y.h.unit) || seasonStart(x.h).localeCompare(seasonStart(y.h)) || x.h.code.localeCompare(y.h.code);
+  });
+
+  const grouped = isGrouped();
+  const units = new Set(list.map(x => x.h.unit));
+  const totTags = list.reduce((s,x) => s + x.a.next[0], 0), totApps = list.reduce((s,x) => s + x.a.apps, 0);
+  $("#summary").innerHTML =
+    `<span><b>${list.length}</b> hunt${list.length === 1 ? "" : "s"} in <b>${units.size}</b> unit${units.size === 1 ? "" : "s"}</span><span><b>${fmt(totTags)}</b> ${tagYear(st)} ${ui.res === "R" ? "resident" : "nonresident"} tags</span>` +
+    `<span><b>${fmt(totApps)}</b> ${st.drawYear} first-choice applicants</span>` +
+    (sp.system === "preference" ? `<span>Preference-point draw (no random half)</span>` : `<span>Bonus-point draw (half to top points, half random)</span>`) +
+    (p == null ? `<span>Enter ${esc(prof.name)}'s ${esc(sp.short || sp.label)} points above to see odds.</span>` : `<span>${esc(prof.name)}: <b>${p}</b> pts</span>`) +
+    (grouped && list.length ? `<span class="grp-acts"><button type="button" class="link-btn" data-groups="collapse">Collapse all</button><button type="button" class="link-btn" data-groups="expand">Expand all</button></span>` : "");
+  renderFilterBar(cols);
+
+  renderHead(cols);
+  if (!list.length){
+    $("#tbody").innerHTML = `<tr><td colspan="${cols.length}" class="empty">No hunts match these filters.</td></tr>`;
+    return;
+  }
+  let html = "";
+  if (grouped){
+    let i = 0;
+    while (i < list.length){
+      const unit = list[i].h.unit, grp = [];
+      while (i < list.length && list[i].h.unit === unit) grp.push(list[i++]);
+      const closed = ui.collapsed.has(unit);
+      const gTags = grp.reduce((s,x) => s + x.a.next[0], 0);
+      const best = p == null ? null : Math.max(...grp.map(x => oddsAt(x.a.model, p) ?? -1));
+      html += `<tr class="grp${closed ? " closed" : ""}" data-unit="${esc(unit)}" tabindex="0" aria-expanded="${!closed}"><td colspan="${cols.length}" class="l">` +
+        `<span class="caret" aria-hidden="true">▾</span><span class="grp-name">${esc(unit)}</span>` +
+        `<span class="grp-meta">${grp.length} hunt${grp.length > 1 ? "s" : ""} · ${fmt(gTags)} tags${best != null && best >= 0 ? ` · ${esc(prof.name)}'s best: ${pct(best)}` : ""}</span></td></tr>`;
+      if (!closed) html += grp.map(({h,a}) => rowHtml(st, sp, h, a, p, true) + (ui.open.has(h.code) ? detailHtml(st, sp, h, a, p, cols.length) : "")).join("");
+    }
+  } else {
+    html = list.map(({h,a}) => rowHtml(st, sp, h, a, p, false) + (ui.open.has(h.code) ? detailHtml(st, sp, h, a, p, cols.length) : "")).join("");
+  }
+  $("#tbody").innerHTML = html;
+}
+const seasonStart = h => (h.seasons && h.seasons[0] && h.seasons[0][1]) || "";
+
+function rowHtml(st, sp, h, a, p, inGroup){
+  const id = st.state + ":" + h.code, starred = ui.stars.has(id), open = ui.open.has(h.code);
+  const nt = a.next;
+  let tags = `<span class="big">${fmt(nt[0])}</span>`;
+  if (sp.system === "bonus" && nt[0]) tags += `<span class="small">${fmt(nt[1])} bonus · ${fmt(nt[2])} rand.</span>`;
+  if (a.nextLoaded){
+    const diff = nt[0] - a.tags;
+    tags += `<span class="small">${st.drawYear}: ${fmt(a.tags)}${diff ? ` <span class="${diff > 0 ? "up" : "down"}">${diff > 0 ? "+" : ""}${diff}</span>` : ""}</span>`;
+  }
+  const guar = a.allDrew ? `<span class="big">${a.guar ? a.guar[0] : 0}</span><span class="small">everyone drew</span>`
+    : a.guar ? `<span class="big">${a.guar[0]}</span><span class="small">points</span>`
+    : a.split ? `<span class="big">${a.guarPts}</span><span class="small">points</span>`
+    : a.randomOnly ? `<span class="na">random only</span><span class="small">no bonus tag</span>` : `<span class="na">—</span>`;
+  const split = a.split ? `<span class="big">${a.split[0]} pts</span><span class="small">${fmt(a.split[2])} of ${fmt(a.split[1])} drew</span>` : `<span class="na">—</span>`;
+  const hv = h.harvest ? `<span class="big">${h.harvest[3].toFixed(0)}%</span><span class="small">${fmt(h.harvest[2])} of ${fmt(h.harvest[1])}</span>` : `<span class="na">—</span>`;
+  const o = oddsAt(a.model, p);
+  const mine = p == null ? `<span class="na">add points</span>`
+    : o == null ? `<span class="na">—</span>`
+    : `<span class="pill ${oddsClass(o)}">${pct(o)}</span><span class="small">${mineNote(a.model, p, o)}</span>`;
+  const m = a.model;
+  const pGuar = !m ? `<span class="na">—</span>`
+    : m.randomOnly ? `<span class="na">random only</span><span class="small">no bonus tag</span>`
+    : m.all ? `<span class="big">${m.guarPts}</span><span class="small">all would draw</span>`
+    : `<span class="big">${m.guarPts}</span><span class="small">points</span>`;
+  const pSplit = !m || m.randomOnly || m.all ? `<span class="na">—</span>`
+    : `<span class="big">${m.split} pts</span><span class="small">${fmt(m.k)} of ${fmt(m.n)} draw</span>`;
+  const s0 = h.seasons && h.seasons[0];
+  const dates = s0 && h.seasons.length === 1 ? ` · ${fmtDate(s0[1])} – ${fmtDate(s0[2])}` : "";
+  const badges = (h.notes || []).map(n => `<span class="badge" title="${esc(n[1])}">${esc(n[0])}</span>`).join("");
+  const name = inGroup
+    ? `<div class="unit">${esc(h.weapon)}${badges}</div><div class="meta"><span class="code">${esc(h.code)}</span>${esc(dates)}</div>`
+    : `<div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div>${badges ? `<div class="badges">${badges}</div>` : ""}`;
+  return `<tr class="row${open ? " open" : ""}${inGroup ? " in-grp" : ""}" data-code="${esc(h.code)}" tabindex="0" aria-expanded="${open}">
+    <td class="c-star l"><button type="button" class="star" data-star="${esc(id)}" aria-pressed="${starred}" aria-label="${starred ? "Unstar" : "Star"} ${esc(h.unit)} ${esc(h.code)}">★</button></td>
+    <td class="l hunt">${name}</td>
+    <td>${tags}</td><td><span class="big">${fmt(a.apps)}</span></td><td>${guar}</td><td>${split}</td>
+    <td>${hv}</td>${ui.showTrends ? `<td>${trendCell(a.trend, "tags")}</td><td>${trendCell(a.trend, "pts")}</td><td>${demandCell(a.trend)}</td>` : ""}<td>${pGuar}</td><td>${pSplit}</td><td>${mine}</td></tr>`;
+}
+// Change over one year, with the two-year change underneath. Orange marks the
+// direction that's worse for applicants: fewer tags, or more points needed.
+function trendCell(t, kind){
+  if (!t) return `<span class="na">—</span>`;
+  const one = kind === "tags" ? t.tags1 : t.pts1, two = kind === "tags" ? t.tags2 : t.pts2;
+  if (one == null && two == null) return `<span class="na">${t.isNew ? "new hunt" : "—"}</span>`;
+  const worse = v => kind === "tags" ? v < 0 : v > 0;
+  const fmtD = v => v == null ? "—" : v === 0 ? "0" : (v > 0 ? "+" : "−") + Math.abs(v).toLocaleString();
+  const cls = v => v == null || v === 0 ? "t-flat" : worse(v) ? "t-worse" : "t-better";
+  return `<span class="big ${cls(one)}">${fmtD(one)}</span><span class="small">${t.from2}: <span class="${cls(two)}">${fmtD(two)}</span></span>`;
+}
+
+// Actual minus projected guaranteed points, where the projection already counts
+// the usual drop-ins. Above 0: more people moved in than usual. Below 0: fewer
+// drop-ins than usual, or people moved out.
+function demandCell(t){
+  if (!t || t.miss == null) return `<span class="na">${t && t.isNew ? "new hunt" : "—"}</span>`;
+  const v = t.miss, rel = Math.sign(v);
+  const sign = x => x === 0 ? "0" : (x > 0 ? "+" : "−") + Math.abs(x);
+  const tag = rel > 0 ? `<span class="dm dm-in">jumped in</span>` : rel < 0 ? `<span class="dm dm-out">left</span>` : `<span class="dm dm-norm">as projected</span>`;
+  const pts = n => `${n} point${n === 1 ? "" : "s"}`;
+  const incl = t.dropins >= 0.5 ? ` (includes about ${Math.round(t.dropins)} usual drop-in${Math.round(t.dropins) === 1 ? "" : "s"})` : "";
+  const why = rel > 0 ? `It took ${pts(v)} more than projected: more people moved into this hunt than usual.`
+    : rel < 0 ? `It took ${pts(-v)} fewer than projected: fewer people dropped in than usual, or people moved out.`
+    : `It landed exactly as projected.`;
+  const title = `Projected ${t.projected}${incl}, actual ${t.projected + v}. ${why}`;
+  return `<span class="big ${rel > 0 ? "t-worse" : rel < 0 ? "t-better" : "t-flat"}" title="${esc(title)}">${sign(v)}</span><span class="small">${tag}</span>`;
+}
+
+// "15 of 21,453 entries": your points + 1 against every entry in the random draw.
+function mineNote(m, p, o){
+  if (o >= 1 && !m.randomOnly) return "guaranteed";
+  if (!m.randomOnly && p === m.split) return "in split group";
+  if (m.randTags > 0 && m.entries > 0) return `${fmt(p + 1)} of ${fmt(Math.round(m.entries))} entries`;
+  return "no random tags";
+}
+
+function detailHtml(st, sp, h, a, p, ncol){
+  const N = nextYear(st), max = Math.max(1, ...a.rows.map(r => r[1]));
+  const rows = a.rows.map(r => {
+    const bon = r[3], ran = r[2] - r[3];
+    const cls = (p === r[0] ? "me " : "") + (a.split && a.split[0] === r[0] ? "split" : "");
+    const w = r[1] / max * 100;
+    return `<tr class="${cls}"><td>${r[0]}</td><td>${fmt(r[1])}</td>${sp.system === "bonus" ? `<td>${fmt(bon)}</td><td>${fmt(ran)}</td>` : `<td>${fmt(r[2])}</td>`}
+      <td>${pct(r[2]/r[1])}</td><td class="est">${pct(oddsAt(a.model, r[0]))}</td><td class="bar"><div class="barbox" style="width:${Math.max(w,2).toFixed(1)}%" title="${r[1]} applicants">
+      ${sp.system === "bonus" ? `<i class="b" style="width:${(bon/r[1]*100).toFixed(1)}%"></i><i class="r" style="width:${(ran/r[1]*100).toFixed(1)}%"></i>` : `<i class="b" style="width:${(r[2]/r[1]*100).toFixed(1)}%"></i>`}</div></td></tr>`;
+  }).join("");
+  const seasons = (h.seasons || []).map(s => `${esc(s[0])}: ${fmtDate(s[1])} – ${fmtDate(s[2])}`).join("<br>");
+  const hv = h.harvest;
+  const hunters = ui.profiles.map(pr => {
+    const pp = ptsOf(pr, sp.key), o = oddsAt(a.model, pp);
+    return `<tr${pr.id === ui.active ? ` class="me"` : ""}><td class="l">${esc(pr.name)}</td><td>${pp == null ? "—" : pp}</td><td>${pp == null ? `<span class="na">no points entered</span>` : `<span class="pill ${oddsClass(o)}">${pct(o)}</span>`}</td></tr>`;
+  }).join("");
+  const tagLine = a.nextLoaded
+    ? `${N}: ${fmt(h.next.R[0])} resident · ${fmt(h.next.N[0])} nonresident<br>${st.drawYear}: ${fmt(h.quota.R[0])} resident · ${fmt(h.quota.N[0])} nonresident`
+    : `${st.drawYear}: ${fmt(h.quota.R[0])} resident · ${fmt(h.quota.N[0])} nonresident<br><span class="na">${N} numbers not released yet</span>`;
+  return `<tr class="detail"><td colspan="${ncol}"><div class="detail detail-grid">
+    <div><h3>${st.drawYear} draw by point level (${ui.res === "R" ? "residents" : "nonresidents"})</h3>
+      <table class="pts"><thead><tr><th>Points</th><th>Applied</th>${sp.system === "bonus" ? "<th>Bonus drew</th><th>Random drew</th>" : "<th>Drew</th>"}<th>${st.drawYear} success</th><th>${N} est.</th><th class="l">Share drawn</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="legend">${sp.system === "bonus" ? `<span>Bonus tag</span><span class="r">Random tag</span>` : `<span>Drew</span>`}<span class="s">Split group</span></div>
+    </div>
+    <div>
+      ${trendHtml(st, sp, h, a)}
+      <h3${h.hist ? ` style="margin-top:1.4rem"` : ""}>Hunters · ${N} odds</h3>
+      <table class="pts hunters-tbl"><thead><tr><th class="l">Hunter</th><th>Points</th><th>${N} odds</th></tr></thead><tbody>${hunters}</tbody></table>
+      ${a.model && !a.model.all && a.model.randTags > 0 ? `<p class="hat">${N} random draw: ${fmt(a.model.randTags)} tag${a.model.randTags === 1 ? "" : "s"} drawn from about <b>${fmt(Math.round(a.model.entries))}</b> entries held by ${fmt(a.model.rest.reduce((s,x) => s + x[1], 0))} applicants.${p != null ? ` ${esc(activeProfile().name)} holds ${p + 1}.` : ""}</p>` : ""}
+      <h3 style="margin-top:1.4rem">Hunt</h3><dl class="facts">
+      ${(h.notes || []).length ? `<dt>Notes</dt><dd>${h.notes.map(n => `<span class="badge">${esc(n[0])}</span> ${esc(n[1])}`).join("<br>")}</dd>` : ""}
+      <dt>Hunt #</dt><dd><span class="code">${esc(h.code)}</span>${h.map ? ` · <a href="${esc(h.map)}" target="_blank" rel="noopener">Boundary map</a>` : ""}</dd>
+      <dt>${st.drawYear} season${(h.seasons||[]).length > 1 ? "s" : ""}</dt><dd>${seasons || "—"}</dd>
+      <dt>Tags</dt><dd>${tagLine}</dd>
+      <dt>${esc(st.harvestYear)} harvest</dt><dd>${hv ? `${hv[3].toFixed(1)}% · ${fmt(hv[2])} harvested by ${fmt(hv[1])} hunters afield (${fmt(hv[0])} permits)` : "No harvest record for this hunt #"}</dd>
+      <dt>${N} projection</dt><dd>${projText(a, st)}</dd>
+    </dl></div>
+  </div></td></tr>`;
+}
+
+// One row per draw year (2024, 2025 from DWR's PDFs; 2026 from utahdraws.com), plus
+// the projection, so trends in tags, applicants and guaranteed points are visible.
+function trendHtml(st, sp, h, a){
+  const years = Object.keys(h.hist || {}).sort();
+  if (!years.length) return "";
+  const yearRow = (y, rows) => {
+    const tot = rows.reduce((s, r) => s + r[2], 0), bon = rows.reduce((s, r) => s + r[3], 0);
+    const x = analyze({rows: {[ui.res]: rows}, quota: {[ui.res]: [tot, bon, tot - bon]}}, ui.res, sp.system, true);
+    return {y, tags: x.tags, apps: x.apps, guar: x.guarPts, split: x.split};
+  };
+  const rows = years.map(y => yearRow(y, h.hist[y][ui.res] || []));
+  rows.push({y: String(st.drawYear), tags: a.drew, apps: a.apps, guar: a.guarPts, split: a.split});
+  const cell = (r, prev, key) => {
+    const v = r[key]; if (v == null) return "—";
+    const d = prev && prev[key] != null ? v - prev[key] : 0;
+    return `${fmt(v)}${d ? ` <span class="dlt ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : ""}${d}</span>` : ""}`;
+  };
+  const m = a.model;
+  const body = rows.map((r, i) => `<tr><td>${r.y}</td><td>${cell(r, rows[i-1], "tags")}</td><td>${cell(r, rows[i-1], "apps")}</td>` +
+    `<td>${r.tags ? cell(r, rows[i-1], "guar") : "—"}</td><td>${r.split ? `${r.split[0]} <span class="na">(${fmt(r.split[2])} of ${fmt(r.split[1])})</span>` : "—"}</td></tr>`).join("") +
+    (m && !m.randomOnly ? `<tr class="proj-row"><td>${nextYear(st)} proj.</td><td>${fmt(a.next[0])}</td><td class="na">—</td><td>${m.guarPts}</td><td>${m.all ? "—" : `${m.split} <span class="na">(${fmt(m.k)} of ${fmt(m.n)})</span>`}</td></tr>` : "");
+  return `<h3>Year by year (${ui.res === "R" ? "residents" : "nonresidents"})</h3>
+    <table class="pts trend"><thead><tr><th>Draw</th><th>Tags</th><th>Applicants</th><th>Guaranteed</th><th>Split (drew)</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function projText(a, st){
+  const m = a.model; if (!m) return "—";
+  const src = a.nextLoaded ? `${nextYear(st)} tags` : `${st.drawYear} tag numbers`;
+  if (m.randomOnly) return `With ${src}, there's no bonus tag; the only tag goes to the random draw.`;
+  if (m.all) return `With ${src}, every returning applicant would draw.`;
+  const g = `${m.guarPts} points should be guaranteed`;
+  const di = m.dropins >= 0.5 ? ` That includes about ${fmt(m.dropins)} high-point drop-in${Math.round(m.dropins) === 1 ? "" : "s"}, typical for this species.` : "";
+  return `With ${src}, ${g}. The split would fall at ${m.split} points, with ${fmt(m.k)} of ${fmt(m.n)} drawing a ${a.system === "bonus" ? "bonus" : "preference"} tag.${di}`;
+}
+function fmtDate(s){ if (!s) return ""; const [y,m,d] = s.split("-"); return new Date(+y, +m-1, +d).toLocaleDateString(undefined, {month:"short", day:"numeric"}); }
+
+function renderExplain(st, sp){
+  const D = st.drawYear, N = nextYear(st), H = st.harvestYear;
+  const items = [
+    [`${tagYear(st)} tags`, st.nextTags
+      ? `Permits for the ${N} draw. The small line shows ${D} and the change. Bonus hunts: half the tags (rounded up) go to the top point holders, the rest to the random draw. A hunt with a single tag sends it to the random draw.`
+      : `Permits from the ${D} draw. DWR releases ${N} numbers in the spring; until then the ${N} projections use these. Bonus hunts: half the tags (rounded up) go to the top point holders, the rest to the random draw. A hunt with a single tag sends it to the random draw.`],
+    [`${D} guaranteed at`, `The lowest point level that drew a bonus tag outright in ${D}. If nobody sat above the split group, it's the split + 1.`],
+    [`${D} split group`, `The point level where the bonus tags ran out. "X of Y drew" counts everyone in that group who drew, bonus or random.`],
+    [`Your ${N} odds`, `First the bonus tags go top points down. Everyone left goes in the hat with points + 1 entries each. Example: 10 people at 15 points hold 160 entries, 30 at 14 hold 450, and so on down to 0 points. Your 6 entries (5 points) are compared to that total. Tags come out one at a time and a winner's other entries are pulled, which the math accounts for. This matched the ${D} results at every point level.`],
+    [`${N} projected guaranteed / split`, `Everyone who drew in ${D} is removed, everyone who didn't comes back with one more point, and the same number of new applicants start at 0. The bonus tags (${st.nextTags ? N : D} numbers) are handed out top points down: the split is where they run out, guaranteed is the level above it. See the assumptions below the table.`],
+    [`${H} harvest success`, `Percent of hunters afield who harvested in the ${H} season, from the DWR harvest report for that hunt number.`],
+    [`Tag change`, st.nextTags
+      ? `Change from ${D} to ${N} tags, with the change since ${D-1} underneath. Orange means fewer tags.`
+      : `Change in permits drawn from ${D-1} to ${D}, with the change since ${D-2} underneath. Earlier years come from DWR's PDF reports, which list permits drawn rather than the official quota, so ${D} is compared the same way. A hunt with fewer applicants than tags can show a drop even if the quota didn't change. Orange means fewer tags.`],
+    [`${D} vs projected`, `Using the ${D-1} results, project ${D} the same way the ${N} projection works: returning applicants plus the usual number of drop-ins for the species. Then compare with the points it actually took. The number is actual minus projected. 0 is "as projected". Above 0 is "jumped in" (more people moved into the hunt than usual); below 0 is "left" (fewer dropped in than usual, or people moved out). Hover the number for the projected and actual points.`],
+    [`Point creep`,`Change in guaranteed points from ${D-1} to ${D}, with the change since ${D-2} underneath. Orange means more points needed. "New hunt" means it didn't exist in the earlier draws.`],
+    [`Your entries`, `Under your odds, "15 of 21,453 entries" means you hold 15 (14 points + 1) of all the entries in the ${N} random draw. With one random tag that's about your chance; with more tags it's higher, since several get drawn.`],
+    [`Grouping and filters`, `Hunts are grouped by unit while sorted by Hunt. The weapon buttons, search and the Hunt column's unit picker keep the groups. Sorting by another column, or a number filter, switches to a flat list.`],
+    [`Badges`, `Management buck, cactus buck, premium, restricted weapon, HAMSS and bison cow/hunter's choice come from DWR's hunt labels. Hover a badge, or open the hunt, for the rule.`],
+  ];
+  if (sp.system === "preference") items.push([`Preference points`, `General-season deer gives every tag to the highest point holders, so there's no random half. The ${D} split is the highest level where fewer than 90% drew; group applications blur it slightly.`]);
+  $("#explainList").innerHTML = items.map(([b, t]) => `<li><b>${esc(b)}</b>${esc(t)}</li>`).join("");
+}
+
+// ---------- column filters ----------
+function filterLabel(col, f){
+  if (col.key === "unit") return f.units.length <= 2 ? f.units.join(", ") : `${f.units.slice(0, 2).join(", ")} +${f.units.length - 2} units`;
+  const u = col.filter === "pct" ? "%" : col.unit ? ` ${col.unit}` : "";
+  if (f.min != null && f.max != null) return `${col.label}: ${f.min}–${f.max}${u}`;
+  if (f.min != null) return `${col.label} ≥ ${f.min}${u}`;
+  return `${col.label} ≤ ${f.max}${u}`;
+}
+function renderFilterBar(cols){
+  const act = activeFilters();
+  if (!act.length){ $("#filterBar").innerHTML = ""; return; }
+  $("#filterBar").innerHTML = act.map(([k, f]) => {
+    const col = cols.find(c => c.key === k); if (!col) return "";
+    return `<button type="button" class="fchip" data-clear="${k}" aria-label="Remove filter ${esc(filterLabel(col, f))}">${esc(filterLabel(col, f))} <span aria-hidden="true">×</span></button>`;
+  }).join("") + `<button type="button" class="link-btn" data-clear="*">Clear filters</button>`;
+}
+let popKey = null;
+function openFilter(key, anchor){
+  const st = curState(), col = columns(st).find(c => c.key === key); if (!col) return;
+  const pop = $("#fpop"); popKey = key;
+  const f = ui.filters[key] || {};
+  if (col.filter === "units"){
+    const units = [...new Set(curSpecies().hunts.map(h => h.unit))].sort((a, b) => a.localeCompare(b));
+    const sel = new Set(f.units || []);
+    pop.innerHTML = `<div class="fp-title">Units</div><input type="text" class="fp-search" placeholder="Find a unit…" aria-label="Find a unit"><div class="fp-list">` +
+      units.map(u => `<label data-u="${esc(u.toLowerCase())}"><input type="checkbox" value="${esc(u)}"${sel.has(u) ? " checked" : ""}> ${esc(u)}</label>`).join("") +
+      `</div><div class="fp-acts"><button type="button" class="link-btn" data-fp="clear">Clear</button><button type="button" class="fp-done" data-fp="done">Done</button></div>`;
+  } else {
+    const u = col.filter === "pct" ? " %" : col.unit ? ` (${col.unit})` : "";
+    pop.innerHTML = `<div class="fp-title">${esc(col.label)}</div>
+      <div class="fp-range"><label>Min${esc(u)}<input type="number" step="any" data-b="min" value="${f.min ?? ""}"></label>
+      <label>Max${esc(u)}<input type="number" step="any" data-b="max" value="${f.max ?? ""}"></label></div>
+      <div class="fp-acts"><button type="button" class="link-btn" data-fp="clear">Clear</button><button type="button" class="fp-done" data-fp="done">Done</button></div>`;
+  }
+  pop.hidden = false;
+  const r = anchor.getBoundingClientRect(), w = pop.offsetWidth;
+  pop.style.top = (r.bottom + window.scrollY + 6) + "px";
+  // Open under the button: left-aligned when there's room, otherwise right-aligned.
+  const vw = document.documentElement.clientWidth;
+  const x = r.left + w <= vw - 8 ? r.left : r.right - w;
+  pop.style.left = (window.scrollX + Math.max(8, Math.min(x, vw - w - 8))) + "px";
+  const first = pop.querySelector("input"); if (first) first.focus();
+}
+function closeFilter(refocus){
+  const pop = $("#fpop"); if (pop.hidden) return;
+  pop.hidden = true;
+  if (refocus && popKey){ const b = document.querySelector(`.fbtn[data-filter="${popKey}"]`); if (b) b.focus(); }
+  popKey = null;
+}
+function readFilter(){
+  const pop = $("#fpop"), key = popKey; if (!key) return;
+  if (key === "unit"){
+    const u = [...pop.querySelectorAll(".fp-list input:checked")].map(i => i.value);
+    if (u.length) ui.filters.unit = {units: u}; else delete ui.filters.unit;
+  } else {
+    const v = b => { const i = pop.querySelector(`[data-b="${b}"]`); return i && i.value !== "" && isFinite(i.value) ? +i.value : null; };
+    const min = v("min"), max = v("max");
+    if (min == null && max == null) delete ui.filters[key]; else ui.filters[key] = {min, max};
+  }
+  render();
+}
+$(".tbl-wrap").addEventListener("scroll", () => closeFilter(false), {passive: true});
+$("#fpop").addEventListener("input", e => {
+  if (e.target.matches(".fp-search")){
+    const q = e.target.value.trim().toLowerCase();
+    $("#fpop").querySelectorAll(".fp-list label").forEach(l => { l.hidden = !!q && !l.dataset.u.includes(q); });
+    return;
+  }
+  readFilter();
+});
+$("#fpop").addEventListener("change", e => { if (!e.target.matches(".fp-search")) readFilter(); });
+$("#fpop").addEventListener("click", e => {
+  const b = e.target.closest("[data-fp]"); if (!b) return;
+  if (b.dataset.fp === "clear"){ delete ui.filters[popKey]; render(); }
+  closeFilter(true);
+});
+$("#fpop").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("input[type=number]")) closeFilter(true); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeFilter(true); });
+document.addEventListener("click", e => {
+  if ($("#fpop").hidden) return;
+  if (e.target.closest("#fpop") || e.target.closest(".fbtn")) return;
+  closeFilter(false);
+});
+$("#filterBar").addEventListener("click", e => {
+  const b = e.target.closest("[data-clear]"); if (!b) return;
+  if (b.dataset.clear === "*") ui.filters = {}; else delete ui.filters[b.dataset.clear];
+  render();
+});
+
+// ---------- weapon buttons ----------
+const WTYPE_ORDER = ["Archery", "Muzzleloader", "Any Legal Weapon", "Multi-Season", "HAMSS", "Other"];
+function renderWeaponChips(){
+  const present = new Set(curSpecies().hunts.map(h => h.wtype));
+  const types = WTYPE_ORDER.filter(w => present.has(w));
+  [...ui.wtypes].forEach(w => { if (!present.has(w)) ui.wtypes.delete(w); });
+  $("#weaponChips").innerHTML = `<button type="button" class="wchip${ui.wtypes.size ? "" : " on"}" data-wt="" aria-pressed="${!ui.wtypes.size}">All</button>` +
+    types.map(w => `<button type="button" class="wchip${ui.wtypes.has(w) ? " on" : ""}" data-wt="${esc(w)}" aria-pressed="${ui.wtypes.has(w)}">${esc(w)}</button>`).join("");
+}
+$("#weaponChips").addEventListener("click", e => {
+  const b = e.target.closest("[data-wt]"); if (!b) return;
+  const w = b.dataset.wt;
+  if (!w) ui.wtypes.clear(); else ui.wtypes.has(w) ? ui.wtypes.delete(w) : ui.wtypes.add(w);
+  render();
+});
+
+// ---------- species tabs + hunters ----------
+function renderSpeciesTabs(){
+  const st = curState(), sp = curSpecies();
+  $("#speciesTabs").innerHTML = st.species.map(s =>
+    `<button type="button" class="vtab${s.key === sp.key ? " is-on" : ""}" data-species="${esc(s.key)}" aria-pressed="${s.key === sp.key}">` +
+    (s.icon ? `<img src="${esc(s.icon)}" alt="" onerror="this.remove()">` : "") + `<span>${esc(s.short || s.label)}</span></button>`).join("");
+}
+function renderHunter(){
+  const st = curState(), sp = curSpecies(), prof = activeProfile();
+  $("#profileChips").innerHTML = ui.profiles.map(p =>
+    `<button type="button" class="chip${p.id === prof.id ? " on" : ""}" data-prof="${esc(p.id)}" aria-pressed="${p.id === prof.id}">${esc(p.name)}</button>`).join("") +
+    `<button type="button" class="chip add" id="addProf">+ Add hunter</button>`;
+  const nameIn = $("#profName");
+  if (document.activeElement !== nameIn) nameIn.value = prof.name;
+  const grid = $("#ptsGrid");
+  const focusKey = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.pts : null;
+  if (!focusKey || grid.dataset.prof !== prof.id || grid.dataset.state !== st.state){
+    grid.dataset.prof = prof.id; grid.dataset.state = st.state;
+    grid.innerHTML = st.species.map(s => {
+      const v = ptsOf(prof, s.key);
+      return `<label class="pt${s.key === sp.key ? " cur" : ""}"><span>${esc(s.short || s.label)}</span><input type="number" min="0" max="99" step="1" inputmode="numeric" data-pts="${esc(s.key)}" value="${v == null ? "" : v}" placeholder="—" aria-label="${esc(prof.name)} ${esc(s.label)} points"></label>`;
+    }).join("");
+  } else {
+    grid.querySelectorAll("label.pt").forEach(l => l.classList.toggle("cur", l.querySelector("input").dataset.pts === sp.key));
+  }
+  $("#delProfBtn").disabled = ui.profiles.length < 2;
+  if (!storageOk) $("#ptsNote").textContent = "This browser isn't letting the page save. Points will be lost when you close it; use Export to keep a copy.";
+}
+
+// ---------- controls ----------
+function fillSelects(){
+  const st = curState();
+  if (!st.species.some(s => s.key === ui.species)) ui.species = st.species[0].key;
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.res === ui.res)));
+  $("#onlyStar").checked = ui.onlyStar; $("#onlyRun").checked = ui.onlyRun; $("#showTrends").checked = ui.showTrends;
+  const D = st.drawYear, N = nextYear(st);
+  $("#assume").innerHTML = `<h2>About the ${N} projections</h2><p>The projected guaranteed points, split and odds assume:</p><ul>` +
+    `<li>Everyone who applied for a hunt in ${D} and didn't draw applies for the same hunt in ${N}, with one more point.</li>` +
+    dropinNote(st, D) +
+    `<li>The number of new applicants at 0 points is the same as in ${D}.</li>` +
+    `<li>${st.nextTags ? `Tag numbers are the released ${N} numbers.` : `Tag numbers stay at ${D} levels until the ${N} numbers are released.`}</li></ul>` +
+    dropinSummary(N) +
+    `<p>When the top point group is bigger than the bonus tags, only some of that group draws, so guaranteed is shown as their points + 1. Example: 10 people at 25 points and 8 bonus tags means 8 of the 10 draw, and guaranteed shows 26, even if nobody holds 26 yet. The same rule applies to the ${D} guaranteed column.</p>` +
+    `<p>Real pools move. Hunts that gain tags or look easier tend to pull applicants in, and hunts that creep tend to lose them. Treat the projections as a starting point, not a guarantee.</p>`;
+  const src = st.sources || {};
+  $("#sources").innerHTML = `Sources: <a href="${esc(src.odds||"#")}" target="_blank" rel="noopener">${esc(st.name)} ${st.drawYear} draw results</a> · <a href="${esc(src.harvest||"#")}" target="_blank" rel="noopener">${st.harvestYear} harvest report</a>` +
+    (st.nextTags && src.tags ? ` · <a href="${esc(src.tags)}" target="_blank" rel="noopener">${nextYear(st)} tag numbers</a>` : "") +
+    `. Last year's results don't guarantee next year's. Check the official guidebook before applying.`;
+}
+function dropinNote(st, D){
+  return `<li>Nobody leaves a hunt; new people do join it (see drop-in applicants below).</li>`;
+}
+function dropinSummary(N){
+  const sp = curSpecies(), di = dropinFor(ui.res);
+  const base = `<p><b>Drop-in applicants.</b> The ${N} projection doesn't just carry last year's applicants forward. It also estimates how many new people will drop into each hunt with high points (switching from another hunt, or coming back after buying points only), based on how many did in past draws, and adds them above the split before working out the projected guaranteed points, split and odds.`;
+  if (!di) return base + `</p>`;
+  if (!di.use) return base + ` For ${esc(sp.label)}, adding them didn't improve past projections, so none are added here.</p>`;
+  const total = di.d.reduce((s, x) => s + x, 0);
+  const ex = n => `${n} bonus tag${n === 1 ? "" : "s"} × ${total.toFixed(2)} ≈ <b>${Math.round(n * total)}</b>`;
+  const rows = di.d.map((r, i) => `<tr><td>+${i + 1}${i === di.d.length - 1 ? " or more" : ""} point${i ? "s" : ""}</td><td>${r.toFixed(3)}</td><td>${(r * 10).toFixed(1)}</td></tr>`).join("");
+  return base + `</p>
+    <p><b>How many.</b> Drop-ins are counted as a <b>rate per bonus tag</b>, so a hunt with more bonus tags gets more of them. For ${esc(sp.label)} the rate is about <b>${total.toFixed(2)} drop-ins per bonus tag</b> (${(total * 10).toFixed(1)} per 10), spread above the projected split the way they showed up in the ${di.years} draws:</p>
+    <table class="assume-tbl"><thead><tr><th>Above the projected split</th><th>Per bonus tag</th><th>Per 10 bonus tags</th></tr></thead>
+    <tbody>${rows}<tr class="tot"><td>Total</td><td>${total.toFixed(3)}</td><td>${(total * 10).toFixed(1)}</td></tr></tbody></table>
+    <p>Examples: a hunt with ${ex(50)} drop-ins; one with ${ex(5)}.</p>
+    <p><b>Why per bonus tag.</b> High-point hunters move to where the top tags are, so the more bonus tags a hunt has, the more of them it pulls in, however many low-point people apply. Tested on the ${di.years} draws (projecting each year from the one before), the per-bonus-tag rate got the projected guaranteed points exactly right ${di.adjusted.exact} of ${di.adjusted.n} times, against ${di.plain.exact} with no drop-ins. A percentage of each hunt's applicants did worse, since popular hunts with few tags got far too many drop-ins, and so did simply adding one point.</p>`;
+}
+function resetView(){ ui.open.clear(); ui.collapsed.clear(); ui.wtypes.clear(); delete ui.filters.unit; closeFilter(false); }
+
+$("#speciesTabs").addEventListener("click", e => {
+  const b = e.target.closest("[data-species]"); if (!b) return;
+  ui.species = b.dataset.species; store.set("species", ui.species); resetView(); fillSelects(); render();
+});
+$("#q").oninput = e => { ui.q = e.target.value; render(); };
+$("#onlyRun").onchange = e => { ui.onlyRun = e.target.checked; render(); };
+$("#onlyStar").onchange = e => { ui.onlyStar = e.target.checked; store.set("onlyStar", ui.onlyStar); render(); };
+$("#showTrends").onchange = e => {
+  ui.showTrends = e.target.checked; store.set("showTrends", ui.showTrends);
+  if (!ui.showTrends){
+    // don't leave hidden columns filtering or sorting the table
+    TREND_KEYS.forEach(k => delete ui.filters[k]);
+    if (TREND_KEYS.includes(ui.sort.key)) ui.sort = {key: "unit", dir: 1};
+  }
+  closeFilter(false); render();
+};
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { ui.res = b.dataset.res; store.set("res", ui.res); fillSelects(); render(); });
+
+// hunters
+$("#profileChips").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "addProf"){
+    const prof = {id: newId(), name: "Hunter " + (ui.profiles.length + 1), pts: {}};
+    ui.profiles.push(prof); ui.active = prof.id; saveProfiles(); render();
+    const n = $("#profName"); n.focus(); n.select(); return;
+  }
+  ui.active = b.dataset.prof; saveProfiles(); render();
+});
+$("#profName").oninput = e => { activeProfile().name = e.target.value.slice(0, 30) || "Hunter"; saveProfiles(); render(); };
+$("#ptsGrid").addEventListener("input", e => {
+  const inp = e.target.closest("[data-pts]"); if (!inp) return;
+  const prof = activeProfile(), key = ui.state + ":" + inp.dataset.pts, v = inp.value;
+  if (v === "" || !isFinite(v)) delete prof.pts[key]; else prof.pts[key] = Math.max(0, Math.min(99, Math.floor(+v)));
+  saveProfiles(); render();
+});
+$("#delProfBtn").onclick = () => {
+  if (ui.profiles.length < 2) return;
+  const prof = activeProfile();
+  if (!confirm(`Delete ${prof.name} and their saved points?`)) return;
+  ui.profiles = ui.profiles.filter(p => p.id !== prof.id); ui.active = ui.profiles[0].id; saveProfiles(); render();
+};
+$("#exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify({app: "draw-odds", version: 1, exported: new Date().toISOString().slice(0, 10), profiles: ui.profiles}, null, 2)], {type: "application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "draw-odds-hunters.json";
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+};
+$("#importBtn").onclick = () => $("#importFile").click();
+$("#importFile").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    const ps = (Array.isArray(data) ? data : data.profiles || []).map(cleanProfile).filter(Boolean);
+    if (!ps.length) throw new Error("no hunters in file");
+    // merge by name: imported points win, other hunters are kept
+    for (const p of ps){
+      const ex = ui.profiles.find(x => x.name.toLowerCase() === p.name.toLowerCase());
+      if (ex) Object.assign(ex.pts, p.pts); else ui.profiles.push({...p, id: newId()});
+    }
+    saveProfiles(); render();
+    $("#ptsNote").textContent = `Imported ${ps.length} hunter${ps.length > 1 ? "s" : ""}.`;
+  } catch(err){ $("#ptsNote").textContent = "Couldn't read that file: " + err.message; }
+};
+
+// table
+$("#thead").addEventListener("click", e => {
+  const fb = e.target.closest("[data-filter]");
+  if (fb){ e.stopPropagation(); if (popKey === fb.dataset.filter) closeFilter(true); else openFilter(fb.dataset.filter, fb); return; }
+  const b = e.target.closest("[data-sort]"); if (!b) return;
+  const k = b.dataset.sort;
+  ui.sort = ui.sort.key === k ? {key:k, dir:-ui.sort.dir} : {key:k, dir: k === "unit" || k === "guar" || k === "split" || k === "proj" || k === "psplit" ? 1 : -1};
+  render();
+});
+$("#summary").addEventListener("click", e => {
+  const b = e.target.closest("[data-groups]"); if (!b) return;
+  if (b.dataset.groups === "expand") ui.collapsed.clear();
+  else document.querySelectorAll("tr.grp").forEach(r => ui.collapsed.add(r.dataset.unit));
+  render();
+});
+$("#tbody").addEventListener("click", e => {
+  const s = e.target.closest("[data-star]");
+  if (s){ const id = s.dataset.star; ui.stars.has(id) ? ui.stars.delete(id) : ui.stars.add(id); store.set("stars", [...ui.stars]); render(); return; }
+  if (e.target.closest("a")) return;
+  const g = e.target.closest("tr.grp");
+  if (g){ const u = g.dataset.unit; ui.collapsed.has(u) ? ui.collapsed.delete(u) : ui.collapsed.add(u); render(); return; }
+  const tr = e.target.closest("tr.row"); if (!tr) return;
+  const c = tr.dataset.code; ui.open.has(c) ? ui.open.delete(c) : ui.open.add(c); render();
+});
+$("#tbody").addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.row, tr.grp")){ e.preventDefault(); e.target.click(); }
+});
+
+if (!STATES.length){ $("#tbody").innerHTML = `<tr><td class="empty">No data loaded.</td></tr>`; return; }
+fillSelects(); render();
+})();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

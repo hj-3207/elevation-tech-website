@@ -2,8 +2,9 @@
 
 Hand-written static site. **No build step, no framework, no dependencies, no
 package.json.** Twelve hand-written public pages, one generated page
-(`draw-odds.html`, see below), two unlinked admin pages, one shared stylesheet
-and six small JS files. Edit a file, refresh the browser.
+(`draw-odds.html`, built locally from `tools/draw-odds/`, see below), two unlinked
+admin pages, one shared stylesheet and six small JS files. Edit a file, refresh
+the browser.
 
 ## Deploy
 
@@ -221,29 +222,31 @@ block; both admin pages carry their own too.
 home, about, services, apps, contact — in that order. Every page points at
 `index.html#…`; `index.html` alone uses bare `#…` so it scrolls instead of
 reloading. There is no templating, so changing the nav means changing 12 files —
-**plus** `draw-odds.html`, whose nav comes from its template in the Draw Odds
-project (`src/template.html`); change it there and rebuild.
+**plus** `draw-odds.html`, whose nav comes from `tools/draw-odds/template.html`;
+change it there and rebuild.
 
 ## Draw Odds page (generated)
 
-`draw-odds.html`, `img/drawodds-*.png` and everything in `data/draw-odds/` are
-written by the Draw Odds project, not by hand. Source of truth:
-`OneDrive\Documents\Hunting\DrawOdds` (its `CLAUDE.md` has the full context). To update:
+`draw-odds.html` is **generated** from `tools/draw-odds/` (template plus Python build
+script). Full context, including the odds logic, the owner's decisions and the yearly
+tasks, is in **`tools/draw-odds/CLAUDE.md`**; read it before touching the page. The
+source moved here from OneDrive on 2026-11-24 so everything lives in one repo. To
+rebuild:
 
 ```
-cd <OneDrive>\Documents\Hunting\DrawOdds
-python tools/build_utah.py --site      # rebuilds the page and copies it here
+python tools/draw-odds/build_utah.py      # writes draw-odds.html and data/draw-odds/
 ```
 
-then commit the changes in this repo as usual. The build never touches git.
+then commit and push as usual. The build never touches git. It's a local
+generator, so there's still no build step on deploy: Pages serves the committed file.
 
 - The page links `style.css` and `nav.js` like the others; its own page styles are
   inline. It uses `div.panel` and `.do-container` rather than `section` /
   `.container`, because `style.css` pads every `section` and caps `.container` at 1080px.
 - About 900 KB, because the draw data is inline so the same page also works opened
   from disk.
-- `data/draw-odds/` is a **backup** of the draw data, kept on a **rolling 5 years**. The build
-  removes older years. It's about 36 MB and holds:
+- `data/draw-odds/` is the build's **working data and the backup**, kept on a
+  **rolling 5 years**. The build removes older years. It's about 36 MB and holds:
   - `raw/utah_<year>_*.json`: utahdraws.com results. The site stops serving them once
     the year passes, so they can't be re-downloaded.
   - DWR's odds and harvest PDFs: kept in case DWR stops publishing them.

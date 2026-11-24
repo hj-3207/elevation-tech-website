@@ -1,7 +1,6 @@
-# Draw Odds data backup
+# Draw Odds data
 
-Copied here by `tools/build_utah.py --site` from the Draw Odds project
-(OneDrive\Documents\Hunting\DrawOdds). That project is the source; this is a backup.
+Read and written by `tools/draw-odds/build_utah.py` (see `tools/draw-odds/CLAUDE.md`).
 
 - `utah-<year>.json` - the compact data inlined into draw-odds.html
 - `utah-tags-<year>.csv`, `utah-hunt-notes.csv` - hand-entered tag numbers and hunt notes
@@ -12,5 +11,4 @@ Copied here by `tools/build_utah.py --site` from the Draw Odds project
 - `raw/utah_odds_<year>.parsed.json` - those reports parsed into tables
 - `raw/utah_harvest_<year>.pdf` - DWR harvest report used for harvest success
 
-Rolling 5 years: files for draws older than that are removed from this backup on
-each build. The Draw Odds project in OneDrive keeps its own copies.
+Rolling 5 years: the build deletes files for draws older than that.
