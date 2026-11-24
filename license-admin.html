@@ -134,6 +134,8 @@
   <div class="la-stats" id="stats"></div>
   <div class="la-subhead">Download clicks</div>
   <div class="la-stats" id="dstats"></div>
+  <div class="la-subhead">Draw Odds &gt; app clicks</div>
+  <div class="la-stats" id="rstats"></div>
 
   <!-- Paste straight from Play Console or App Store Connect. This is the only thing on
        the page that creates rows; see the comment on the loader below. -->
@@ -346,6 +348,38 @@
       }).catch(function () { return { d30: null, d7: null }; });
   }
 
+  /* Clicks from draw-odds.html through to each app's page (table referrals_drawodds,
+   * SQL in tools/draw-odds/referrals_drawodds.sql). All-time only for now: one exact
+   * count per app, filtered on the app column. Each box opens the full referral log. */
+  var REF_APPS = [
+    ['detector', 'Rack Detector'],
+    ['viewer', 'Rack Viewer'],
+    ['tracker', 'Rack Tracker'],
+    ['scorer', 'Rack Scorer']
+  ];
+
+  function refTotal(app) {
+    return authFetch('/rest/v1/referrals_drawodds?select=id&limit=1&app=eq.' + app,
+                     { headers: { Prefer: 'count=exact' } })
+      .then(function (r) {
+        if (!r.ok) return null;
+        var n = (r.headers.get('content-range') || '').split('/')[1];
+        return (!n || n === '*') ? null : parseInt(n, 10);
+      }).catch(function () { return null; });
+  }
+
+  function loadReferrals() {
+    return Promise.all(REF_APPS.map(function (a) {
+      return refTotal(a[0]).then(function (n) { return { name: a[1], all: n }; });
+    })).then(function (out) {
+      el('rstats').innerHTML = out.map(function (d) {
+        return '<a class="la-stat la-stat-link" href="download-log.html?t=referrals_drawodds"><b>' +
+               (d.all == null ? '--' : d.all) + '</b><span>Draw Odds &gt; ' + d.name +
+               '<small>' + (d.all == null ? 'no read access' : 'all time') + '</small></span></a>';
+      }).join('');
+    });
+  }
+
   function loadDownloads() {
     return Promise.all(DL_TABLES.map(function (t) {
       return Promise.all([total(t[0]), recent(t[0])]).then(function (out) {
@@ -388,6 +422,7 @@
       buildFilters();
       render();
       loadDownloads();
+      loadReferrals();
     }).catch(function (err) { say('msg', err.message, 'bad'); });
   }
 
@@ -814,7 +849,7 @@
     el(id).addEventListener('input', render);
     el(id).addEventListener('change', render);
   });
-  el('refresh').addEventListener('click', function () { load(); loadDownloads(); });
+  el('refresh').addEventListener('click', function () { load(); loadDownloads(); loadReferrals(); });
 
   /* ---- boot ------------------------------------------------------------ */
   function show() {
