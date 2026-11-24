@@ -120,11 +120,11 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - "About the 2027 projections", which covers the assumptions, the guaranteed = split + 1 example, and drop-in applicants with the per-bonus-tag rate table, examples and backtest.
 - **On the rest of the site:** Draw Odds is listed as the fifth app, **outside** the Sort → View → Track → Score workflow. See the root `CLAUDE.md`.
 - **Advertising the paid apps** (added 2026-11-24). The page is free, and the owner wants it to show off the paid apps without being annoying. The owner chose three placements:
-  1. **Maker line** (`.maker-strip`): one quiet line under the intro, "Free from Elevation Technology Solutions, makers of …", with a link to each app and to `apps.html`.
-  2. **Hunt detail suggestions** (`promoHtml` / `promoFor`): one or two apps at the bottom of a hunt's right-hand column, worded for that species.
-     - The lead line is "Looks like you'll draw this one. Get ready:" when the active hunter's 2027 odds are 90% or better, otherwise "Getting ready for this hunt?".
+  1. **Maker row** (`.maker-strip`): one quiet row under the intro, "Check out these other useful apps:", then each app's icon and name as a link, then "See the apps →". The owner picked this icon row over a featured card or a dismissible bar.
+  2. **Hunt detail suggestions** (`promoHtml` / `promoFor`): **all four apps** in a compact 2x2 grid (one column on phones) at the bottom of a hunt's right-hand column, in Sort → View → Track → Score order, with one short line each worded for that species. The owner chose all four over a per-species pick.
+     - The lead line is "Looks like you may draw this one. Get ready with:" when the active hunter's 2027 odds are 90% or better, otherwise "Getting ready for this hunt?".
      - **Only claim what each app supports:** Scorer covers elk, mule deer, whitetail, bighorn, pronghorn, bear and lion; Tracker covers elk, mule deer, whitetail, bighorn and bear; Detector identifies elk and deer.
-     - So elk, deer and bighorn get Tracker + Scorer, pronghorn gets Scorer + Viewer, and moose, bison and goat get Viewer only. Recheck this if an app adds species.
+     - Where an app doesn't cover the hunt's species, its line uses generic wording that names no species (Scorer lists the species it does cover). Recheck this if an app adds species.
   3. **"After the draw" section** (`.after-draw`): four cards in Sort → View → Track → Score order with the `apps.html` verbs, a one-line pitch and the price. **Prices are duplicated here**, so update them when a product page's price changes.
   - **Declined:** a pop-up (annoying, and it lands before the tool has given anything), a sidebar (the table needs the full width), and a "you'll draw" toast (held in reserve).
   - Icons are the 64px `img/menu-*.png` used by the nav dropdown. None of this shows when printing.
@@ -154,7 +154,7 @@ There's no test suite. Checks are done by:
 ## Backlog / ideas (owner agreed to "later")
 
 - **QUEUED, next up: click counters from Draw Odds to each app.** The owner wants to know how many clicks Draw Odds sends to each paid app's page. Not built yet.
-  - **Links to tag:** the maker line, the hunt-detail suggestions, and the After the draw cards.
+  - **Links to tag:** the maker row, the hunt-detail suggestions, and the After the draw cards.
   - **Suggested approach:** add `?from=draw-odds` (or a per-placement value like `draw-odds-detail`) to those links, then record a row per click.
   - **How it fits the existing counters:** `downloads.js` writes one row per click to a separate Supabase table per app, with insert-only RLS and the publishable key. See "The four download counters" in the root `CLAUDE.md` and never merge those tables.
   - **Two options:**

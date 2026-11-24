@@ -262,18 +262,20 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 .assume-tbl th{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
 .assume-tbl tr.tot td{color:var(--text);font-weight:700;border-bottom:0}
 /* Cross-promotion of the paid apps: maker strip, hunt-detail suggestions, After the draw */
-.maker-strip{color:var(--muted);font-size:0.84rem;line-height:1.7;max-width:860px;margin:-1.25rem 0 1.9rem}
-.maker-strip a{color:var(--soft);text-decoration:none;border-bottom:1px solid var(--border-strong)}
-.maker-strip a:hover{color:#fff;border-color:var(--orange)}
-.maker-strip a.maker-more{color:var(--orange-bright);border:0;font-family:var(--mono);font-size:0.74rem;letter-spacing:0.04em;margin-left:0.3rem;white-space:nowrap}
+.maker-strip{display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem 1.1rem;color:var(--muted);font-size:0.84rem;margin:-1.25rem 0 1.9rem}
+.maker-lead{color:var(--subtle);font-family:var(--mono);font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase}
+.maker-app{display:inline-flex;align-items:center;gap:0.45rem;color:var(--soft);text-decoration:none;font-weight:600;transition:color 0.2s}
+.maker-app img{width:22px;height:22px;border-radius:5px}
+.maker-app:hover{color:#fff}
+.maker-strip a.maker-more{color:var(--orange-bright);text-decoration:none;font-family:var(--mono);font-size:0.74rem;letter-spacing:0.04em;white-space:nowrap}
 .promo{margin-top:1.4rem;padding-top:1.1rem;border-top:1px solid var(--border)}
+.promo-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:0.5rem}
 .detail a.promo-item{color:var(--muted)}   /* not the orange .detail a link color */
-.promo-item{display:flex;align-items:flex-start;gap:0.8rem;padding:0.7rem 0.8rem;margin-top:0.5rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);font-size:0.84rem;line-height:1.55;text-decoration:none;transition:border-color 0.2s,background 0.2s}
+.promo-item{display:flex;align-items:flex-start;gap:0.6rem;padding:0.6rem 0.7rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);font-size:0.78rem;line-height:1.45;text-decoration:none;transition:border-color 0.2s,background 0.2s}
 .promo-item:hover{border-color:var(--border-orange);background:var(--card2)}
-.promo-item img{width:30px;height:30px;border-radius:6px;flex:none;margin-top:0.1rem}
+.promo-item img{width:24px;height:24px;border-radius:5px;flex:none;margin-top:0.1rem}
 .promo-item b{color:#fff;font-weight:700}
-.promo-item i{font-style:normal;font-family:var(--mono);font-size:0.64rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--subtle);margin-left:0.3rem}
-.promo-go{margin-left:auto;color:var(--orange);align-self:center;padding-left:0.4rem}
+@media (max-width:560px){.promo-grid{grid-template-columns:1fr}}
 .after-draw{margin-top:3rem;padding-top:2.5rem;border-top:1px solid var(--border)}
 .after-title{font-size:clamp(1.5rem,2.6vw,2.1rem);font-weight:900;color:#fff;letter-spacing:-0.02em;line-height:1.15;margin-bottom:1.5rem}
 .after-title span{color:var(--orange)}
@@ -344,11 +346,15 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   <h1 class="page-title" id="title">Draw <span>Odds</span></h1>
   <div class="divider"></div>
   <p class="page-sub" id="subtitle"></p>
-  <!-- Cross-promotion, part 1 of 3: one quiet line saying who built this. -->
-  <p class="maker-strip">Free from Elevation Technology Solutions, makers of
-    <a href="rack-detector.html">Rack Detector</a>, <a href="rack-viewer.html">Rack Viewer</a>,
-    <a href="rack-tracker.html">Rack Tracker</a> and <a href="rack-scorer.html">Rack Scorer</a>.
-    <a href="apps.html" class="maker-more">See the apps →</a></p>
+  <!-- Cross-promotion, part 1 of 3: one quiet row of app icons saying who built this. -->
+  <div class="maker-strip">
+    <span class="maker-lead">Check out these other useful apps:</span>
+    <a class="maker-app" href="rack-detector.html"><img src="img/menu-detector.png" alt="">Rack Detector</a>
+    <a class="maker-app" href="rack-viewer.html"><img src="img/menu-viewer.png" alt="">Rack Viewer</a>
+    <a class="maker-app" href="rack-tracker.html"><img src="img/menu-tracker.png" alt="">Rack Tracker</a>
+    <a class="maker-app" href="rack-scorer.html"><img src="img/menu-scorer.png" alt="">Rack Scorer</a>
+    <a href="apps.html" class="maker-more">See the apps →</a>
+  </div>
 
   <div class="species-tabs" id="speciesTabs" role="group" aria-label="Species"></div>
 
@@ -949,36 +955,41 @@ function trendHtml(st, sp, h, a){
     <table class="pts trend"><thead><tr><th>Draw</th><th>Tags</th><th>Applicants</th><th>Guaranteed</th><th>Split (drew)</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 
-// Cross-promotion, part 2 of 3: one or two of the paid apps that fit the species
-// in this hunt, worded for it. Only claims what each app supports (apps.html):
+// Cross-promotion, part 2 of 3: all four paid apps in a compact 2x2, in their
+// Sort -> View -> Track -> Score order, worded for the species in this hunt.
+// Only claims what each app supports (apps.html):
 // Scorer: elk, mule deer, whitetail, bighorn, pronghorn, bear, lion.
 // Tracker: elk, mule deer, whitetail, bighorn, bear. Detector IDs elk and deer.
-// Moose, bison and goat fit none of those, so they get Rack Viewer only.
+// Species an app doesn't cover get generic wording that names no species.
 const PROMO_APPS = {
-  detector: {name: "Rack Detector", url: "rack-detector.html", icon: "img/menu-detector.png", plat: "Windows"},
-  viewer:   {name: "Rack Viewer",   url: "rack-viewer.html",   icon: "img/menu-viewer.png",   plat: "Windows · free to view"},
-  tracker:  {name: "Rack Tracker",  url: "rack-tracker.html",  icon: "img/menu-tracker.png",  plat: "Android"},
-  scorer:   {name: "Rack Scorer",   url: "rack-scorer.html",   icon: "img/menu-scorer.png",   plat: "Android · iOS"},
+  detector: {name: "Rack Detector", url: "rack-detector.html", icon: "img/menu-detector.png"},
+  viewer:   {name: "Rack Viewer",   url: "rack-viewer.html",   icon: "img/menu-viewer.png"},
+  tracker:  {name: "Rack Tracker",  url: "rack-tracker.html",  icon: "img/menu-tracker.png"},
+  scorer:   {name: "Rack Scorer",   url: "rack-scorer.html",   icon: "img/menu-scorer.png"},
 };
 const promoFor = key => {
   const animal = {"le-elk": "bulls", "le-deer": "bucks", "gs-deer": "bucks", "desert-bighorn": "rams", "rocky-bighorn": "rams", "pronghorn": "bucks"}[key];
   const one = {"le-elk": "bull", "le-deer": "buck", "gs-deer": "buck", "desert-bighorn": "ram", "rocky-bighorn": "ram", "pronghorn": "buck"}[key];
-  const tracker = ["tracker", `Keep track of the ${animal} you're seeing on this unit: every trail-cam hit, glassing session and shed find, mapped in order across the season.`];
-  const scorer  = ["scorer", `Score your ${one} at the tailgate, Boone & Crockett and Pope & Young style, with live gross and net totals. Works offline.`];
-  const viewer  = ["viewer", `Scouting with trail cameras? Go through the photos and video at arrow-key speed and keep only the ones worth keeping.`];
-  if (key === "le-elk" || key === "le-deer" || key === "gs-deer" || key === "desert-bighorn" || key === "rocky-bighorn") return [tracker, scorer];
-  if (key === "pronghorn") return [scorer, viewer];
-  return [viewer];
+  const detects = ["le-elk", "le-deer", "gs-deer"].includes(key);
+  const tracks  = ["le-elk", "le-deer", "gs-deer", "desert-bighorn", "rocky-bighorn"].includes(key);
+  const scores  = tracks || key === "pronghorn";
+  return [
+    ["detector", detects ? `Sorts SD cards of trail-cam photos so the ${animal} land in their own folder.`
+                         : `Sorts SD cards of trail-cam photos into folders by species.`],
+    ["viewer",   `Go through trail-cam photos and video at arrow-key speed. Free to view.`],
+    ["tracker",  tracks ? `Follow the ${animal} on this unit: trail-cam hits, glassing and sheds, mapped.`
+                        : `Map your scouting season: trail-cam hits, glassing sessions and sheds.`],
+    ["scorer",   scores ? `Score your ${one} at the tailgate, B&C and P&Y style. Works offline.`
+                        : `Score elk, deer, sheep and pronghorn at the tailgate. Works offline.`],
+  ];
 };
 function promoHtml(sp, a, p){
-  const items = promoFor(sp.key);
-  if (!items.length) return "";
   const o = oddsAt(a.model, p);
-  const lead = p != null && o != null && o >= 0.9 ? "Looks like you'll draw this one. Get ready:" : "Getting ready for this hunt?";
-  return `<div class="promo"><h3>${esc(lead)}</h3>` + items.map(([k, text]) => {
+  const lead = p != null && o != null && o >= 0.9 ? "Looks like you may draw this one. Get ready with:" : "Getting ready for this hunt?";
+  return `<div class="promo"><h3>${esc(lead)}</h3><div class="promo-grid">` + promoFor(sp.key).map(([k, text]) => {
     const app = PROMO_APPS[k];
-    return `<a class="promo-item" href="${app.url}"><img src="${app.icon}" alt=""><span><b>${esc(app.name)}</b> <i>${esc(app.plat)}</i><br>${esc(text)}</span><span class="promo-go" aria-hidden="true">→</span></a>`;
-  }).join("") + `</div>`;
+    return `<a class="promo-item" href="${app.url}"><img src="${app.icon}" alt=""><span><b>${esc(app.name)}</b><br>${esc(text)}</span></a>`;
+  }).join("") + `</div></div>`;
 }
 
 function projText(a, st){
