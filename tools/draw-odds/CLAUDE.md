@@ -208,6 +208,12 @@ There's no test suite. Checks are done by:
 
 - Possibly calibrate pronghorn and general deer differently, since drop-ins didn't help there.
 - A flat-number-per-hunt drop-in variant was never backtested. The owner asked; it was offered, not done.
+- **Drop-ins per weapon type: tested 2026-11-25, not worth it.** The same leave-one-year-out backtest compared rates per species × weapon type (and weapon rates shrunk toward the species rate, K = 25–200 bonus tags) against one rate per species.
+  - Residents, average miss: LE elk 1.053 vs 1.053, LE deer 0.963 vs 0.955; worse for bison, goat and sheep, whose small weapon groups (7–17 cases) are noisy.
+  - Nonresidents: worse for LE elk (1.66 → 1.74).
+  - Pronghorn improved slightly (0.725 → 0.697) but still lost to no drop-ins (0.660).
+  - Recommendation: keep one rate per species.
+- **Link preview:** `og:`/`twitter:` tags in the template head point at `img/drawodds-og.jpg` (1200×630), rendered from `tools/draw-odds/og-card.html` with headless Edge (see the comment in that file). Re-render it if the page's look changes a lot. The static `<title>` is "Utah Draw Odds | Elevation Technology" so crawlers that don't run JS get the right name.
 - Separate Colorado and Wyoming pages. Colorado uses preference points; Wyoming uses preference plus random.
 - Offered 2026-11-24 and skipped "for now": every hunter's odds as columns in the main table, a "best odds" panel (the active hunter's top hunts across species), and a CSV download of the filtered table.
 - Phone ideas offered and skipped: "x pts short" under the odds; a "(DWR: any legal weapon)" note on Rifle hunts.

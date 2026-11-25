@@ -3,8 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Draw Odds | Elevation Technology</title>
+<title>Utah Draw Odds | Elevation Technology</title>
 <meta name="description" content="Big game draw odds by hunt: points that guaranteed a tag last year, the split group, random-draw odds, and harvest success.">
+<!-- Link previews (texts, Facebook, Slack, etc.). The image is made from
+     tools/draw-odds/og-card.html; URLs must be absolute. -->
+<link rel="canonical" href="https://elevationtechsolutions.net/draw-odds.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Elevation Technology">
+<meta property="og:title" content="Utah Draw Odds">
+<meta property="og:description" content="Guaranteed points, split groups, your random-draw odds and next year's projections for every Utah big game hunt.">
+<meta property="og:url" content="https://elevationtechsolutions.net/draw-odds.html">
+<meta property="og:image" content="https://elevationtechsolutions.net/img/drawodds-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Utah Draw Odds: a hunt's draw results by point level, with 2027 estimates">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="shortcut icon" href="favicon.ico" />
@@ -1054,7 +1067,10 @@ function renderHead(cols){
 // Phone sort/filter bar: the same sorting and filters as the header buttons.
 function renderMobileBar(cols){
   const sortable = cols.filter(c => c.sort !== false);
-  $("#mSort").innerHTML = sortable.map(c => `<option value="${c.key}"${ui.sort.key === c.key ? " selected" : ""}>${esc(c.key === "unit" ? "Hunt (grouped by unit)" : c.label)}</option>` +
+  // "(grouped by unit)" only when picking Hunt would actually group: a number filter, or
+  // Hunt sorted Z-A, gives a flat list.
+  const groups = !activeFilters().some(([k]) => k !== "unit") && !(ui.sort.key === "unit" && ui.sort.dir < 0);
+  $("#mSort").innerHTML = sortable.map(c => `<option value="${c.key}"${ui.sort.key === c.key ? " selected" : ""}>${esc(c.key === "unit" ? (groups ? "Hunt (grouped by unit)" : "Hunt") : c.label)}</option>` +
     (c.key === "unit" ? `<option value="season"${ui.sort.key === "season" ? " selected" : ""}>Season dates</option>` : "")).join("");
   $("#mDir").textContent = ui.sort.dir > 0 ? "▲" : "▼";
   $("#mFilter").innerHTML = `<option value="">Choose a column…</option>` +
