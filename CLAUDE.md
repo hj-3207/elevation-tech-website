@@ -111,7 +111,7 @@ free web tool used *before* the hunt, when you apply for tags (the owner's call,
 2026-11-24).
 - **Never a fifth step:** don't give it a step number or verb, or an arrow in the flow.
 - **Where it's listed:**
-  - `apps.html`: its own `.hero-pre` card under the trust strip, an `#drawodds` app-row after Rack Scorer, a row in the comparison table ("All five at a glance"), and a button.
+  - `apps.html`: its own `.hero-pre` card under the trust strip, set off by a small centered "Free online tools" heading (`.hero-prehead`, added 2026-11-24; the owner preferred it to a label divider and dropped the subtitle) so the paid apps' offline claims don't read as covering it and future free tools have a place; an `#drawodds` app-row after Rack Scorer (five bullets and a screenshot refreshed 2026-11-24: neutral "Hunter" at 8 LE elk points, Manti archery EB3006 opened, taken with `?sp=le-elk&q=manti&h=EB3006`), a row in the comparison table ("All five at a glance"), and a button.
   - `index.html`: a full-width `.app-tile.wide` under the four tiles.
 - **Same sentence:** its hero card and app-row lead share one sentence, like the others. The index tile adds "Before the hunt:".
 - **Icon:** `img/drawodds-icon.png` (and the 64 px `img/menu-drawodds.png`): an orange notched hunting tag, tilted 6°, with the black antler mark and a punch hole, on a transparent background. Chosen by the owner on 2026-11-24 to replace the dice placeholder. Source: `tools/draw-odds/drawodds-icon.svg`.
