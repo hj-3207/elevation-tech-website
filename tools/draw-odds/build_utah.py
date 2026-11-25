@@ -856,25 +856,36 @@ def build_picker(states, template):
         if not s:   # context only (on the map but not in states.json, e.g. WA, CA): outline, no label
             parts.append(f'<g class="ctx"><path d="{g["d"]}"/></g>')
             continue
+        status = "Open" if s["live"] else "Under construction" if s.get("building") else "Coming later"
         label = (f'<text class="code" x="{x}" y="{y}">{code}</text>'
-                 f'<text class="sub" x="{x}" y="{y + 12}">{"Open" if s["live"] else "Coming later"}</text>')
-        title = f'<title>{escape(s["name"])}: {"open" if s["live"] else "coming later"}</title>'
+                 f'<text class="sub" x="{x}" y="{y + 12}">{status}</text>')
+        title = f'<title>{escape(s["name"])}: {status.lower()}</title>'
         if s["live"]:
             parts.append(f'<a class="live" href="{s["page"]}" aria-label="{escape(s["name"])} draw odds">{title}<path d="{g["d"]}"/>{label}</a>')
+        elif s.get("building"):
+            # Under construction: clickable, but it opens the notice on this page.
+            parts.append(f'<a class="building" href="#{s["code"].lower()}" data-building="{s["code"]}" aria-label="{escape(s["name"])}: under construction">{title}<path d="{g["d"]}"/>{label}</a>')
         else:
             parts.append(f'<g class="soon">{title}<path d="{g["d"]}"/>{label}</g>')
     svg = (f'<svg viewBox="{m["viewBox"]}" role="img" aria-label="Map of the Western states and Kansas. '
            f'{", ".join(s["name"] for s in states if s["live"])} ready; the others are coming later.">' + "".join(parts) + "</svg>")
-    items = []
-    for s in sorted(states, key=lambda s: (not s["live"], s["name"])):
+    items, notices = [], []
+    for s in sorted(states, key=lambda s: (not s["live"], not s.get("building"), s["name"])):
+        go = "Open →" if s["live"] else "Under construction" if s.get("building") else "Coming later"
         inner = (f'<span class="nm">{escape(s["name"])}</span><span class="sys">{escape(s["system"])}</span>'
-                 f'<span class="go">{"Open →" if s["live"] else "Coming later"}</span>')
-        items.append(f'<li><a class="st live" data-code="{s["code"]}" href="{s["page"]}">{inner}</a></li>' if s["live"]
-                     else f'<li><div class="st soon" data-code="{s["code"]}">{inner}</div></li>')
+                 f'<span class="go">{go}</span>')
+        if s["live"]:
+            items.append(f'<li><a class="st live" data-code="{s["code"]}" href="{s["page"]}">{inner}</a></li>')
+        elif s.get("building"):
+            items.append(f'<li><a class="st building" data-code="{s["code"]}" data-building="{s["code"]}" href="#{s["code"].lower()}">{inner}</a></li>')
+            notices.append(f'<div class="notice" id="notice-{s["code"].lower()}" role="status" hidden>'
+                           f'<b>{escape(s["name"])} is under construction.</b> {escape(s.get("notice", "")).replace(escape(s["name"]) + " is under construction. ", "")}</div>')
+        else:
+            items.append(f'<li><div class="st soon" data-code="{s["code"]}">{inner}</div></li>')
     nav = re.search(r"<nav>.*?</nav>", template, re.S).group(0)
     footer = re.search(r"<footer>.*?</footer>", template, re.S).group(0)
     page = ((TOOL / "picker.html").read_text(encoding="utf-8")
-            .replace("<!--__MAP__-->", svg).replace("<!--__LIST__-->", "<ul>" + "".join(items) + "</ul>")
+            .replace("<!--__MAP__-->", svg).replace("<!--__LIST__-->", "".join(notices) + "<ul>" + "".join(items) + "</ul>")
             .replace("<!--__NAV__-->", nav).replace("<!--__FOOTER__-->", footer)
             .replace("<!DOCTYPE html>\n", "<!DOCTYPE html>\n" + NOTICE.replace("template.html", "picker.html"), 1))
     out = ROOT / "draw-odds.html"

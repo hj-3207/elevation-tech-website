@@ -233,6 +233,45 @@ There's no test suite. Checks are done by:
   - To look at part of the page, hide the elements before it in the injected script (scrolling a screenshot is unreliable); see the scroll note under "Phones" above.
 - The owner's spreadsheets may be open in Excel (file locked). Copy to a scratch folder before reading with openpyxl.
 
+## Colorado (in progress, started 2026-11-25)
+
+The owner's decisions:
+- Species: elk, deer, pronghorn, moose, bighorn (Rocky Mountain and desert), mountain goat, bear.
+- Hunts: **antlered or either-sex only** (sex letter M or E); youth-only (K) hunts are left out.
+- Show **all valid units** for multi-unit hunt codes.
+- Note when a tag was **available to draw as a 2nd choice**.
+- **Filters** to hide private-land-only (P) and Ranching for Wildlife (W/J) hunts.
+- The large PDFs stay **out of the repo**.
+- Harvest is added after the draw data works.
+
+**Stage 1, `tools/draw-odds/build_colorado.py` (written):**
+- **Links:** finds recap links on CPW's statistics pages (cpw.widen.net shares, `discover()`).
+- **Storage:** downloads PDFs to `C:\Users\hayden.j\OneDrive\Documents\Hunting\DrawOddsData\colorado\` and writes parsed JSON to `data/draw-odds/raw/colorado_<species>_<year>_<recap|drawnout>.json`, `colorado_w2_units_2026.json` and `colorado_sources.json`.
+- **Recaps:** 2022, 2023, 2025 and 2026 for every species, plus desert bighorn 2024. CPW posts no 2024 recap for the others, so `parse_drawnout` fetches the "Drawn Out At" report only where a year has no recap.
+- **Recap parser:** checked by `verify_recap` against CPW's own Total Choice 1 lines. 2026 elk: 1,039 codes, 0 mismatches. Per hunt it keeps the quota; post-draw # drawn (adult R/N, youth R/N, landowner); hybrid licenses drawn; the nonresident cap; first-choice applicants and draws by point level; and totals by choice 1–4 (choice 2+ draws mean a 2nd-choice tag).
+- **Valid units:** from CPW **Chapter W-2** (as approved May 2026) via pdfplumber `extract_tables()`. The merged unit cell carries down a group of code rows and across pages. All 422 non-RFW antlered/either-sex elk codes get units, including CPW's qualifiers ("82 public lands only"). Ranching for Wildlife codes aren't in W-2, so they show the code's GMU plus a badge.
+
+**Hunt codes** (2026 brochure p. 20) read species, sex, GMU, season, method:
+- **Species:** E elk, D deer, A pronghorn, M moose, B bear (sheep and goat codes start with S and G).
+- **Sex:** M male, F female, E either.
+- **Season:** O1–O6 regular seasons; P private land only; E early; L late; K youth only; S special/split; U unlimited; V1 nonresident only; W or J Ranching for Wildlife (residents only).
+- **Method:** A archery, M muzzleloader, R rifle.
+
+**Draw systems** (CPW primary draw page; 2026 brochure pp. 13–19):
+- **Elk, deer, pronghorn, bear:** preference points (top points first). Nonresident caps: 20% on codes that took 6+ resident points (3-year average with a lag), 35% otherwise.
+- **Hybrid draw:** on codes that took 10+ resident points the year before and have 5+ licenses, up to 20% go to a random draw among first-choice applicants with 5+ points who applied individually.
+- **Moose, Rocky Mountain bighorn, goat:** need 3 points to enter, then **weighted** points. The random application number is divided by (weighted points + 1); lowest numbers win.
+- **Desert bighorn:** pure random, no points.
+- **Coming:** from 2028 Colorado replaces the hybrid draw with a split draw.
+
+**Still to do:**
+1. Run stage 1 for everything.
+2. The odds model for the three draw types, checked against 2026 by point level.
+3. Data assembly into `data/draw-odds/co-2026.json`.
+4. The page: species buttons with `co-` species keys so saved points don't clash with Utah's; "GMU 41 · 1st rifle" names; P/RFW filters and badges; 2nd-choice notes.
+5. Harvest.
+6. Flip `states.json` to live.
+
 ## Backlog / ideas (owner agreed to "later")
 
 - Possibly calibrate pronghorn and general deer differently, since drop-ins didn't help there.
@@ -246,6 +285,7 @@ There's no test suite. Checks are done by:
 - **State picker and switcher (built 2026-11-25, owner's design):**
   - **Picker:** the map covers the West only plus Kansas. Washington and California are dim outlines for context, not clickable, with no label. Any map state not in `states.json` shows that way, so adding one to the list is all it takes to label it. Working states are orange links; the others say "Coming later". A list beside the map (below it on phones) repeats the states with their draw system. If this browser has hunters with points, Utah's row says "Your points are saved". Under the intro it has the same "Check out these other useful apps:" strip as the state pages (added 2026-11-25). Its clicks count in `referrals_drawodds` as placement `top`, mixed with the state pages' top strip, because the table's check constraint only allows top/detail/after. A separate `map` placement would need the constraint changed in Supabase first.
   - **Switcher:** each state page has a "State: Utah ▾" button at the top right of the title (on phones a compact "Utah ▾" beside the eyebrow). It lists working states, the coming ones (greyed) and "All states (map) →".
+  - **Under construction** (owner's request, 2026-11-25): a state with `"building": true` in `states.json` (Colorado now) is clickable on the map (orange dashed outline, "Under construction") and in the list. Clicking shows its `notice` text above the state list instead of opening a page; `draw-odds.html#co` opens it on arrival. The state pages' switcher lists it as "Under construction", linking to that. When the state goes live, set `"live": true` and drop `building`/`notice`.
   - **Saved points:** hunters and points sit in one localStorage (`drawodds:` keys) shared by every state page. Utah's species keys (`le-elk`, …) are unprefixed. A new state's species keys must not clash, so prefix them (e.g. `co-elk`).
   - **Site copy:** apps.html and index.html still say "Utah" (true while it's the only working state). Update them when the second state goes live.
 - Separate Colorado and Wyoming pages. Colorado uses preference points; Wyoming uses preference plus random.

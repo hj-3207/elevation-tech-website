@@ -71,6 +71,8 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .st-menu span{color:var(--subtle)}
 .st-menu small{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--subtle)}
 .st-menu a.cur small{color:var(--orange-bright)}
+.st-menu a.st-build{color:var(--soft)}
+.st-menu a.st-build small{color:var(--orange-bright)}
 @media (max-width:680px){
   /* Phones: a compact "Utah ▾" beside the eyebrow line, so the title keeps the full width. */
   .head-row{display:block;position:relative}
@@ -2078,8 +2080,9 @@ function renderStateSwitch(){
   const cur = curState().state;
   const me = STATE_LIST.find(s => s.code === cur);
   $("#stName").textContent = me ? me.name : curState().name;
-  $("#stMenu").innerHTML = [...STATE_LIST].sort((a, b) => (b.live - a.live) || a.name.localeCompare(b.name)).map(s => s.live
+  $("#stMenu").innerHTML = [...STATE_LIST].sort((a, b) => (b.live - a.live) || (!!b.building - !!a.building) || a.name.localeCompare(b.name)).map(s => s.live
     ? `<a href="${esc(s.page)}"${s.code === cur ? ` class="cur" aria-current="page"` : ""}>${esc(s.name)}<small>${s.code === cur ? "Viewing" : esc(s.system)}</small></a>`
+    : s.building ? `<a class="st-build" href="draw-odds.html#${esc(s.code.toLowerCase())}">${esc(s.name)}<small>Under construction</small></a>`
     : `<span aria-disabled="true">${esc(s.name)}<small>Coming later</small></span>`).join("") +
     `<a class="st-all" href="draw-odds.html">All states (map) →</a>`;
   if (!STATE_LIST.length) $("#stSwitch").hidden = true;

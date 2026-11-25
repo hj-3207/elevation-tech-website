@@ -72,6 +72,20 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .map .live path{fill:rgba(204,85,0,0.32);stroke:var(--orange);stroke-width:1.5}
 .map a.live:hover path,.map a.live:focus-visible path{fill:rgba(204,85,0,0.55);stroke:#ff7a26}
 .map a.live{cursor:pointer;outline:none}
+/* Under construction (states.json "building"): orange dashed outline, opens a notice. */
+.map .building path{fill:rgba(204,85,0,0.1);stroke:var(--orange);stroke-width:1.2;stroke-dasharray:4 3}
+.map a.building{cursor:pointer;outline:none}
+.map a.building:hover path,.map a.building:focus-visible path{fill:rgba(204,85,0,0.22)}
+.map .building .code{fill:#ffb27a}
+.map .building .sub{fill:var(--orange-bright)}
+.map-key .k-build i{background:rgba(204,85,0,0.1);border:1px dashed var(--orange)}
+a.st.building{border-style:dashed;border-color:var(--border-orange);background:rgba(204,85,0,0.05)}
+a.st.building:hover{background:rgba(204,85,0,0.12)}
+a.st.building .nm{color:#fff}
+a.st.building .go{color:var(--orange-bright)}
+.notice{border:1px solid var(--orange);border-radius:10px;background:rgba(204,85,0,0.12);padding:0.85rem 1rem;margin:0 0 0.9rem;color:var(--text);font-size:0.9rem;line-height:1.6}
+.notice b{color:#fff}
+.notice[hidden]{display:none}
 .map text{pointer-events:none;text-anchor:middle;font-family:var(--mono)}
 .map .code{font-size:14px;font-weight:600;letter-spacing:0.06em}
 .map .soon .code{fill:#6a6a6a}
@@ -139,7 +153,7 @@ a.st.live .go{color:var(--orange-bright)}
   <div class="pick">
     <div class="map">
       <!--__MAP__-->
-      <div class="map-key"><span class="k-live"><i></i>Ready</span><span class="k-soon"><i></i>Coming later</span></div>
+      <div class="map-key"><span class="k-live"><i></i>Ready</span><span class="k-build"><i></i>Under construction</span><span class="k-soon"><i></i>Coming later</span></div>
     </div>
     <div class="states">
       <h2>States</h2>
@@ -164,6 +178,27 @@ a.st.live .go{color:var(--orange-bright)}
     var el = document.querySelector('a.st[data-code="UT"] .nm');
     if (el) el.insertAdjacentHTML("beforeend", '<span class="saved">Your points are saved</span>');
   } catch(e){}
+})();
+</script>
+<script>
+// States under construction (map shape or list row): show their notice above the list
+// instead of a page. #colorado in the address (the state pages' switcher links there)
+// opens it on arrival.
+(function(){
+  function show(code, scroll){
+    var n = document.getElementById("notice-" + code.toLowerCase()); if (!n) return;
+    document.querySelectorAll(".notice").forEach(function(x){ x.hidden = x !== n; });
+    n.hidden = false;
+    if (scroll) n.scrollIntoView({block: "center", behavior: "smooth"});
+  }
+  document.addEventListener("click", function(e){
+    var a = e.target.closest("[data-building]"); if (!a) return;
+    e.preventDefault();
+    show(a.getAttribute("data-building"), true);
+    try { history.replaceState(null, "", "#" + a.getAttribute("data-building").toLowerCase()); } catch(err){}
+  });
+  var h = (location.hash || "").slice(1);
+  if (h) show(h.toUpperCase(), true);
 })();
 </script>
 <script src="nav.js"></script>

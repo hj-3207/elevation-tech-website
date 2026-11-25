@@ -1,6 +1,7 @@
 [
   {"code": "UT", "name": "Utah", "page": "draw-odds-utah.html", "live": true, "system": "Bonus points", "blurb": "Half the tags to top points, half random"},
-  {"code": "CO", "name": "Colorado", "page": "draw-odds-colorado.html", "live": false, "system": "Preference points"},
+  {"code": "CO", "name": "Colorado", "page": "draw-odds-colorado.html", "live": false, "building": true, "system": "Preference points",
+   "notice": "Colorado is under construction. We're building it now from Colorado Parks and Wildlife's draw results: elk, deer, pronghorn, moose, bighorn sheep, mountain goat and bear, with the points it took to draw each hunt, your odds and next year's projections. Check back soon."},
   {"code": "WY", "name": "Wyoming", "page": "draw-odds-wyoming.html", "live": false, "system": "Preference points + random"},
   {"code": "AZ", "name": "Arizona", "page": "draw-odds-arizona.html", "live": false, "system": "Bonus points"},
   {"code": "NM", "name": "New Mexico", "page": "draw-odds-new-mexico.html", "live": false, "system": "Random draw"},
