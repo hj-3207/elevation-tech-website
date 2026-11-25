@@ -53,6 +53,14 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .divider{width:40px;height:2px;background:var(--orange);margin:1.1rem 0 1.25rem;border-radius:1px}
 .page-sub{color:var(--muted);font-family:var(--mono);font-size:0.84rem;line-height:1.85;max-width:720px;margin-bottom:2.25rem}
 
+/* App strip (same as the state pages). */
+.maker-strip{display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem 1.1rem;color:var(--muted);font-size:0.84rem;margin:-1.25rem 0 1.9rem}
+.maker-lead{color:var(--subtle);font-family:var(--mono);font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase}
+.maker-app{display:inline-flex;align-items:center;gap:0.45rem;color:var(--soft);text-decoration:none;font-weight:600;transition:color 0.2s}
+.maker-app img{width:22px;height:22px;border-radius:5px}
+.maker-app:hover{color:#fff}
+.maker-strip a.maker-more{color:var(--orange-bright);text-decoration:none;font-family:var(--mono);font-size:0.74rem;letter-spacing:0.04em;white-space:nowrap}
+
 .pick{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:2.5rem;align-items:start}
 
 /* Map */
@@ -117,6 +125,16 @@ a.st.live .go{color:var(--orange-bright)}
   <h1 class="page-title">Draw <span>Odds</span></h1>
   <div class="divider"></div>
   <p class="page-sub">Pick a state. Each one shows last draw's results by hunt and point level, the points that guaranteed a tag, your odds and next year's projections.</p>
+  <!-- Same app strip as the state pages. Clicks count as placement "top" in
+       referrals_drawodds (the table only allows top/detail/after). -->
+  <div class="maker-strip">
+    <span class="maker-lead">Check out these other useful apps:</span>
+    <a class="maker-app" href="rack-detector.html" data-ref="detector:top"><img src="img/menu-detector.png" alt="">Rack Detector</a>
+    <a class="maker-app" href="rack-viewer.html" data-ref="viewer:top"><img src="img/menu-viewer.png" alt="">Rack Viewer</a>
+    <a class="maker-app" href="rack-tracker.html" data-ref="tracker:top"><img src="img/menu-tracker.png" alt="">Rack Tracker</a>
+    <a class="maker-app" href="rack-scorer.html" data-ref="scorer:top"><img src="img/menu-scorer.png" alt="">Rack Scorer</a>
+    <a href="apps.html" class="maker-more" data-ref="apps:top">See the apps →</a>
+  </div>
 
   <div class="pick">
     <div class="map">
@@ -149,5 +167,16 @@ a.st.live .go{color:var(--orange-bright)}
 })();
 </script>
 <script src="nav.js"></script>
+<script src="downloads.js"></script>
+<script>
+// App clicks: one anonymous row per click in referrals_drawodds (which app, placement, when),
+// same as the state pages.
+document.addEventListener("click", function(e){
+  var a = e.target.closest("a[data-ref]");
+  if (!a || typeof dlCount !== "function") return;
+  var p = a.dataset.ref.split(":");
+  dlCount("referrals_drawodds", {app: p[0], placement: p[1]});
+});
+</script>
 </body>
 </html>
