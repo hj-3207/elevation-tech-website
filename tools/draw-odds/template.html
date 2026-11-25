@@ -301,6 +301,7 @@ tr.grp:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
 tr.grp .caret{display:inline-block;color:var(--orange);margin:0 0.55rem 0 0.35rem;transition:transform 0.2s;font-size:0.8rem}
 tr.grp.closed .caret{transform:rotate(-90deg)}
 .grp-name{font-weight:800;color:#fff;font-size:1rem;letter-spacing:-0.01em}
+.grp-badge{margin-left:0.7rem;vertical-align:1px;cursor:help}
 .grp-meta{font-family:var(--mono);font-size:0.68rem;color:var(--muted);margin-left:0.9rem;letter-spacing:0.03em}
 tr.row.in-grp td.hunt{padding-left:1.6rem}
 tr.row.in-grp .unit{font-weight:600;font-size:0.9rem;color:var(--text)}
@@ -1212,7 +1213,10 @@ function render(){
       const best = p == null ? null : Math.max(...grp.map(x => oddsAt(x.a.model, p) ?? -1));
       html += `<tr class="grp${closed ? " closed" : ""}" data-unit="${esc(unit)}" tabindex="0" aria-expanded="${!closed}"><td colspan="${cols.length}" class="l">` +
         `<span class="caret" aria-hidden="true">▾</span><span class="grp-name">${esc(unit)}</span>` +
-        `<span class="grp-meta">${grp.length} hunt${grp.length > 1 ? "s" : ""} · ${fmt(gTags)} tags${best != null && best >= 0 ? ` · ${esc(prof.name)}'s best: ${pct(best)}` : ""}</span></td></tr>`;
+        `<span class="grp-meta">${grp.length} hunt${grp.length > 1 ? "s" : ""} · ${fmt(gTags)} tags${best != null && best >= 0 ? ` · ${esc(prof.name)}'s best: ${pct(best)}` : ""}</span>` +
+        // Unit-level badge (bear: an over-the-counter harvest-objective hunt on the unit), once per unit.
+        ((grp.find(x => x.h.ho) || {}).h ? (ho => `<span class="badge grp-badge" title="${esc(ho[1])}">${esc(ho[0])}</span>`)(grp.find(x => x.h.ho).h.ho) : "") +
+        `</td></tr>`;
       if (!closed) html += grp.map(({h,a}) => rowHtml(st, sp, h, a, p, true) + (ui.open.has(h.code) ? detailHtml(st, sp, h, a, p, cols.length) : "")).join("");
     }
   } else {
@@ -1260,7 +1264,8 @@ function rowHtml(st, sp, h, a, p, inGroup){
     : `<span class="big">${m.split} pts</span><span class="small">${fmt(m.k)} of ${fmt(m.n)} draw</span>`;
   const s0 = h.seasons && h.seasons[0];
   const dates = s0 && h.seasons.length === 1 ? ` · ${fmtDate(s0[1])} – ${fmtDate(s0[2])}` : "";
-  const badges = (h.notes || []).map(n => `<span class="badge" title="${esc(n[1])}">${esc(n[0])}</span>`).join("");
+  // h.ho (unit-level) sits on the unit heading when grouped; flat lists show it per hunt.
+  const badges = [...(h.notes || []), ...(h.ho && !inGroup ? [h.ho] : [])].map(n => `<span class="badge" title="${esc(n[1])}">${esc(n[0])}</span>`).join("");
   const name = inGroup
     ? `<div class="unit">${esc(h.weapon)}${badges}</div><div class="meta"><span class="code">${esc(h.code)}</span>${esc(dates)}</div>`
     : `<div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div>` +
@@ -1355,7 +1360,7 @@ function detailHtml(st, sp, h, a, p, ncol){
       <table class="pts hunters-tbl"><thead><tr><th class="l">Hunter</th><th>Points</th><th>${N} odds</th></tr></thead><tbody>${hunters}</tbody></table>
       ${a.model && !a.model.all && a.model.randTags > 0 ? `<p class="hat">${N} random draw: ${fmt(a.model.randTags)} tag${a.model.randTags === 1 ? "" : "s"} drawn from about <b>${fmt(Math.round(a.model.entries))}</b> entries held by ${fmt(a.model.rest.reduce((s,x) => s + x[1], 0))} applicants.${p != null ? ` ${esc(activeProfile().name)} holds ${p + 1}.` : ""}</p>` : ""}
       <h3 style="margin-top:1.4rem">Hunt</h3><dl class="facts">
-      ${(h.notes || []).length ? `<dt>Notes</dt><dd>${h.notes.map(n => `<span class="badge">${esc(n[0])}</span> ${esc(n[1])}`).join("<br>")}</dd>` : ""}
+      ${(h.notes || []).length || h.ho ? `<dt>Notes</dt><dd>${[...(h.notes || []), ...(h.ho ? [h.ho] : [])].map(n => `<span class="badge">${esc(n[0])}</span> ${esc(n[1])}`).join("<br>")}</dd>` : ""}
       <dt>Hunt #</dt><dd><span class="code">${esc(h.code)}</span>${h.map ? ` · <a href="${esc(h.map)}" target="_blank" rel="noopener">Boundary map</a>` : ""}</dd>
       <dt>${st.drawYear} season${(h.seasons||[]).length > 1 ? "s" : ""}</dt><dd>${seasons || "—"}</dd>
       <dt>Tags</dt><dd>${tagLine}</dd>

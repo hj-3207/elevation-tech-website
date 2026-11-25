@@ -164,7 +164,13 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
     - **Bait:** summer; bait station registration required, no early baiting, no dogs. "The only bear season that allows bait is the summer limited-entry season."
     - **Hounds or bait:** multi-season; each season's rules apply while you hunt it.
     - **No hounds or bait:** the one spot-and-stalk hunt.
-    - Re-check the guidebook each year: these rules come from it, not from the draw data.
+    - Re-check the guidebook each year: these rules come from it, not from the draw data. They are unchanged in the 2026 edition, pp. 73–80.
+  - **"OTC hunt on this unit"** (owner's request, 2026-11-25, `apply_bear_ho()`): marks bear units that also have a **harvest-objective** hunt, a permit bought without drawing and good until the unit's quota is met.
+    - **Source:** parsed from the "Harvest-objective hunts" table in DWR's combined black bear, cougar and furbearer guidebook. Its URL has no year (`BEAR_GUIDEBOOK_URL`); it's cached as `raw/utah_bear_guidebook_<year on cover>.pdf`. The 2026 edition has 21 units, all matching limited-entry units by name.
+    - **Layout quirk:** a unit with two seasons prints one date line above its row and one below.
+    - **Tooltip:** each hunt's season(s), quota and method ("no bait or dogs" / "no bait, dogs allowed"), the fee ($93 R / $600 NR) and sale date (March 10), the "closes when the quota is met, check wildlife.utah.gov/bearharvest" rule, and "not available if you draw a limited-entry bear permit".
+    - **Where it shows:** it's stored as `h.ho` (not in `notes`). The page shows it **once on the unit heading** when grouped, on each hunt in flat lists, and under Notes in the hunt detail.
+    - **Yearly:** the build re-downloads the guidebook only with `--refresh`. Delete `raw/utah_bear_guidebook_*.pdf`, or use `--refresh`, once DWR posts the next year's guidebook.
   - The cactus buck and HAMSS wording is plain-language, unconfirmed against DWR, and says to check the guidebook.
 - **Hunt detail view:** shows the 2026 table by point level with 2027 estimates, the year-by-year table (5 draws plus the 2027 projection), each hunter's 2027 odds, the random-draw entry count, notes, season dates, harvest and the projection text.
 - **Notes at the bottom:**

@@ -115,8 +115,8 @@ def auto_notes(h, weapon):
         notes.append(["Restricted", "Restricted weapon hunt: limited equipment. Check the guidebook."])
     return notes
 def bear_notes(season):
-    """Hounds/bait badges for limited-entry bear, from DWR's black bear guidebook (2025,
-    pp. 42-47 and R657-33): spring and fall allow dogs but no bait; summer allows bait
+    """Hounds/bait badges for limited-entry bear, from DWR's black bear guidebook (2025
+    pp. 42-47; unchanged in the 2026 edition, pp. 73-80; R657-33): spring and fall allow dogs but no bait; summer allows bait
     (bait station COR required, no early baiting) but no dogs; multi-season follows the
     rules of whichever season you hunt in. "The only bear season that allows bait is the
     summer limited-entry season." Max 16 dogs in spring and fall."""
@@ -326,6 +326,100 @@ def apply_species_harvest(species, refresh):
                 n += 1
         sp["harvestYear"], sp["harvestSource"] = y, url
         print(f"  {sp['short']} {y} harvest: {n}/{len(sp['hunts'])} hunts")
+
+
+# Bear harvest-objective (over-the-counter) hunts: a permit bought without drawing, good on
+# a unit until its quota is met. Listed in DWR's black bear guidebook hunt tables
+# ("Harvest-objective hunts": unit, harvest quota, season dates, hunting method). The
+# guidebook URL has no year in it; the cached copy is named for the year on its cover.
+BEAR_GUIDEBOOK_URL = "https://wildlife.utah.gov/guidebooks/black-bear-cougar-furbearer-guidebook.pdf"
+_MON = r"(?:Jan|Feb|March|April|May|June|July|Aug|Sept|Oct|Nov|Dec)\.?"
+_DATES = rf"{_MON} \d+[–-]{_MON} \d+"
+HO_ROW = re.compile(rf"^(.+?) (\d+)(?: ({_DATES}))? (No bait(?:/no dogs)?)$")
+HO_DATES = re.compile(rf"^({_DATES})$")
+
+
+def parse_bear_ho(pdf_path):
+    """{"year", "fee": [res, nonres], "sale": "March 10", "units": {unit: [[quota, [dates...], method]]}}.
+    In the table a unit with two seasons prints its dates on the lines above and below the row."""
+    import pdfplumber
+    out = {"year": None, "fee": None, "sale": None, "units": {}}
+    with pdfplumber.open(pdf_path) as pdf:
+        cover = " ".join((pdf.pages[0].extract_text() or "").split())
+        m = re.search(r"GUIDEBOOK (20\d\d)", cover)
+        out["year"] = int(m.group(1)) if m else None
+        for page in pdf.pages:
+            text = page.extract_text() or ""
+            flat = " ".join(text.split())
+            if out["fee"] is None:
+                m = re.search(r"Harvest-objective hunts Permit fee: Resident \$(\d+), Nonresident \$(\d+)", flat)
+                if m:
+                    out["fee"] = [int(m.group(1)), int(m.group(2))]
+            if out["sale"] is None:
+                m = re.search(r"harvest-objective permits will be available to residents and nonresidents, begin- ?ning (\w+ \d+)", flat, re.I)
+                if m:
+                    out["sale"] = m.group(1)
+            if "Harvest-objective hunts" not in text:
+                continue
+            lines = [l.strip() for l in text.splitlines()]
+            start = next((i for i, l in enumerate(lines) if l.startswith("Unit name quota Season dates method")), None)
+            if start is None:
+                continue
+            body = lines[start + 1:]
+            for i, l in enumerate(body):
+                m = HO_ROW.match(l)
+                if not m:
+                    continue
+                unit, quota, dates, method = m.group(1), int(m.group(2)), m.group(3), m.group(4)
+                if dates:
+                    windows = [dates]
+                else:  # two seasons: one date line above the row, one below
+                    windows = [x.group(1) for x in (HO_DATES.match(body[i - 1]) if i else None,
+                                                     HO_DATES.match(body[i + 1]) if i + 1 < len(body) else None) if x]
+                out["units"].setdefault(unit, []).append([quota, [w.replace("-", "–") for w in windows], method])
+    return out
+
+
+def apply_bear_ho(species, refresh):
+    """Badge every limited-entry bear hunt whose unit also has a harvest-objective hunt."""
+    sp = next((s for s in species if s["key"] == "bear"), None)
+    if not sp:
+        return
+    pdf = RAW / "utah_bear_guidebook.pdf"
+    try:
+        fetch(BEAR_GUIDEBOOK_URL, pdf, refresh)
+        ho = parse_bear_ho(pdf)
+    except Exception as e:
+        print(f"  ! bear guidebook not available ({e})", file=sys.stderr)
+        return
+    if ho["year"]:   # keep a copy named for its year, like the other cached reports
+        dated = RAW / f"utah_bear_guidebook_{ho['year']}.pdf"
+        if not dated.exists():
+            dated.write_bytes(pdf.read_bytes())
+    pdf.unlink(missing_ok=True)
+    fee = f"${ho['fee'][0]} resident / ${ho['fee'][1]} nonresident" if ho["fee"] else "see the guidebook for the fee"
+    sale = f", on sale from {ho['sale']}" if ho["sale"] else ""
+    n, units = 0, set()
+    for h in sp["hunts"]:
+        rows = ho["units"].get(h["unit"])
+        if not rows:
+            continue
+        method = lambda m: "no bait or dogs" if "dogs" in m.lower() else "no bait, dogs allowed"
+        hunts = "; ".join(f"{' and '.join(w) or 'see guidebook'} (quota {q}, {method(m)})" for q, w, m in rows)
+        # A unit-level fact: the page shows it once on the unit heading when grouped,
+        # and on each hunt in flat lists and the hunt detail.
+        h["ho"] = (["OTC hunt on this unit",
+            f"This unit also has {'an over-the-counter (harvest-objective) bear hunt' if len(rows) == 1 else f'{len(rows)} over-the-counter (harvest-objective) bear hunts'}: {hunts}. "
+            f"Buy the permit without drawing ({fee}{sale}); the unit closes once its quota is taken, so check "
+            f"wildlife.utah.gov/bearharvest before each trip. No bait on any harvest-objective hunt. "
+            f"Not available if you draw a limited-entry bear permit (one bear permit a year). "
+            f"From DWR's {ho['year'] or ''} bear guidebook."])
+        h["ho"] = list(h["ho"])
+        n += 1; units.add(h["unit"])
+    missing = sorted(set(ho["units"]) - {h["unit"] for h in sp["hunts"]})
+    sp["hoYear"] = ho["year"]
+    print(f"  bear harvest-objective ({ho['year']} guidebook): {len(ho['units'])} units, badge on {n} hunts in {len(units)} units"
+          + (f"; no limited-entry match: {', '.join(missing)}" if missing else ""))
 
 
 def split_quota(total, system):
@@ -689,6 +783,7 @@ def main():
     total = sum(len(s["hunts"]) for s in species)
     print(f"  hunts with harvest data: {matched}/{total}")
     apply_species_harvest(species, a.refresh)
+    apply_bear_ho(species, a.refresh)
 
     apply_history(species, load_history(a.refresh, a.year))
     fit_dropins(species, a.year)
