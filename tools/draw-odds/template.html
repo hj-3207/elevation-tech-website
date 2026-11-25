@@ -399,10 +399,15 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   table.main>tbody>tr>td.k-sp + td.k-unit{margin-top:-0.3rem}
   table.main>tbody>tr.row>td:not(.k-star):not(.k-unit):not(.k-tags):not(.k-guar):not(.k-proj):not(.k-mine),
   table.main>tbody>tr.srow>td.k-psplit{display:none}
-  table.main>tbody>tr>td[data-label]::before{content:attr(data-label);display:block;font-family:var(--mono);font-size:0.54rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;line-height:1.3}
+  /* Labels always take two lines (clamped), and the number, pill or "add points" all
+     sit in one 1.3rem line, so the big numbers line up across the card. */
+  table.main>tbody>tr>td[data-label]::before{content:attr(data-label);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+    height:2.6em;font-family:var(--mono);font-size:0.54rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem;line-height:1.3}
+  table.main>tbody>tr>td[data-label] .big,table.main>tbody>tr>td[data-label] .na{display:block;height:1.3rem;line-height:1.3rem}
   table.main>tbody>tr>td[data-label] .big{font-size:0.92rem}
+  table.main>tbody>tr>td[data-label] .na{font-size:0.7rem}
   table.main>tbody>tr>td[data-label] .small{font-size:0.58rem}
-  table.main>tbody>tr>td.k-mine .pill{font-size:0.78rem}
+  table.main>tbody>tr>td.k-mine .pill{font-size:0.74rem;height:1.3rem;line-height:calc(1.3rem - 2px);padding:0 0.4rem;box-sizing:border-box;vertical-align:top}
   table.main>tbody>tr.srow>td.k-mine:nth-child(n+9){grid-column:span 2}
   table.main>tbody>tr.grp{display:block}
   table.main>tbody>tr.grp>td{display:block;border:0;padding:1rem 0.2rem 0.5rem;background:none;white-space:normal}
@@ -462,9 +467,9 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
     <a href="apps.html" class="maker-more" data-ref="apps:top">See the apps →</a>
   </div>
 
-  <div class="panel hunters" role="region" aria-label="Hunters and points">
+  <div class="panel hunters" role="region" aria-label="Your points">
     <div class="panel-head">
-      <span class="lbl">Hunter</span>
+      <span class="lbl">Your points</span>
       <div class="chips" id="profileChips"></div>
       <!-- Phones only: the name and points fold away behind this button. -->
       <button type="button" class="h-toggle" id="hToggle" aria-expanded="false" aria-controls="hunterMore"><span id="hSum"></span><span class="caret" aria-hidden="true">▾</span></button>
@@ -1376,7 +1381,8 @@ function renderHunter(){
     grid.querySelectorAll("label.pt").forEach(l => l.classList.toggle("cur", l.querySelector("input").dataset.pts === sp.key));
   }
   const myPts = ptsOf(prof, sp.key), open = $(".hunters").classList.contains("open");
-  $("#hSum").textContent = open ? "Done" : myPts == null ? "Add points" : `${sp.short || sp.label}: ${myPts} pts`;
+  // "Edit" so it's clear the name (rename, delete) is in there too, not just points.
+  $("#hSum").textContent = open ? "Done" : myPts == null ? "Add points · Edit" : `${myPts} pts · Edit`;
   $("#hToggle").classList.toggle("need", !open && myPts == null);
   $("#delProfBtn").disabled = ui.profiles.length < 2;
   if (!storageOk) $("#ptsNote").textContent = "This browser isn't letting the page save. Points will be lost when you close it; use Export to keep a copy.";
@@ -1482,7 +1488,10 @@ $("#profileChips").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   if (b.id === "addProf"){
     const prof = {id: newId(), name: "Hunter " + (ui.profiles.length + 1), pts: {}};
-    ui.profiles.push(prof); ui.active = prof.id; saveProfiles(); render();
+    ui.profiles.push(prof); ui.active = prof.id; saveProfiles();
+    // On phones the name box is folded away: open it so the new hunter can be named.
+    if (!$(".hunters").classList.contains("open")){ $(".hunters").classList.add("open"); $("#hToggle").setAttribute("aria-expanded", "true"); store.set("hunterOpen", true); }
+    render();
     const n = $("#profName"); n.focus(); n.select(); return;
   }
   ui.active = b.dataset.prof; saveProfiles(); render();
