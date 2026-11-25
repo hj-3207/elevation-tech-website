@@ -62,9 +62,22 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .tog:has(input:checked){color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
 /* Points-to-draw slider: two range inputs stacked on one track (only the thumbs take
    the pointer), with an orange fill between them. */
-.prange{--th:16px;display:flex;align-items:center;gap:0.9rem;min-height:40px;padding:0 0.85rem;border:1px solid var(--border-strong);border-radius:6px;flex:0 1 480px}
-.prange.on{border-color:var(--orange);background:rgba(204,85,0,0.14)}
-.pr-lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--soft);white-space:nowrap}
+/* Desktop: a filter button that drops the slider down in a small box. */
+.pr-wrap{position:relative}
+.pr-btn{background:none;line-height:1.2}
+.pr-btn b{font-weight:600;color:var(--soft);margin-left:0.1rem}
+.pr-btn.on{color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
+.pr-btn.on b{color:var(--orange-bright)}
+.pr-btn .caret{font-size:0.6rem;transition:transform 0.2s}
+.pr-wrap.open .pr-btn .caret{transform:rotate(180deg)}
+.prange{--th:16px;display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:30;width:340px;box-sizing:border-box;flex-wrap:wrap;align-items:center;gap:0.35rem 0.8rem;
+  padding:0.8rem 0.95rem 0.55rem;background:var(--bg2);border:1px solid var(--border-strong);border-radius:8px;box-shadow:0 12px 32px rgba(0,0,0,0.55)}
+.pr-wrap.open .prange{display:flex}
+.prange.on{border-color:var(--orange)}
+.pr-lbl{flex:1;font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--soft);white-space:nowrap}
+.pr-clear{order:1}
+.prange:not(.on) .pr-clear{visibility:hidden}
+.prange .pr-track{order:2;flex-basis:100%}
 .pr-lbl b{color:#fff;font-weight:600;margin-left:0.35rem}
 .prange.on .pr-lbl b{color:var(--orange-bright)}
 .pr-track{position:relative;flex:1;min-width:150px;height:28px}
@@ -200,6 +213,8 @@ tr.row[data-odds="p-good"]>td:first-child{box-shadow:inset 3px 0 0 var(--orange)
 tr.row[data-odds="p-mid"]>td:first-child{box-shadow:inset 3px 0 0 rgba(204,85,0,0.45)}
 tr.row[data-odds="p-bad"]>td:first-child{box-shadow:inset 3px 0 0 var(--border-strong)}
 .copy-link{color:var(--orange-bright)}
+.trends-btn:hover{color:#fff}
+.trends-btn.on{color:var(--orange-bright)}
 .star-head .copy-link{margin-left:auto}
 .m-only{display:none}
 .star:hover{color:var(--soft)}
@@ -409,10 +424,14 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   .f-count{color:var(--orange-bright)}
   .f-toggle .caret{transition:transform 0.2s}
   .controls.open .f-toggle .caret{transform:rotate(180deg)}
-  .controls:not(.open) .wchips,.controls:not(.open) .seg,.controls:not(.open) .toggles,.controls:not(.open) .m-bar,.controls:not(.open) .prange{display:none}
-  .prange{--th:22px;flex-basis:100%;box-sizing:border-box;min-width:0;max-width:100%}
-  .prange{flex-wrap:wrap;gap:0.2rem;padding:0.55rem 0.85rem 0.35rem}
-  .pr-track{min-width:0;flex-basis:100%}
+  .controls:not(.open) .wchips,.controls:not(.open) .seg,.controls:not(.open) .toggles,.controls:not(.open) .m-bar,.controls:not(.open) .pr-wrap{display:none}
+  /* Phones: no button; the slider sits in the open Filters fold, full width. */
+  .pr-btn{display:none}
+  .pr-wrap{flex-basis:100%;min-width:0}
+  .prange,.pr-wrap.open .prange{--th:22px;display:flex;position:static;width:auto;max-width:100%;min-width:0;gap:0.2rem 0.8rem;padding:0.55rem 0.85rem 0.35rem;
+    background:transparent;border-radius:6px;box-shadow:none}
+  .prange.on{background:rgba(204,85,0,0.14)}
+  .pr-track{min-width:0}
   .controls.open{padding-bottom:0.6rem;border-bottom:1px solid var(--border)}
   .controls .wchips{flex-basis:100%}
   /* Summary: one short line of stats; the draw type and points prompt are desktop-only
@@ -625,16 +644,20 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
     <div class="toggles" role="group" aria-label="Options">
       <label class="tog" title="Within 1 point of guaranteed"><input type="checkbox" id="onlyRun"> Within 1 pt</label>
       <label class="tog"><input type="checkbox" id="onlyStar"> Starred only</label>
-      <label class="tog"><input type="checkbox" id="showTrends"> Trend columns</label>
     </div>
     <!-- Points to draw: a two-handled slider on the projected guaranteed points. It is
-         the same filter as that column's filter button (ui.filters.proj). -->
+         the same filter as that column's filter button (ui.filters.proj). Desktop: a
+         button that drops the slider down; phones: the slider sits in the Filters fold. -->
+    <div class="pr-wrap" id="prWrap">
+    <button type="button" class="tog pr-btn" id="prBtn" aria-expanded="false" aria-controls="pRange">Pts to draw <b id="prBtnVal">Any</b><span class="caret" aria-hidden="true">▾</span></button>
     <div class="prange" id="pRange" role="group" aria-labelledby="prLbl">
       <span class="pr-lbl" id="prLbl"><span id="prYear"></span> pts to draw <b id="prVal">Any</b></span>
       <div class="pr-track"><div class="pr-fill" id="prFill"></div>
         <input type="range" id="prMin" min="0" max="30" step="1" value="0" aria-label="Minimum points to draw">
         <input type="range" id="prMax" min="0" max="30" step="1" value="30" aria-label="Maximum points to draw">
       </div>
+      <button type="button" class="link-btn pr-clear" id="prClear">Clear</button>
+    </div>
     </div>
     <!-- Phones only: the cards have no header row, so sorting and the column
          filters live here, inside the folded filters. -->
@@ -1093,7 +1116,9 @@ function render(){
     `<span class="s-stat"><b>${fmt(totApps)}</b> <span class="d-only">${st.drawYear} first-choice </span>applicants</span>` +
     (sp.system === "preference" ? `<span class="d-only">Preference-point draw (no random half)</span>` : `<span class="d-only">Bonus-point draw (half to top points, half random)</span>`) +
     (p == null ? `<span class="d-only">Enter ${esc(prof.name)}'s ${esc(sp.short || sp.label)} points above to see odds.</span>` : `<span class="d-only">${esc(prof.name)}: <b>${p}</b> pts</span>`) +
-    `<span class="grp-acts">` + (grouped && list.length ? `<button type="button" class="link-btn" data-groups="collapse">Collapse all</button><button type="button" class="link-btn" data-groups="expand">Expand all</button>` : "") +
+    `<span class="grp-acts">` +
+    `<button type="button" class="link-btn trends-btn${ui.showTrends ? " on" : ""}" data-trends aria-pressed="${ui.showTrends}" title="Tag change, point creep and ${st.drawYear} vs projected">${ui.showTrends ? "Hide" : "Show"} trend columns</button>` +
+    (grouped && list.length ?`<button type="button" class="link-btn" data-groups="collapse">Collapse all</button><button type="button" class="link-btn" data-groups="expand">Expand all</button>` : "") +
     `<button type="button" class="link-btn copy-link" data-copylink title="Copies a link to this exact view (species, filters, open hunts). Hunters and points aren't included.">Copy link</button></span>`;
   renderFilterBar(cols);
 
@@ -1411,7 +1436,10 @@ function renderPRange(all, N){
 function prPaint(){
   const mn = $("#prMin"), mx = $("#prMax"), hi = +mx.max, a = +mn.value, b = +mx.value;
   const on = a > 0 || b < hi;
-  $("#prVal").textContent = !on ? "Any" : a === b ? `${a} pts` : b >= hi ? `${a}+ pts` : `${a}–${b} pts`;
+  const txt = !on ? "Any" : a === b ? `${a}` : b >= hi ? `${a}+` : a <= 0 ? `≤ ${b}` : `${a}–${b}`;
+  $("#prVal").textContent = on ? txt + " pts" : txt;
+  $("#prBtnVal").textContent = txt;
+  $("#prBtn").classList.toggle("on", on);
   $("#pRange").classList.toggle("on", on);
   $("#pRange").title = `Hunts whose ${$("#prYear").textContent} projected guaranteed points fall in this range. Random-only hunts are hidden while it's set.`;
   const fill = $("#prFill");
@@ -1430,6 +1458,15 @@ function onPRange(e){
 }
 $("#prMin").addEventListener("input", onPRange);
 $("#prMax").addEventListener("input", onPRange);
+$("#prClear").onclick = () => { delete ui.filters.proj; render(); };
+// Desktop drop-down: the button opens it; a click elsewhere or Escape closes it.
+function prOpen(open){
+  $("#prWrap").classList.toggle("open", open);
+  $("#prBtn").setAttribute("aria-expanded", open);
+}
+$("#prBtn").onclick = () => { const open = !$("#prWrap").classList.contains("open"); prOpen(open); if (open) $("#prMin").focus(); };
+document.addEventListener("click", e => { if (!e.target.closest("#prWrap") && $("#prWrap").classList.contains("open")) prOpen(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#prWrap").classList.contains("open")){ prOpen(false); $("#prBtn").focus(); } });
 
 function renderFilterBar(cols){
   const act = activeFilters();
@@ -1731,7 +1768,7 @@ function fillSelects(){
   const st = curState();
   if (!st.species.some(s => s.key === ui.species)) ui.species = st.species[0].key;
   document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.res === ui.res)));
-  $("#onlyStar").checked = ui.onlyStar; $("#onlyRun").checked = ui.onlyRun; $("#showTrends").checked = ui.showTrends;
+  $("#onlyStar").checked = ui.onlyStar; $("#onlyRun").checked = ui.onlyRun;
   const D = st.drawYear, N = nextYear(st);
   $("#assume").innerHTML = `<h2>About the ${N} projections</h2><p>The projected guaranteed points, split and odds assume:</p><ul>` +
     `<li>Everyone who applied for a hunt in ${D} and didn't draw applies for the same hunt in ${N}, with one more point.</li>` +
@@ -1784,15 +1821,17 @@ $("#speciesTabs").addEventListener("click", e => {
 $("#q").oninput = e => { ui.q = e.target.value; render(); };
 $("#onlyRun").onchange = e => { ui.onlyRun = e.target.checked; render(); };
 $("#onlyStar").onchange = e => { ui.onlyStar = e.target.checked; store.set("onlyStar", ui.onlyStar); render(); };
-$("#showTrends").onchange = e => {
-  ui.showTrends = e.target.checked; store.set("showTrends", ui.showTrends);
+// "Show/Hide trend columns" in the summary line (re-rendered, so delegated).
+$("#summary").addEventListener("click", e => {
+  if (!e.target.closest("[data-trends]")) return;
+  ui.showTrends = !ui.showTrends; store.set("showTrends", ui.showTrends);
   if (!ui.showTrends){
     // don't leave hidden columns filtering or sorting the table
     TREND_KEYS.forEach(k => delete ui.filters[k]);
     if (TREND_KEYS.includes(ui.sort.key)) ui.sort = {key: "unit", dir: 1};
   }
   closeFilter(false); render();
-};
+});
 document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { ui.res = b.dataset.res; store.set("res", ui.res); fillSelects(); render(); });
 
 // hunters
