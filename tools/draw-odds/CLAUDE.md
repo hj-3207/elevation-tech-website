@@ -52,7 +52,7 @@ python tools/draw-odds/build_utah.py --refresh  # re-download PDFs and current-y
 | `data/draw-odds/utah-tags-2027.csv` | **Fill in each spring** with next year's tag numbers (blank = not released). Auto-generated template. |
 | `data/draw-odds/utah-hunt-notes.csv` | Owner's own hunt badges (`hunt_code,badge,note`), e.g. "Stag". Empty so far. |
 | `data/draw-odds/raw/` | Downloads and caches, rolling 5 years: `utah_<year>_<typeId>.json` (utahdraws), `utah_odds_<year>_{0,1}.pdf` plus `.parsed.json`, `utah_harvest_<year>.pdf`. About 36 MB, committed on purpose as the backup. |
-| `img/drawodds-*.png` | Species button icons: white PNGs from `C:\Users\hayden.j\Desktop\RackScore\rackscoreflutter\assets`, cropped and resized to 64 px tall. |
+| `img/drawodds-*.png` | Species button icons: white PNGs from `C:\Users\hayden.j\Desktop\RackScore\rackscoreflutter\assets`, cropped and resized to 64 px tall. Bear is that folder's `BearPawWhite128.png`. Turkey is a white turkey track drawn for this page (`tools/draw-odds/turkey-icon.svg`, rendered with headless Edge). |
 | `img/drawodds-icon.png`, `img/drawodds-screenshot.jpg` | App icon (orange notched tag, black antler, transparent; source `tools/draw-odds/drawodds-icon.svg`) and screenshot used on `apps.html` and `index.html`. |
 
 ## Data sources
@@ -60,13 +60,17 @@ python tools/draw-odds/build_utah.py --refresh  # re-download PDFs and current-y
 - **Current draw (2026):** JSON endpoint behind utahdraws.com's official Draw Odds page:
   `https://www.utahdraws.com/internetsales/Home/DrawOddsData?drawName=Big%20Game&licenseYear=2026&masterHuntTypeID=N`.
   Only the current year is served (2025 returns empty).
-  - **Type IDs:** 9 LE elk, 8 LE deer, 5 general-season deer (preference), 10 pronghorn, 11 moose, 13 desert bighorn, 14 Rocky bighorn, 12 bison, 15 goat.
-  - **Skipped:** CWMU, Bonus Point and Preference Point categories, plus youth rows.
+  - **Type IDs:** 9 LE elk, 8 LE deer, 5 general-season deer (preference), 10 pronghorn, 11 moose, 13 desert bighorn, 14 Rocky bighorn, 12 bison, 15 goat; and since 2026-11-25 **1 black bear** (`drawName=Black Bear`) and **3 turkey** (`drawName=Turkey`). `DRAW_NAME` in the build maps the non-"Big Game" draws. `https://www.utahdraws.com/internetsales/Home/DrawOddsSupplementData` lists every draw name and type ID.
+  - **Skipped:** CWMU, Bonus Point and Preference Point categories, plus youth rows (except turkey), and bear restricted pursuit (type 16, not a harvest permit).
+  - **Bear** (90 hunts): bonus points, split by residency like big game. DWR lists every bear hunt as "Any Legal Weapon", so hunts are labelled and filtered by **season** from `SpeciesSubtypeName`: Spring, Summer, Fall, Multi-Season, plus one Spot and stalk. Fall hunts have two windows and are flagged multi-season, but stay "Fall". Season windows keep DWR's "Any Legal Weapon" wording, not "Rifle".
+  - **Turkey** (5 limited-entry hunts; 2 CWMU skipped): **one pool**. No resident/nonresident quotas; youth get a 15% first pass and then compete in the main draw. The build merges all rows (residents, nonresidents, youth) into one table used for both residency views, and the quota is `QuotaQuantity` split by the usual half-to-bonus rule. That matched 2026's bonus-round draws within a tag per hunt; the difference is the youth round, which the odds don't model. The species carries `"pooled": true`; the page then drops "resident" from the summary and adds a "One pool" note.
+  - **Checks:** the points + 1 random-draw weighting fits bear about as well as elk (2026 random winners by point level). Drop-ins: bear uses them (average miss 1.34 → 1.31); turkey doesn't (0.40 → 0.75).
+  - **No harvest yet** for bear or turkey: the harvest PDF covers big game only. DWR publishes separate bear and turkey harvest reports, which could be added later.
   - **Residency:** `ResidencyTypeID` 1 = resident, 2 = nonresident.
   - **Fields used:** `SuccessfulCount` (first choice) and `SuccessfulByMaxPointRoundCount` (bonus round).
   - **Hunt labels:** `SpeciesSubtypeName` / `HuntCategoryName` drive the automatic badges.
 - **Earlier draws:** a rolling 5 years total. `HIST_YEARS = 4`, currently 2022–2025.
-  - **Files:** DWR PDFs `https://wildlife.utah.gov/pdf/bg/<yyyy>/<yy>_bg-odds.pdf` (limited-entry and once-in-a-lifetime) and `<yy>_deer_odds.pdf` (general-season deer). The owner said 5 years is enough; don't add more.
+  - **Files:** DWR PDFs `https://wildlife.utah.gov/pdf/bg/<yyyy>/<yy>_bg-odds.pdf` (limited-entry and once-in-a-lifetime) and `<yy>_deer_odds.pdf` (general-season deer). Also `EXTRA_HIST`: bear `https://wildlife.utah.gov/pdf/bear/<yy>_drawing_odds.pdf` and turkey `https://wildlife.utah.gov/pdf/uplandgame/turkey/<yyyy>_turkey_bonus_points_draw_results.pdf`. They use the same layout and parse with `parse_hist_pdf`. Each is cached as `raw/utah_<bear|turkey>_odds_<year>.pdf` plus `.parsed.json`. The owner said 5 years is enough; don't add more.
   - **Layout:** one page per hunt (`Hunt: CODE ...`), with resident and nonresident tables side by side, parsed by regex.
   - **What they give:** permits *drawn*, not quota.
   - **From 2026 on,** a year's history comes from its cached utahdraws JSON (`history_from_json`), not a PDF.
@@ -112,7 +116,7 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
 
 - **Styled like the website** because it *is* a site page: it uses `style.css`, `nav.js`, the shared nav and footer, and the title `<State> Draw Odds | Elevation Technology`. Dark only, with no light theme.
 - **Top of the page:**
-  - Species are **buttons with icons**, not a dropdown. Labels spell out "(Once-in-a-lifetime)", not OIAL.
+  - Species are **buttons with icons**, not a dropdown. Labels spell out "(Once-in-a-lifetime)", not OIAL. With bear and turkey (12 buttons including Starred) the row and the points panel were tightened to stay on one line at 1,400 px. Check both if a species is added.
   - **No state dropdown** while there's one state.
   - Weapon-type buttons (Archery, Muzzleloader, Rifle, Multi-Season, HAMSS) are in the filter bar under the species buttons. They allow more than one.
   - **"Rifle", not DWR's "Any Legal Weapon"**, everywhere on the page (buttons, hunt names, seasons), because it's the common term (owner, 2026-11-24). `plain_weapon()` in the build does the rename; "Restricted Rifle" is unchanged.

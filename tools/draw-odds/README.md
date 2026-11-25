@@ -11,6 +11,9 @@ python tools/draw-odds/build_utah.py --refresh  # re-downloads PDFs and the curr
 ```
 Then commit and push. The build never touches git.
 
+## Species (Utah)
+Limited-entry elk, deer and pronghorn; general-season deer; the once-in-a-lifetime species; and, since November 2026, limited-entry **black bear** (grouped by season) and **turkey** (residents and nonresidents draw from one pool).
+
 ## Files
 - `tools/draw-odds/template.html` — the page: markup, page styles and all the odds math. It uses the site's `style.css` and `nav.js`.
 - `tools/draw-odds/build_utah.py` — downloads, parses, builds `draw-odds.html` at the repo root.
@@ -32,6 +35,8 @@ DWR approves permit numbers in the spring. Until they're loaded, the page projec
 2. Rebuild, adding `--tags-source <link to DWR's permit document>` if you want it cited.
 
 The bonus/random split is worked out automatically: half rounded up goes to bonus, and a single tag goes random.
+
+Turkey has no resident/nonresident split: put the whole permit number in `res_2027` and leave `nonres_2027` blank. Hunts added to the page later are appended to the sheet automatically, blank.
 
 ## After each year's draw
 ```

@@ -155,6 +155,9 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .vtab:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
 .vtab.is-on{color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
 .vtab{display:inline-flex;align-items:center;gap:0.45rem;min-height:40px;padding:0.6rem 0.78rem}
+/* With bear and turkey (12 buttons) the row is tightened to stay on one line at 1,400 px. */
+.species-tabs{gap:0.3rem}
+.species-tabs .vtab{padding:0.6rem 0.6rem;letter-spacing:0.03em}
 .vtab img{height:20px;width:auto;opacity:0.55;transition:opacity 0.2s}
 .vtab:hover img,.vtab.is-on img{opacity:1}
 
@@ -166,8 +169,9 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .chip:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
 .chip.on{background:var(--orange);border-color:var(--orange);color:#fff}
 .chip.add{font-family:var(--mono);font-size:0.7rem;font-weight:400;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);border-style:dashed}
-.hunter-body{display:grid;grid-template-columns:200px 1fr;gap:1rem 1.25rem;align-items:end}
-.pts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:0.6rem}
+.hunter-body{display:grid;grid-template-columns:180px 1fr;gap:1rem 1.25rem;align-items:end}
+/* 11 species (with bear and turkey) on one row at 1,400 px. */
+.pts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:0.5rem}
 .pt{display:flex;flex-direction:column;gap:0.35rem}
 .pt span{font-family:var(--mono);font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pt input{width:100%;background:var(--bg2);border:1px solid var(--border-strong);border-radius:6px;padding:0.45rem 0.6rem;min-height:38px;font-family:var(--mono);font-size:0.95rem;color:#fff}
@@ -476,6 +480,9 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   .summary .d-only{display:none}
   .summary{gap:0.3rem 0.9rem;font-size:0.68rem;margin:0.9rem 0.1rem 0.6rem}
   .summary .grp-acts{margin-left:auto}
+  /* Phones: the summary links get their own line and never break mid-label. */
+  .summary .grp-acts{flex-basis:100%;flex-wrap:wrap;justify-content:flex-start;gap:0.35rem 1.1rem;margin-left:0}
+  .summary .grp-acts .link-btn{white-space:nowrap}
 }
 /* PHONES: each hunt becomes a card. The hunt name runs across the top, then four
    numbers: tags, guaranteed, projected guaranteed, and the hunter's odds. The rest
@@ -1164,9 +1171,10 @@ function render(){
   const totTags = list.reduce((s,x) => s + x.a.next[0], 0), totApps = list.reduce((s,x) => s + x.a.apps, 0);
   $("#summary").innerHTML =
     // On phones (.d-only hidden) this shrinks to one line: "145 hunts in 28 units · 3,051 tags · 50,869 applicants".
-    `<span class="s-stat"><b>${list.length}</b> hunt${list.length === 1 ? "" : "s"} in <b>${units.size}</b> unit${units.size === 1 ? "" : "s"}</span><span class="s-stat"><b>${fmt(totTags)}</b> <span class="d-only">${tagYear(st)} ${ui.res === "R" ? "resident" : "nonresident"} </span>tags</span>` +
+    `<span class="s-stat"><b>${list.length}</b> hunt${list.length === 1 ? "" : "s"} in <b>${units.size}</b> unit${units.size === 1 ? "" : "s"}</span><span class="s-stat"><b>${fmt(totTags)}</b> <span class="d-only">${tagYear(st)} ${sp.pooled ? "" : ui.res === "R" ? "resident " : "nonresident "}</span>tags</span>` +
     `<span class="s-stat"><b>${fmt(totApps)}</b> <span class="d-only">${st.drawYear} first-choice </span>applicants</span>` +
     (sp.system === "preference" ? `<span class="d-only">Preference-point draw (no random half)</span>` : `<span class="d-only">Bonus-point draw (half to top points, half random)</span>`) +
+    (sp.pooled ? `<span class="d-only">Residents and nonresidents draw together</span>` : "") +
     (p == null ? `<span class="d-only">Enter ${esc(prof.name)}'s ${esc(sp.short || sp.label)} points above to see odds.</span>` : `<span class="d-only">${esc(prof.name)}: <b>${p}</b> pts</span>`) +
     `<span class="grp-acts">` +
     `<button type="button" class="link-btn trends-btn${ui.showTrends ? " on" : ""}" data-trends aria-pressed="${ui.showTrends}" title="Tag change, point creep and ${st.drawYear} vs projected">${ui.showTrends ? "Hide" : "Show"} trend columns</button>` +
@@ -1406,10 +1414,10 @@ const PROMO_APPS = {
   scorer:   {name: "Rack Scorer",   url: "rack-scorer.html",   icon: "img/menu-scorer.png"},
 };
 const promoFor = key => {
-  const animal = {"le-elk": "bulls", "le-deer": "bucks", "gs-deer": "bucks", "desert-bighorn": "rams", "rocky-bighorn": "rams", "pronghorn": "bucks"}[key];
-  const one = {"le-elk": "bull", "le-deer": "buck", "gs-deer": "buck", "desert-bighorn": "ram", "rocky-bighorn": "ram", "pronghorn": "buck"}[key];
+  const animal = {"le-elk": "bulls", "le-deer": "bucks", "gs-deer": "bucks", "desert-bighorn": "rams", "rocky-bighorn": "rams", "pronghorn": "bucks", "bear": "bears"}[key];
+  const one = {"le-elk": "bull", "le-deer": "buck", "gs-deer": "buck", "desert-bighorn": "ram", "rocky-bighorn": "ram", "pronghorn": "buck", "bear": "bear"}[key];
   const detects = ["le-elk", "le-deer", "gs-deer"].includes(key);
-  const tracks  = ["le-elk", "le-deer", "gs-deer", "desert-bighorn", "rocky-bighorn"].includes(key);
+  const tracks  = ["le-elk", "le-deer", "gs-deer", "desert-bighorn", "rocky-bighorn", "bear"].includes(key);
   const scores  = tracks || key === "pronghorn";
   return [
     ["detector", detects ? `Sorts SD cards of trail-cam photos so the ${animal} land in their own folder.`
@@ -1461,6 +1469,8 @@ function renderExplain(st, sp){
     [`Grouping and filters`, `Hunts are grouped by unit while sorted by Hunt. The weapon buttons, search and the Hunt column's unit picker keep the groups. Sorting by another column, or a number filter, switches to a flat list. "Season dates" (next to Hunt) sorts by opening day, then unit name.`],
     [`Badges`, `Management buck, cactus buck, premium, restricted weapon, HAMSS and bison cow/hunter's choice come from DWR's hunt labels. Hover a badge, or open the hunt, for the rule.`],
   ];
+  if (sp.pooled) items.push([`One pool`, `Limited-entry turkey doesn't split permits between residents and nonresidents: everyone, youth included, draws from the same permits, so the tables count everyone and the Resident and Nonres buttons show the same numbers. Youth get a first pass at 15% of the permits before the main draw, which takes a tag or two from adults; the odds don't model that.`]);
+  if (sp.key === "bear") items.push([`Bear seasons`, `Bear hunts are grouped by season (spring, summer, fall, multi-season) instead of weapon; the season buttons filter them. Harvest success isn't shown yet: the harvest report used here covers big game only.`]);
   if (sp.system === "preference") items.push([`Preference points`, `General-season deer gives every tag to the highest point holders, so there's no random half. The ${D} split is the highest level where fewer than 90% drew; group applications blur it slightly.`]);
   $("#explainList").innerHTML = items.map(([b, t]) => `<p><b>${esc(b)}.</b> ${esc(t)}</p>`).join("");
 }
@@ -1602,7 +1612,8 @@ $("#filterBar").addEventListener("click", e => {
 });
 
 // ---------- weapon buttons ----------
-const WTYPE_ORDER = ["Archery", "Muzzleloader", "Rifle", "Multi-Season", "HAMSS", "Other"];
+// Bear and turkey hunts are grouped by season instead of weapon (wtype = season name).
+const WTYPE_ORDER = ["Archery", "Muzzleloader", "Rifle", "Spring", "Summer", "Fall", "Spot and stalk", "Multi-Season", "HAMSS", "Other"];
 function renderWeaponChips(){
   const present = new Set(curSpecies().hunts.map(h => h.wtype));
   const types = WTYPE_ORDER.filter(w => present.has(w));

@@ -46,7 +46,17 @@ HUNT_TYPES = {
     14: ("rocky-bighorn",  "Rocky Mtn Bighorn Sheep (Once-in-a-lifetime)", "Rocky Sheep", "bonus"),
     12: ("bison",     "Bison (Once-in-a-lifetime)",                "Bison",        "bonus"),
     15: ("goat",      "Mountain Goat (Once-in-a-lifetime)",        "Mtn Goat",     "bonus"),
+    1:  ("bear",      "Limited-Entry Black Bear",    "Bear",         "bonus"),
+    3:  ("turkey",    "Limited-Entry Turkey",        "Turkey",       "bonus"),
 }
+# Draws outside "Big Game" on utahdraws.com (its DrawOddsSupplementData lists them all).
+DRAW_NAME = {1: "Black Bear", 3: "Turkey"}
+# Turkey: residents and nonresidents (and youth, after their 15% youth round) draw from
+# one pool, so its tables merge everyone and both residency views show the same thing.
+POOLED = {3}
+# Bear and turkey hunts are labelled by season, not weapon (DWR lists every one as
+# "Any Legal Weapon"); their season windows keep DWR's wording rather than "Rifle".
+SEASON_LABELS = {1, 3}
 # Species button icons: img/drawodds-*.png (white PNGs from the Rack Scorer app
 # assets, cropped and resized to 64px tall). Types without an icon show text only.
 ICONS = {
@@ -59,6 +69,8 @@ ICONS = {
     "moose": "img/drawodds-moose.png",
     "bison": "img/drawodds-bison.png",
     "goat": "img/drawodds-goat.png",
+    "bear": "img/drawodds-bear.png",      # Rack Scorer's BearPawWhite128.png
+    "turkey": "img/drawodds-turkey.png",  # drawn for this page (tools/draw-odds/turkey-icon.svg)
 }
 
 
@@ -127,25 +139,53 @@ def plain_weapon(name):
     return re.sub(r"(?i)any legal weapon", "Rifle", name or "")
 
 
-def weapon_label(h):
+def season_label(h):
+    """Bear/turkey: "Bear Spring" -> "Spring", "Bear Multi-season" -> "Multi-Season".
+    Goes by DWR's season name, not IsMultiseasonHunt: fall bear hunts have two windows
+    and are flagged multi-season, but DWR calls them "Bear Fall"."""
+    if "multi" in (h.get("SpeciesSubtypeName") or "").lower():
+        return "Multi-Season"
+    sub = re.sub(r"(?i)^(bear|le bearded turkey)\s*", "", (h.get("SpeciesSubtypeName") or "").strip())
+    if sub:
+        return sub[0].upper() + sub[1:].lower()
+    start = ((h.get("SeasonWeapons") or [{}])[0].get("SeasonStartDate") or "")[5:7]
+    return {"03": "Spring", "04": "Spring", "05": "Spring"}.get(start, "Spring" if "turkey" in (h.get("SpeciesSubtypeName") or "").lower() else "Other")
+
+
+def weapon_label(h, tid=None):
+    if tid in SEASON_LABELS:
+        return season_label(h)
     if h.get("IsMultiseasonHunt") or len(h.get("SeasonWeapons") or []) > 1:
         return "Multi-Season"
     sw = (h.get("SeasonWeapons") or [{}])[0]
     return plain_weapon((sw.get("WeaponName") or "").strip()) or "—"
 
 
-def seasons(h):
+def seasons(h, tid=None):
+    keep = tid in SEASON_LABELS   # bear/turkey: DWR's own wording ("Any Legal Weapon")
     out = []
     for s in h.get("SeasonWeapons") or []:
-        out.append([plain_weapon(s.get("WeaponName", "")), (s.get("SeasonStartDate") or "")[:10], (s.get("SeasonEndDate") or "")[:10]])
+        w = s.get("WeaponName", "")
+        out.append([w if keep else plain_weapon(w), (s.get("SeasonStartDate") or "")[:10], (s.get("SeasonEndDate") or "")[:10]])
     return out
 
 
-def compact_hunt(h, system):
+def merge_rows(*tables):
+    """Add up [points, applicants, drew, drew_in_bonus] rows from several tables by point level."""
+    m = {}
+    for t in tables:
+        for p, a, d, b in t:
+            r = m.setdefault(p, [p, 0, 0, 0])
+            r[1] += a; r[2] += d; r[3] += b
+    return sorted(m.values(), key=lambda r: -r[0])
+
+
+def compact_hunt(h, system, tid=None):
+    pooled = tid in POOLED
     rows = {"R": {}, "N": {}}
     for o in h.get("OddsList") or []:
         res = RES.get(o.get("ResidencyTypeID"))
-        if res is None or o.get("IsYouth"):
+        if res is None or (o.get("IsYouth") and not pooled):
             continue
         pts = int(round(o.get("Point") or 0))
         r = rows[res].setdefault(pts, [pts, 0, 0, 0])
@@ -161,16 +201,28 @@ def compact_hunt(h, system):
             mx, rg = tot, 0
         return [tot, mx or 0, rg or 0]
 
+    rows = {k: sorted(v.values(), key=lambda r: -r[0]) for k, v in rows.items()}
+    if pooled:
+        # One pool: everyone's rows together, and the whole quota split by Utah's rule
+        # (checked: 2026 bonus-round draws match half rounded up within a tag or two,
+        # the youth round accounting for the difference).
+        both = merge_rows(rows["R"], rows["N"])
+        rows = {"R": both, "N": both}
+        quota = split_quota(h.get("QuotaQuantity") or 0, system)
+        quota = {"R": quota, "N": quota}
+    else:
+        quota = {"R": q("Resident"), "N": q("NonResident")}
+    wl = weapon_label(h, tid)
     return {
         "code": h["HuntCode"],
         "unit": h["HuntName"].strip(),
-        "weapon": weapon_label(h),
-        "seasons": seasons(h),
-        "wtype": weapon_type(weapon_label(h)),
-        "notes": auto_notes(h, weapon_label(h)),
+        "weapon": wl,
+        "seasons": seasons(h, tid),
+        "wtype": wl if tid in SEASON_LABELS else weapon_type(wl),
+        "notes": auto_notes(h, wl),
         "map": h.get("HuntMapURL") or "",
-        "quota": {"R": q("Resident"), "N": q("NonResident")},
-        "rows": {k: sorted(v.values(), key=lambda r: -r[0]) for k, v in rows.items()},
+        "quota": quota,
+        "rows": rows,
     }
 
 
@@ -217,13 +269,25 @@ def apply_next_tags(species, path, next_year):
                     w.writerow([h["code"], sp["short"], h["unit"], h["weapon"], h["quota"]["R"][0], h["quota"]["N"][0], "", ""])
         print(f"  wrote tag template {path} (fill in the {next_year} columns when DWR releases them)")
         return 0
-    rows = {}
+    rows, listed = {}, set()
     with path.open(newline="", encoding="utf-8-sig") as f:
         for r in csv.DictReader(f):
             code = (r.get("hunt_code") or "").strip().upper()
+            listed.add(code)
             res, non = (r.get(f"res_{next_year}") or "").strip(), (r.get(f"nonres_{next_year}") or "").strip()
             if code and (res or non):
                 rows[code] = (int(float(res or 0)), int(float(non or 0)))
+    # Hunts added to the page after the sheet was made (e.g. bear and turkey, Nov 2026):
+    # append them blank so they can be filled in too. Pooled species (turkey) list their
+    # whole quota under res_prev; fill the total into res_<year> and leave nonres blank.
+    extra = [(sp, h) for sp in species for h in sp["hunts"] if h["code"] not in listed]
+    if extra:
+        with path.open("a", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            for sp, h in extra:
+                pooled = sp.get("pooled")
+                w.writerow([h["code"], sp["short"], h["unit"], h["weapon"], h["quota"]["R"][0], "" if pooled else h["quota"]["N"][0], "", ""])
+        print(f"  added {len(extra)} new hunts to {path.name} (blank, to fill in)")
     n = 0
     known = set()
     for sp in species:
@@ -231,7 +295,11 @@ def apply_next_tags(species, path, next_year):
             known.add(h["code"])
             if h["code"] in rows:
                 r, nr = rows[h["code"]]
-                h["next"] = {"R": split_quota(r, sp["system"]), "N": split_quota(nr, sp["system"])}
+                if sp.get("pooled"):   # one pool: the sheet's total covers everyone
+                    both = split_quota(r + nr, sp["system"])
+                    h["next"] = {"R": both, "N": both}
+                else:
+                    h["next"] = {"R": split_quota(r, sp["system"]), "N": split_quota(nr, sp["system"])}
                 n += 1
     missing = sorted(set(rows) - known)
     print(f"  {next_year} tags loaded for {n} hunts" + (f"; not in draw data (new hunt #s?): {', '.join(missing[:12])}" if missing else ""))
@@ -252,6 +320,13 @@ def hist_pdfs(draw_year):
         out[y] = [f"https://wildlife.utah.gov/pdf/bg/{y}/{yy}_bg-odds.pdf",
                   f"https://wildlife.utah.gov/pdf/bg/{y}/{yy}_deer_odds.pdf"]
     return out
+# Bear and turkey have their own DWR odds reports, in the same layout as the big game
+# ones (parse_hist_pdf reads them unchanged). Each is cached on its own:
+# raw/utah_<name>_odds_<year>.pdf and .parsed.json. Listed at wildlife.utah.gov/odds.
+EXTRA_HIST = {
+    "bear":   "https://wildlife.utah.gov/pdf/bear/{yy}_drawing_odds.pdf",
+    "turkey": "https://wildlife.utah.gov/pdf/uplandgame/turkey/{yyyy}_turkey_bonus_points_draw_results.pdf",
+}
 HIST_ROW = re.compile(r"^(\d+) (\d+) (\d+) (\d+) (\d+) (?:N/A|1 in [\d.,]+) (\d+) (\d+) (\d+) (\d+) (\d+) (?:N/A|1 in [\d.,]+)$")
 HIST_HUNT = re.compile(r"^Hunt: (\w+) ")
 
@@ -291,7 +366,7 @@ def history_from_json(year):
         for h in json.loads(f.read_bytes()).get("Data") or []:
             if h.get("HuntCategoryName") in SKIP_CATEGORIES:
                 continue
-            out[h["HuntCode"]] = compact_hunt(h, system)["rows"]
+            out[h["HuntCode"]] = compact_hunt(h, system, tid)["rows"]
     return out
 
 
@@ -306,16 +381,31 @@ def load_history(refresh, draw_year):
             continue
         cache = RAW / f"utah_odds_{year}.parsed.json"
         if cache.exists() and not refresh:
-            hist[year] = json.loads(cache.read_text(encoding="utf-8"))
-            continue
-        merged = {}
-        for i, url in enumerate(urls):
-            pdf = RAW / f"utah_odds_{year}_{i}.pdf"
-            fetch(url, pdf, refresh)
-            merged.update(parse_hist_pdf(pdf))
-        cache.write_text(json.dumps(merged, separators=(",", ":")), encoding="utf-8")
+            merged = json.loads(cache.read_text(encoding="utf-8"))
+        else:
+            merged = {}
+            for i, url in enumerate(urls):
+                pdf = RAW / f"utah_odds_{year}_{i}.pdf"
+                fetch(url, pdf, refresh)
+                merged.update(parse_hist_pdf(pdf))
+            cache.write_text(json.dumps(merged, separators=(",", ":")), encoding="utf-8")
+            print(f"  parsed {year} draw PDFs: {len(merged)} hunts")
+        for name, pattern in EXTRA_HIST.items():
+            extra_cache = RAW / f"utah_{name}_odds_{year}.parsed.json"
+            if extra_cache.exists() and not refresh:
+                extra = json.loads(extra_cache.read_text(encoding="utf-8"))
+            else:
+                pdf = RAW / f"utah_{name}_odds_{year}.pdf"
+                try:
+                    fetch(pattern.format(yy=str(year)[2:], yyyy=year), pdf, refresh)
+                except Exception as e:  # a missing year shouldn't stop the build
+                    print(f"  ! {name} {year} odds PDF not available ({e})", file=sys.stderr)
+                    continue
+                extra = parse_hist_pdf(pdf)
+                extra_cache.write_text(json.dumps(extra, separators=(",", ":")), encoding="utf-8")
+                print(f"  parsed {year} {name} odds PDF: {len(extra)} hunts")
+            merged = {**merged, **extra}
         hist[year] = merged
-        print(f"  parsed {year} draw PDFs: {len(merged)} hunts")
     return hist
 
 
@@ -327,6 +417,9 @@ def apply_history(species, hist):
             for h in sp["hunts"]:
                 t = by_code.get(h["code"])
                 if t and (t["R"] or t["N"]):
+                    if sp.get("pooled") and t["R"] is not t["N"]:
+                        both = merge_rows(t["R"], t["N"])   # the PDFs split residents and nonresidents
+                        t = {"R": both, "N": both}
                     h.setdefault("hist", {})[str(year)] = t
                     n += 1
         print(f"  {year} draw results matched to {n} current hunts")
@@ -486,16 +579,19 @@ def main():
 
     species = []
     for type_id, (key, label, short, system) in HUNT_TYPES.items():
-        url = ODDS_URL.format(draw=urllib.parse.quote("Big Game"), year=a.year, id=type_id)
+        url = ODDS_URL.format(draw=urllib.parse.quote(DRAW_NAME.get(type_id, "Big Game")), year=a.year, id=type_id)
         body = fetch(url, RAW / f"utah_{a.year}_{type_id}.json", a.refresh)
         payload = json.loads(body)
-        hunts = [compact_hunt(h, system) for h in payload.get("Data") or []
+        hunts = [compact_hunt(h, system, type_id) for h in payload.get("Data") or []
                  if h.get("HuntCategoryName") not in SKIP_CATEGORIES]
         if not hunts:
             print(f"  ! no data for {label} {a.year}", file=sys.stderr)
             continue
         hunts.sort(key=lambda h: (h["unit"], h["weapon"], h["code"]))
-        species.append({"key": key, "label": label, "short": short, "icon": ICONS.get(key, ""), "system": system, "hunts": hunts})
+        sp = {"key": key, "label": label, "short": short, "icon": ICONS.get(key, ""), "system": system, "hunts": hunts}
+        if type_id in POOLED:
+            sp["pooled"] = True
+        species.append(sp)
         print(f"  {label}: {len(hunts)} hunts")
 
     harvest_pdf = fetch(a.harvest_url, RAW / f"utah_harvest_{a.harvest_year}.pdf", a.refresh)
