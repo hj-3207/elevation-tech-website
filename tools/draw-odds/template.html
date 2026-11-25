@@ -324,19 +324,9 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 .empty{padding:3rem 1rem;text-align:center!important;color:var(--muted);font-family:var(--mono);font-size:0.8rem}
 
 /* HOW IT WORKS */
-.explain{margin-top:2.5rem;background:var(--card);border:1px solid var(--border-orange);border-radius:12px;padding:1.5rem 1.75rem;position:relative;overflow:hidden}
-.explain::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--orange),transparent)}
-.explain summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:0.72rem;color:var(--orange);letter-spacing:0.12em;text-transform:uppercase;display:flex;align-items:center;gap:0.6rem}
-.explain summary::-webkit-details-marker{display:none}
-.explain summary::before{content:'//';color:var(--subtle)}
-.explain summary::after{content:'+';margin-left:auto;color:var(--muted);font-size:1rem}
-.explain[open] summary::after{content:'–'}
-.explain ul{list-style:none;margin-top:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:1.1rem 2.25rem}
-.explain li{color:var(--muted);font-size:0.86rem;line-height:1.7}
-.explain li b{display:block;color:#fff;font-size:0.92rem;font-weight:800;margin-bottom:0.2rem}
-.explain li b::before{content:'› ';color:var(--orange)}
-@media (max-width:760px){.explain ul{grid-template-columns:1fr}}
 .assume-wrap{margin-top:1.75rem;max-width:860px}
+.assume-wrap.explain-wrap{margin-top:2.5rem}
+#explainList p+p{margin-top:0.6rem}
 .assume-wrap:not(.open) .assume{max-height:10.5rem;overflow:hidden;-webkit-mask-image:linear-gradient(#000 45%,transparent);mask-image:linear-gradient(#000 45%,transparent)}
 .assume-more{margin:0.5rem 0 0 1.1rem;color:var(--orange-bright)}
 .assume{border-left:2px solid var(--orange);padding:0.25rem 0 0.25rem 1.1rem;max-width:860px}
@@ -351,6 +341,15 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 .assume-tbl th:first-child,.assume-tbl td:first-child{text-align:left}
 .assume-tbl th{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
 .assume-tbl tr.tot td{color:var(--text);font-weight:700;border-bottom:0}
+.assume-scroll{overflow-x:auto;max-width:100%}
+.assume-tbl.all-sp td.t{color:var(--text);font-weight:600}
+.assume-tbl.all-sp td.yes{color:var(--orange-bright)}
+.assume-tbl.all-sp tr.cur td{color:var(--text);background:rgba(204,85,0,0.1)}
+.assume-tbl.all-sp tr.cur td.yes{color:var(--orange-bright)}
+.assume-tbl.all-sp tr.cur td:first-child{color:var(--orange-bright);font-weight:600;padding-left:0.4rem}
+.assume-tbl.all-sp th,.assume-tbl.all-sp td{white-space:nowrap}
+@media (max-width:680px){.assume-tbl.all-sp th,.assume-tbl.all-sp td{padding-right:0.38rem}.assume-tbl.all-sp td:last-child,.assume-tbl.all-sp th:last-child{padding-right:0}
+  .assume-tbl.all-sp{font-size:0.72rem}.assume-tbl.all-sp th{font-size:0.55rem;letter-spacing:0.02em}.assume-tbl.all-sp tr.cur td:first-child{padding-left:0.25rem}}
 /* Cross-promotion of the paid apps: maker strip, hunt-detail suggestions, After the draw */
 .maker-strip{display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem 1.1rem;color:var(--muted);font-size:0.84rem;margin:-1.25rem 0 1.9rem}
 .maker-lead{color:var(--subtle);font-family:var(--mono);font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase}
@@ -551,7 +550,7 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   table.main>tbody>tr>td.empty,table.main>tbody>tr>td.star-empty{display:block;background:var(--card);border:1px solid var(--border);border-radius:10px}
 }
 @media print{
-  nav,.grid-bg,.controls,.explain,.star,footer{display:none!important}
+  nav,.grid-bg,.controls,.explain-wrap,.star,footer{display:none!important}
   main{padding:0} body{background:#fff;color:#000}
   .tbl-wrap{border:0;overflow:visible;background:none;max-height:none} table.main{min-width:0;font-size:11px}
   .big,.unit,.page-title{color:#000}
@@ -693,12 +692,13 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
     </table>
   </div>
 
-  <details class="explain">
-    <summary>How the numbers are calculated</summary>
-    <ul id="explainList"></ul>
-  </details>
+  <!-- Both notes sections share one format: orange rule, small heading, paragraphs with
+       bold lead-ins, collapsed by default to a short preview that "Read more" expands. -->
+  <div class="assume-wrap explain-wrap">
+    <div class="assume" id="explain"><h2>How the numbers are calculated</h2><div id="explainList"></div></div>
+    <button type="button" class="link-btn assume-more" aria-controls="explain" aria-expanded="false">Read more ↓</button>
+  </div>
 
-  <!-- Collapsed by default to a short preview; the button expands it. -->
   <div class="assume-wrap">
     <div class="assume" id="assume"></div>
     <button type="button" class="link-btn assume-more" id="assumeMore" aria-controls="assume" aria-expanded="false">Read more ↓</button>
@@ -1407,7 +1407,7 @@ function renderExplain(st, sp){
     [`Badges`, `Management buck, cactus buck, premium, restricted weapon, HAMSS and bison cow/hunter's choice come from DWR's hunt labels. Hover a badge, or open the hunt, for the rule.`],
   ];
   if (sp.system === "preference") items.push([`Preference points`, `General-season deer gives every tag to the highest point holders, so there's no random half. The ${D} split is the highest level where fewer than 90% drew; group applications blur it slightly.`]);
-  $("#explainList").innerHTML = items.map(([b, t]) => `<li><b>${esc(b)}</b>${esc(t)}</li>`).join("");
+  $("#explainList").innerHTML = items.map(([b, t]) => `<p><b>${esc(b)}.</b> ${esc(t)}</p>`).join("");
 }
 
 // ---------- column filters ----------
@@ -1772,7 +1772,7 @@ function fillSelects(){
     dropinNote(st, D) +
     `<li>The number of new applicants at 0 points is the same as in ${D}.</li>` +
     `<li>${st.nextTags ? `Tag numbers are the released ${N} numbers.` : `Tag numbers stay at ${D} levels until the ${N} numbers are released.`}</li></ul>` +
-    dropinSummary(N) +
+    dropinSummary(N) + dropinAllSpecies(st) +
     `<p>When the top point group is bigger than the bonus tags, only some of that group draws, so guaranteed is shown as their points + 1. Example: 10 people at 25 points and 8 bonus tags means 8 of the 10 draw, and guaranteed shows 26, even if nobody holds 26 yet. The same rule applies to the ${D} guaranteed column.</p>` +
     `<p>Real pools move. Hunts that gain tags or look easier tend to pull applicants in, and hunts that creep tend to lose them. Treat the projections as a starting point, not a guarantee.</p>`;
   const src = st.sources || {};
@@ -1801,14 +1801,30 @@ function dropinSummary(N){
     <p>Examples: a hunt with ${ex(50)} drop-ins; one with ${ex(5)}.</p>
     <p><b>Why per bonus tag.</b> High-point hunters move to where the top tags are, so the more bonus tags a hunt has, the more of them it pulls in, however many low-point people apply. Tested on the ${di.years} draws (projecting each year from the one before), the per-bonus-tag rate got the projected guaranteed points exactly right ${di.adjusted.exact} of ${di.adjusted.n} times, against ${di.plain.exact} with no drop-ins. A percentage of each hunt's applicants did worse, since popular hunts with few tags got far too many drop-ins, and so did simply adding one point.</p>`;
 }
+// Every species' drop-in rates side by side (residency follows the switch), with the
+// backtest that decided whether each species uses them. The species on screen is highlighted.
+function dropinAllSpecies(st){
+  const list = st.species.map(sp => ({sp, di: sp.dropin && sp.dropin[ui.res]})).filter(x => x.di);
+  if (!list.length) return "";
+  const f = x => (x * 10).toFixed(1);
+  const rows = list.map(({sp, di}) => {
+    const tot = di.d.reduce((s, x) => s + x, 0);
+    return `<tr class="${sp.key === ui.species ? "cur" : ""}"><td>${esc(sp.short || sp.label)}</td>${di.d.map(x => `<td>${f(x)}</td>`).join("")}<td class="t">${f(tot)}</td>` +
+      `<td>${di.plain.mae.toFixed(2)}→${di.adjusted.mae.toFixed(2)}</td><td class="${di.use ? "yes" : "no"}">${di.use ? "Yes" : "No"}</td></tr>`;
+  }).join("");
+  return `<p><b>All species.</b> The rates are worked out separately for each species (and for residents and nonresidents), because jumpers behave differently: elk jumpers tend to land well above the split, sheep and goat jumpers just above it. Each species is also tested on its own past draws, and drop-ins are only used where they made the projected guaranteed points closer on average. ${ui.res === "R" ? "Resident" : "Nonresident"} rates, per 10 bonus tags, by points above the projected split (+4+ means 4 or more); "Avg. miss" is how many points the projected guaranteed was off by on average, without → with drop-ins:</p>
+    <div class="assume-scroll"><table class="assume-tbl all-sp"><thead><tr><th>Species</th><th>+1</th><th>+2</th><th>+3</th><th title="4 or more points above the split">+4+</th><th>Total</th><th>Avg. miss</th><th>Used</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+}
 function resetView(){ ui.open.clear(); ui.collapsed.clear(); ui.wtypes.clear(); delete ui.filters.unit; closeFilter(false); }
 
-$("#assumeMore").onclick = () => {
-  const w = $(".assume-wrap"), open = w.classList.toggle("open");
-  $("#assumeMore").setAttribute("aria-expanded", String(open));
-  $("#assumeMore").textContent = open ? "Show less ↑" : "Read more ↓";
+// "Read more" / "Show less" on both notes sections.
+document.querySelectorAll(".assume-more").forEach(b => b.onclick = () => {
+  const w = b.closest(".assume-wrap"), open = w.classList.toggle("open");
+  b.setAttribute("aria-expanded", String(open));
+  b.textContent = open ? "Show less ↑" : "Read more ↓";
   if (!open) w.scrollIntoView({block: "nearest"});
-};
+});
 $("#speciesTabs").addEventListener("click", e => {
   if (e.target.closest("[data-starview]")){ ui.starView = true; store.set("starView", true); closeFilter(false); render(); return; }
   const b = e.target.closest("[data-species]"); if (!b) return;
