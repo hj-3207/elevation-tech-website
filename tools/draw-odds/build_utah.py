@@ -70,7 +70,7 @@ ICONS = {
     "bison": "img/drawodds-bison.png",
     "goat": "img/drawodds-goat.png",
     "bear": "img/drawodds-bear.png",      # Rack Scorer's BearPawWhite128.png
-    "turkey": "img/drawodds-turkey.png",  # drawn for this page (tools/draw-odds/turkey-icon.svg)
+    "turkey": "img/drawodds-turkey.png",  # Rack Scorer's turkeyFan512.png
 }
 
 
@@ -244,6 +244,63 @@ def parse_harvest(pdf_bytes, dest):
                 code, permits, hunters, harvest, pct = m.group(1), int(m.group(2)), int(m.group(3)), int(m.group(4)), float(m.group(5))
                 out[code] = [permits, hunters, harvest, pct]
     return out
+
+
+# Bear and turkey harvest are in their own DWR reports (wildlife.utah.gov/hunting/reports
+# and /uplandgame/reports), one table row per hunt number:
+#  - bear: annual black bear report, "Hunt number, Hunt name, Permits sold, Male, Female,
+#    Total harvest, % permits filled" (no hunters-afield count, so success = permits filled).
+#  - turkey: upland game annual report <yyyy-1>-<yy>, "Spring wild turkey harvest statistics
+#    by hunt": Hunt, name, Permits, n (surveyed), Hunters, Harvest, Days afield, Percent
+#    success. Its spring season is the one right after that year's draw.
+SPECIES_HARVEST = {
+    "bear": {"year": 2025, "url": "https://wildlife.utah.gov/pdf/annual-reports/bear/{yy}_black_bear_report.pdf",
+             "line": re.compile(r"^(BR\d{4})\s+.+?\s(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$")},
+    "turkey": {"year": 2026, "url": "https://wildlife.utah.gov/pdf/annual-reports/upland/{prev}-{yy}.pdf",
+               "line": re.compile(r"^(TK\d{4})\s+.+?\s(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$")},
+}
+
+
+def parse_species_harvest(key, pdf_path):
+    """{hunt_code: [permits, hunters afield or None, harvested, percent]}."""
+    import pdfplumber
+    line_re = SPECIES_HARVEST[key]["line"]
+    out = {}
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            for line in (page.extract_text() or "").splitlines():
+                m = line_re.match(line.strip())
+                if not m:
+                    continue
+                v = [int(x) for x in m.groups()[1:]]
+                if key == "bear":     # permits, male, female, total, % filled
+                    out[m.group(1)] = [v[0], None, v[3], float(v[4])]
+                else:                 # permits, n surveyed, hunters, harvest, days, % success
+                    out[m.group(1)] = [v[0], v[2], v[3], float(v[5])]
+    return out
+
+
+def apply_species_harvest(species, refresh):
+    for sp in species:
+        cfg = SPECIES_HARVEST.get(sp["key"])
+        if not cfg:
+            continue
+        y = cfg["year"]
+        url = cfg["url"].format(yy=str(y)[2:], prev=y - 1)
+        pdf = RAW / f"utah_{sp['key']}_harvest_{y}.pdf"
+        try:
+            fetch(url, pdf, refresh)
+            hv = parse_species_harvest(sp["key"], pdf)
+        except Exception as e:
+            print(f"  ! {sp['key']} harvest report not available ({e})", file=sys.stderr)
+            continue
+        n = 0
+        for h in sp["hunts"]:
+            if h["code"] in hv:
+                h["harvest"] = hv[h["code"]]
+                n += 1
+        sp["harvestYear"], sp["harvestSource"] = y, url
+        print(f"  {sp['short']} {y} harvest: {n}/{len(sp['hunts'])} hunts")
 
 
 def split_quota(total, system):
@@ -606,6 +663,7 @@ def main():
                 matched += 1
     total = sum(len(s["hunts"]) for s in species)
     print(f"  hunts with harvest data: {matched}/{total}")
+    apply_species_harvest(species, a.refresh)
 
     apply_history(species, load_history(a.refresh, a.year))
     fit_dropins(species, a.year)

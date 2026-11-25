@@ -1036,6 +1036,16 @@ function oddsAt(m, p){
   return m.randAt(p);
 }
 
+// ---------- harvest ----------
+// Harvest comes from different DWR reports per species, so each species can carry its
+// own season year and source (bear: annual bear report; turkey: upland game report,
+// the spring season right after that year's draw). h.harvest = [permits, hunters
+// afield, harvested, percent]; hunters is null when the report counts permits filled
+// (bear), and the percent is then harvested / permits.
+const harvYear = sp => (sp && sp.harvestYear) || curState().harvestYear;
+const harvSmall = hv => `${fmt(hv[2])} of ${fmt(hv[1] ?? hv[0])}${hv[1] == null ? " permits" : ""}`;
+const harvCell = hv => hv ? `<span class="big">${hv[3].toFixed(0)}%</span><span class="small">${harvSmall(hv)}</span>` : `<span class="na">—</span>`;
+
 // ---------- columns, sorting, filtering ----------
 // Trend columns are hidden unless "Show trend columns" is checked.
 const TREND_KEYS = ["dtags", "creep", "demand"];
@@ -1048,7 +1058,7 @@ function columns(st){
     {key:"apps", label:`${D} applicants`, short:`${D} applicants`, filter:"num"},
     {key:"guar", label:`${D} guaranteed at`, short:`${D} guaranteed`, filter:"num", unit:"pts"},
     {key:"split", label:`${D} split group`, short:`${D} split`, filter:"num", unit:"pts"},
-    {key:"harv", label:`${st.harvestYear} harvest success`, short:`${st.harvestYear} harvest`, filter:"pct"},
+    {key:"harv", label:`${harvYear(curSpecies())} harvest success`, short:`${harvYear(curSpecies())} harvest`, filter:"pct"},
     {key:"dtags", label: st.nextTags ? `Tag change ${D}–${N}` : `Tag change ${D-1}–${D}`, short:"Tag change", filter:"num"},
     {key:"creep", label:`Point creep ${D-1}–${D}`, short:"Point creep", filter:"num", unit:"pts"},
     {key:"demand", label:`${D} vs projected`, short:`${D} vs proj.`, filter:"num", unit:"pts"},
@@ -1130,7 +1140,7 @@ function render(){
   document.title = st.name + " Draw Odds | Elevation Technology";
   $("#title").innerHTML = `${esc(st.name)} <span>Draw Odds</span>`;
   $("#eyebrow").textContent = sp.label;
-  $("#subtitle").innerHTML = `Results from the <b>${st.drawYear} draw</b>, harvest from the <b>${st.harvestYear} season</b>, and projections for the <b>${N} draw</b>.`;
+  $("#subtitle").innerHTML = `Results from the <b>${st.drawYear} draw</b>, harvest from the <b>${harvYear(sp)} season</b>, and projections for the <b>${N} draw</b>.`;
   renderSpeciesTabs(); renderWeaponChips(); renderHunter(); renderExplain(st, sp);
   if (typeof showCurrentSpecies === "function") showCurrentSpecies();
   if (typeof renderPin === "function") renderPin();
@@ -1236,7 +1246,7 @@ function rowHtml(st, sp, h, a, p, inGroup){
     : a.split ? `<span class="big">${a.guarPts}</span><span class="small">points</span>`
     : a.randomOnly ? `<span class="na">random only</span><span class="small">no bonus tag</span>` : `<span class="na">—</span>`;
   const split = a.split ? `<span class="big">${a.split[0]} pts</span><span class="small">${fmt(a.split[2])} of ${fmt(a.split[1])} drew</span>` : `<span class="na">—</span>`;
-  const hv = h.harvest ? `<span class="big">${h.harvest[3].toFixed(0)}%</span><span class="small">${fmt(h.harvest[2])} of ${fmt(h.harvest[1])}</span>` : `<span class="na">—</span>`;
+  const hv = harvCell(h.harvest);
   const o = oddsAt(a.model, p);
   const mine = p == null ? `<span class="na">add points</span>`
     : o == null ? `<span class="na">—</span>`
@@ -1349,7 +1359,9 @@ function detailHtml(st, sp, h, a, p, ncol){
       <dt>Hunt #</dt><dd><span class="code">${esc(h.code)}</span>${h.map ? ` · <a href="${esc(h.map)}" target="_blank" rel="noopener">Boundary map</a>` : ""}</dd>
       <dt>${st.drawYear} season${(h.seasons||[]).length > 1 ? "s" : ""}</dt><dd>${seasons || "—"}</dd>
       <dt>Tags</dt><dd>${tagLine}</dd>
-      <dt>${esc(st.harvestYear)} harvest</dt><dd>${hv ? `${hv[3].toFixed(1)}% · ${fmt(hv[2])} harvested by ${fmt(hv[1])} hunters afield (${fmt(hv[0])} permits)` : "No harvest record for this hunt #"}</dd>
+      <dt>${esc(harvYear(sp))} harvest</dt><dd>${!hv ? "No harvest record for this hunt #"
+        : hv[1] == null ? `${hv[3].toFixed(0)}% of permits filled · ${fmt(hv[2])} harvested on ${fmt(hv[0])} permits`
+        : `${hv[3].toFixed(1)}% · ${fmt(hv[2])} harvested by ${fmt(hv[1])} hunters afield (${fmt(hv[0])} permits)`}</dd>
       <dt>${N} projection</dt><dd>${projText(a, st)}</dd>
     </dl>${promoHtml(sp, a, p)}</div>
   </div><button type="button" class="d-close" data-close="${esc(h.code)}">Close ▴</button></td></tr>`;
@@ -1450,7 +1462,7 @@ function projText(a, st){
 function fmtDate(s){ if (!s) return ""; const [y,m,d] = s.split("-"); return new Date(+y, +m-1, +d).toLocaleDateString(undefined, {month:"short", day:"numeric"}); }
 
 function renderExplain(st, sp){
-  const D = st.drawYear, N = nextYear(st), H = st.harvestYear;
+  const D = st.drawYear, N = nextYear(st), H = harvYear(sp);
   const items = [
     [`${tagYear(st)} tags`, st.nextTags
       ? `Permits for the ${N} draw. The small line shows ${D} and the change. Bonus hunts: half the tags (rounded up) go to the top point holders, the rest to the random draw. A hunt with a single tag sends it to the random draw.`
@@ -1459,7 +1471,11 @@ function renderExplain(st, sp){
     [`${D} split group`, `The point level where the bonus tags ran out. "X of Y drew" counts everyone in that group who drew, bonus or random.`],
     [`Your ${N} odds`, `First the bonus tags go top points down. Everyone left goes in the hat with points + 1 entries each. Example: 10 people at 15 points hold 160 entries, 30 at 14 hold 450, and so on down to 0 points. Your 6 entries (5 points) are compared to that total. Tags come out one at a time and a winner's other entries are pulled, which the math accounts for. This matched the ${D} results at every point level.`],
     [`${N} projected guaranteed / split`, `Everyone who drew in ${D} is removed, everyone who didn't comes back with one more point, and the same number of new applicants start at 0. The bonus tags (${st.nextTags ? N : D} numbers) are handed out top points down: the split is where they run out, guaranteed is the level above it. See the assumptions below the table.`],
-    [`${H} harvest success`, `Percent of hunters afield who harvested in the ${H} season, from the DWR harvest report for that hunt number.`],
+    [`${H} harvest success`, sp.key === "bear"
+      ? `Percent of permits filled in the ${H} season, from DWR's annual black bear report for that hunt number. The bear report counts permits, not hunters afield, so it reads lower than a hunters-afield rate would.`
+      : sp.key === "turkey"
+      ? `Percent of hunters afield who harvested in the spring ${H} season, from DWR's upland game annual report for that hunt number. That's the season right after the ${D} draw.`
+      : `Percent of hunters afield who harvested in the ${H} season, from the DWR harvest report for that hunt number.`],
     [`Tag change`, st.nextTags
       ? `Change from ${D} to ${N} tags, with the change since ${D-1} underneath. Orange means fewer tags.`
       : `Change in permits drawn from ${D-1} to ${D}, with the change since ${D-2} underneath. Earlier years come from DWR's PDF reports, which list permits drawn rather than the official quota, so ${D} is compared the same way. A hunt with fewer applicants than tags can show a drop even if the quota didn't change. Orange means fewer tags.`],
@@ -1470,7 +1486,7 @@ function renderExplain(st, sp){
     [`Badges`, `Management buck, cactus buck, premium, restricted weapon, HAMSS and bison cow/hunter's choice come from DWR's hunt labels. Hover a badge, or open the hunt, for the rule.`],
   ];
   if (sp.pooled) items.push([`One pool`, `Limited-entry turkey doesn't split permits between residents and nonresidents: everyone, youth included, draws from the same permits, so the tables count everyone and the Resident and Nonres buttons show the same numbers. Youth get a first pass at 15% of the permits before the main draw, which takes a tag or two from adults; the odds don't model that.`]);
-  if (sp.key === "bear") items.push([`Bear seasons`, `Bear hunts are grouped by season (spring, summer, fall, multi-season) instead of weapon; the season buttons filter them. Harvest success isn't shown yet: the harvest report used here covers big game only.`]);
+  if (sp.key === "bear") items.push([`Bear seasons`, `Bear hunts are grouped by season (spring, summer, fall, multi-season) instead of weapon; the season buttons filter them.`]);
   if (sp.system === "preference") items.push([`Preference points`, `General-season deer gives every tag to the highest point holders, so there's no random half. The ${D} split is the highest level where fewer than 90% drew; group applications blur it slightly.`]);
   $("#explainList").innerHTML = items.map(([b, t]) => `<p><b>${esc(b)}.</b> ${esc(t)}</p>`).join("");
 }
@@ -1686,7 +1702,7 @@ function renderStarred(st){
       // Phone-only cells (hidden on desktop, where the starred table keeps its columns).
       `<td class="m-only k-apps" data-label="${D} applicants"><span class="big">${fmt(a.apps)}</span></td>` +
       `<td class="m-only k-split" data-label="${D} split">${a.split ? `<span class="big">${a.split[0]} pts</span><span class="small">${fmt(a.split[2])} of ${fmt(a.split[1])} drew</span>` : `<span class="na">—</span>`}</td>` +
-      `<td class="m-only k-harv" data-label="${st.harvestYear} harvest">${h.harvest ? `<span class="big">${h.harvest[3].toFixed(0)}%</span><span class="small">${fmt(h.harvest[2])} of ${fmt(h.harvest[1])}</span>` : `<span class="na">—</span>`}</td></tr>`;
+      `<td class="m-only k-harv" data-label="${harvYear(s)} harvest">${harvCell(h.harvest)}</td></tr>`;
   }).join("");
 }
 function renderHunter(){
@@ -1844,7 +1860,7 @@ function fillSelects(){
   const src = st.sources || {};
   // Which tags the projections use: a note at the bottom, not in the intro.
   const tagNote = st.nextTags ? `Projections use the released ${nextYear(st)} tag numbers. ` : `${nextYear(st)} tag numbers aren't out yet, so projections use ${st.drawYear} tags. `;
-  $("#sources").innerHTML = tagNote + `Sources: <a href="${esc(src.odds||"#")}" target="_blank" rel="noopener">${esc(st.name)} ${st.drawYear} draw results</a> · <a href="${esc(src.harvest||"#")}" target="_blank" rel="noopener">${st.harvestYear} harvest report</a>` +
+  $("#sources").innerHTML = tagNote + `Sources: <a href="${esc(src.odds||"#")}" target="_blank" rel="noopener">${esc(st.name)} ${st.drawYear} draw results</a> · <a href="${esc(curSpecies().harvestSource || src.harvest || "#")}" target="_blank" rel="noopener">${harvYear(curSpecies())} ${curSpecies().harvestSource ? esc(curSpecies().short || "") + " " : ""}harvest report</a>` +
     (st.nextTags && src.tags ? ` · <a href="${esc(src.tags)}" target="_blank" rel="noopener">${nextYear(st)} tag numbers</a>` : "") +
     `. Last year's results don't guarantee next year's. Check the official guidebook before applying.` +
     ` Your hunters and points stay in this browser. Clicks on the app links are counted anonymously: which link and when, nothing else.`;

@@ -52,7 +52,7 @@ python tools/draw-odds/build_utah.py --refresh  # re-download PDFs and current-y
 | `data/draw-odds/utah-tags-2027.csv` | **Fill in each spring** with next year's tag numbers (blank = not released). Auto-generated template. |
 | `data/draw-odds/utah-hunt-notes.csv` | Owner's own hunt badges (`hunt_code,badge,note`), e.g. "Stag". Empty so far. |
 | `data/draw-odds/raw/` | Downloads and caches, rolling 5 years: `utah_<year>_<typeId>.json` (utahdraws), `utah_odds_<year>_{0,1}.pdf` plus `.parsed.json`, `utah_harvest_<year>.pdf`. About 36 MB, committed on purpose as the backup. |
-| `img/drawodds-*.png` | Species button icons: white PNGs from `C:\Users\hayden.j\Desktop\RackScore\rackscoreflutter\assets`, cropped and resized to 64 px tall. Bear is that folder's `BearPawWhite128.png`. Turkey is a white turkey track drawn for this page (`tools/draw-odds/turkey-icon.svg`, rendered with headless Edge). |
+| `img/drawodds-*.png` | Species button icons: white PNGs from `C:\Users\hayden.j\Desktop\RackScore\rackscoreflutter\assets`, cropped and resized to 64 px tall. Bear is that folder's `BearPawWhite128.png`; turkey is the owner's `turkeyFan512.png` (added 2026-11-25). |
 | `img/drawodds-icon.png`, `img/drawodds-screenshot.jpg` | App icon (orange notched tag, black antler, transparent; source `tools/draw-odds/drawodds-icon.svg`) and screenshot used on `apps.html` and `index.html`. |
 
 ## Data sources
@@ -65,7 +65,9 @@ python tools/draw-odds/build_utah.py --refresh  # re-download PDFs and current-y
   - **Bear** (90 hunts): bonus points, split by residency like big game. DWR lists every bear hunt as "Any Legal Weapon", so hunts are labelled and filtered by **season** from `SpeciesSubtypeName`: Spring, Summer, Fall, Multi-Season, plus one Spot and stalk. Fall hunts have two windows and are flagged multi-season, but stay "Fall". Season windows keep DWR's "Any Legal Weapon" wording, not "Rifle".
   - **Turkey** (5 limited-entry hunts; 2 CWMU skipped): **one pool**. No resident/nonresident quotas; youth get a 15% first pass and then compete in the main draw. The build merges all rows (residents, nonresidents, youth) into one table used for both residency views, and the quota is `QuotaQuantity` split by the usual half-to-bonus rule. That matched 2026's bonus-round draws within a tag per hunt; the difference is the youth round, which the odds don't model. The species carries `"pooled": true`; the page then drops "resident" from the summary and adds a "One pool" note.
   - **Checks:** the points + 1 random-draw weighting fits bear about as well as elk (2026 random winners by point level). Drop-ins: bear uses them (average miss 1.34 → 1.31); turkey doesn't (0.40 → 0.75).
-  - **No harvest yet** for bear or turkey: the harvest PDF covers big game only. DWR publishes separate bear and turkey harvest reports, which could be added later.
+  - **Harvest (added 2026-11-25):** each comes from its own DWR report (`SPECIES_HARVEST` in the build, cached as `raw/utah_<bear|turkey>_harvest_<year>.pdf`). Each species carries `harvestYear` and `harvestSource`, and the page's harvest column, subtitle, notes and sources line use them (`harvYear(sp)`).
+    - **Bear:** annual black bear report, `pdf/annual-reports/bear/<yy>_black_bear_report.pdf`, 2025. It has spring, summer, fall and multi-season tables by hunt number. It counts **permits filled**, not hunters afield, so `h.harvest[1]` is null and the page says "x of y permits" / "% of permits filled". 83 of 90 hunts match; the 7 others are new 2026 hunts (Dolores Triangle, the split La Sal Mtns).
+    - **Turkey:** upland game annual report, `pdf/annual-reports/upland/<yyyy-1>-<yy>.pdf`, table "Spring wild turkey harvest statistics by hunt". It is the **2026** spring season, right after the 2026 draw, so turkey's harvest year is one later than the other species'. All 5 match.
   - **Residency:** `ResidencyTypeID` 1 = resident, 2 = nonresident.
   - **Fields used:** `SuccessfulCount` (first choice) and `SuccessfulByMaxPointRoundCount` (bonus round).
   - **Hunt labels:** `SpeciesSubtypeName` / `HuntCategoryName` drive the automatic badges.
@@ -205,6 +207,7 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - **Also do the same each year after:** keep each year's `utah_<year>_*.json`.
   - The history window moves to 2023–2026, the drop-ins are refit, and 2022's files are pruned automatically (they stay in git history). To force fresh current-year data, delete just `utah_2027_*.json` instead of using `--refresh`.
   - Also update the "2026"/"2027" wording on `apps.html` / `index.html` if any of it names years. It currently doesn't.
+  - **Bear and turkey harvest:** bump the years in `SPECIES_HARVEST` once DWR posts the newer reports: bear to the newest `<yy>_black_bear_report.pdf` (2026's is likely out by spring 2027), turkey to the newest upland report (`2026-27.pdf` has spring 2027). Bear and turkey draw history needs nothing extra: 2026 comes from the cached `utah_2026_1.json` / `_3.json` like the big game types.
 
 ## Testing approach used
 
