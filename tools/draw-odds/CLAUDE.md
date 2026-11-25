@@ -66,7 +66,7 @@ python tools/draw-odds/build_utah.py --refresh  # re-download PDFs and current-y
   - **Turkey** (5 limited-entry hunts; 2 CWMU skipped): **one pool**. No resident/nonresident quotas; youth get a 15% first pass and then compete in the main draw. The build merges all rows (residents, nonresidents, youth) into one table used for both residency views, and the quota is `QuotaQuantity` split by the usual half-to-bonus rule. That matched 2026's bonus-round draws within a tag per hunt; the difference is the youth round, which the odds don't model. The species carries `"pooled": true`; the page then drops "resident" from the summary and adds a "One pool" note.
   - **Checks:** the points + 1 random-draw weighting fits bear about as well as elk (2026 random winners by point level). Drop-ins: bear uses them (average miss 1.34 → 1.31); turkey doesn't (0.40 → 0.75).
   - **Harvest (added 2026-11-25):** each comes from its own DWR report (`SPECIES_HARVEST` in the build, cached as `raw/utah_<bear|turkey>_harvest_<year>.pdf`). Each species carries `harvestYear` and `harvestSource`, and the page's harvest column, subtitle, notes and sources line use them (`harvYear(sp)`).
-    - **Bear:** annual black bear report, `pdf/annual-reports/bear/<yy>_black_bear_report.pdf`, 2025. It has spring, summer, fall and multi-season tables by hunt number. It counts **permits filled**, not hunters afield, so `h.harvest[1]` is null and the page says "x of y permits" / "% of permits filled". 83 of 90 hunts match; the 7 others are new 2026 hunts (Dolores Triangle, the split La Sal Mtns).
+    - **Bear:** annual black bear report, `pdf/annual-reports/bear/<yy>_black_bear_report.pdf`, 2025. It has spring, summer, fall and multi-season tables by hunt number. It counts **permits filled**, not hunters afield, so `h.harvest[1]` is null and the page says "x of y permits" / "% of permits filled". 83 of 90 hunts match; the 7 others are new 2026 hunts (Dolores Triangle, the split La Sal Mtns). **Skip the report's conservation-permit table (Table 8):** it reuses limited-entry hunt numbers, and before 2026-11-25 its rows overwrote four multi-season hunts (e.g. Nebo BR7305 showed 0% instead of 100%). The parser tracks each "Table N." title and drops conservation rows. 0% hunts are real (e.g. Boulder/Kaiparowits fall BR7215: 11 permits, 0 bears).
     - **Turkey:** upland game annual report, `pdf/annual-reports/upland/<yyyy-1>-<yy>.pdf`, table "Spring wild turkey harvest statistics by hunt". It is the **2026** spring season, right after the 2026 draw, so turkey's harvest year is one later than the other species'. All 5 match.
   - **Residency:** `ResidencyTypeID` 1 = resident, 2 = nonresident.
   - **Fields used:** `SuccessfulCount` (first choice) and `SuccessfulByMaxPointRoundCount` (bonus round).
@@ -159,6 +159,12 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
     - **Keep the card CSS scoped with `>`** (`table.main>tbody>tr.row>td`): the hunt detail has its own tables inside the row, and descendant selectors broke them.
 - **Badges** come from DWR labels:
   - Management buck (rule R657-5-45: 3 points or less on at least one antler, eye guards don't count), Cactus buck, Premium, Restricted (restricted rifle: open or peep sights, no semi-auto, per R657-5-48), HAMSS, and bison Cow only / Hunter's choice.
+  - **Bear method badges** (owner's request, 2026-11-25, `bear_notes()`), from DWR's 2025 black bear guidebook, pp. 42–47:
+    - **Hounds:** spring and fall; dogs allowed, up to 16 in a pursuit, no bait.
+    - **Bait:** summer; bait station registration required, no early baiting, no dogs. "The only bear season that allows bait is the summer limited-entry season."
+    - **Hounds or bait:** multi-season; each season's rules apply while you hunt it.
+    - **No hounds or bait:** the one spot-and-stalk hunt.
+    - Re-check the guidebook each year: these rules come from it, not from the draw data.
   - The cactus buck and HAMSS wording is plain-language, unconfirmed against DWR, and says to check the guidebook.
 - **Hunt detail view:** shows the 2026 table by point level with 2027 estimates, the year-by-year table (5 draws plus the 2027 projection), each hunter's 2027 odds, the random-draw entry count, notes, season dates, harvest and the projection text.
 - **Notes at the bottom:**

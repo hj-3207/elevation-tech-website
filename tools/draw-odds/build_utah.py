@@ -114,6 +114,24 @@ def auto_notes(h, weapon):
     elif "restricted" in w:
         notes.append(["Restricted", "Restricted weapon hunt: limited equipment. Check the guidebook."])
     return notes
+def bear_notes(season):
+    """Hounds/bait badges for limited-entry bear, from DWR's black bear guidebook (2025,
+    pp. 42-47 and R657-33): spring and fall allow dogs but no bait; summer allows bait
+    (bait station COR required, no early baiting) but no dogs; multi-season follows the
+    rules of whichever season you hunt in. "The only bear season that allows bait is the
+    summer limited-entry season." Max 16 dogs in spring and fall."""
+    s = season.lower()
+    if s in ("spring", "fall"):
+        return [["Hounds", f"{season} bear: dogs allowed (up to 16 in a pursuit), no bait. Some units close to dogs at times; check the guidebook."]]
+    if s == "summer":
+        return [["Bait", "Summer bear: bait allowed where permitted (a bait station registration from DWR is required first, no early baiting); no dogs."]]
+    if s == "multi-season":
+        return [["Hounds or bait", "Multi-season bear: each season's rules apply while you hunt it, so dogs in spring and fall, bait (with a bait station registration) in summer."]]
+    if "spot" in s:
+        return [["No hounds or bait", "Spot-and-stalk bear: no dogs and no bait."]]
+    return []
+
+
 SKIP_CATEGORIES = {"CWMU", "Bonus Point", "Preference Point"}
 RES = {1: "R", 2: "N"}  # ResidencyTypeID
 
@@ -219,7 +237,7 @@ def compact_hunt(h, system, tid=None):
         "weapon": wl,
         "seasons": seasons(h, tid),
         "wtype": wl if tid in SEASON_LABELS else weapon_type(wl),
-        "notes": auto_notes(h, wl),
+        "notes": auto_notes(h, wl) + (bear_notes(wl) if tid == 1 else []),
         "map": h.get("HuntMapURL") or "",
         "quota": quota,
         "rows": rows,
@@ -266,11 +284,18 @@ def parse_species_harvest(key, pdf_path):
     import pdfplumber
     line_re = SPECIES_HARVEST[key]["line"]
     out = {}
+    table = ""   # title of the table the rows belong to ("Table 7. ... multi-season limited-entry ...")
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             for line in (page.extract_text() or "").splitlines():
+                if re.match(r"^\s*T\s?able\s*\d+", line):
+                    table = line.lower()
                 m = line_re.match(line.strip())
                 if not m:
+                    continue
+                # The bear report's conservation-permit table (Table 8) reuses limited-entry
+                # hunt numbers; only the drawn limited-entry permits belong on this page.
+                if key == "bear" and "conservation" in table:
                     continue
                 v = [int(x) for x in m.groups()[1:]]
                 if key == "bear":     # permits, male, female, total, % filled
