@@ -211,11 +211,11 @@
     .nav-links .nav-menu a { padding: 0.5rem 0.5rem; font-size: 0.92rem; }
     .nav-links .nav-menu a.nav-menu-sep { margin-top: 0; border-top: 0; padding-top: 0.5rem; }
     /* Home hero: the logo and headline sat side by side and ran ~70px past a phone
-       screen. Stack them, centered, with a smaller logo. */
+       screen. Stack them, centered (logo 120px, a little under desktop's 130px). */
     #home { padding: 6rem 1.25rem 4rem; }
     .hero { width: 100%; min-width: 0; }
     .hero-top { flex-direction: column; gap: 1.25rem; text-align: center; }
-    .hero-logo img { height: 92px; }
+    .hero-logo img { height: 120px; }
     .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
     .services-grid { grid-template-columns: 1fr; }
     footer { flex-direction: column; gap: 1rem; text-align: center; }
