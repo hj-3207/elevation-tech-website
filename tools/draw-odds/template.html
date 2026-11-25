@@ -45,13 +45,14 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 
 /* CONTROLS */
 .panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.35rem;position:relative;overflow:hidden;margin-bottom:1rem}
-.controls{display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem 0.9rem;margin:0 0 0.5rem}
-.controls .q{flex:1 1 200px;min-width:170px;max-width:300px;background:transparent;border:1px solid var(--border-strong);border-radius:6px;padding:0 0.85rem;min-height:40px;color:var(--text);font-family:var(--mono);font-size:0.74rem;transition:border-color 0.2s}
+/* Desktop: everything on one line at 1,400 px for every species, search first (far left). */
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem 0.6rem;margin:0 0 0.5rem}
+.controls .q{order:-3;flex:1 1 150px;min-width:150px;max-width:280px;background:transparent;border:1px solid var(--border-strong);border-radius:6px;padding:0 0.85rem;min-height:40px;color:var(--text);font-family:var(--mono);font-size:0.74rem;transition:border-color 0.2s}
 .controls .q::placeholder{color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-size:0.7rem}
 .controls .q:hover{border-color:rgba(255,255,255,0.25)}
 .controls .q:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-tint-2)}
-.toggles{display:flex;flex-wrap:wrap;gap:0.4rem}
-.tog{display:inline-flex;align-items:center;gap:0.45rem;min-height:40px;padding:0 0.8rem;border:1px solid var(--border-strong);border-radius:6px;cursor:pointer;
+.toggles{display:flex;flex-wrap:wrap;gap:0.3rem}
+.tog{display:inline-flex;align-items:center;gap:0.4rem;min-height:40px;padding:0 0.6rem;border:1px solid var(--border-strong);border-radius:6px;cursor:pointer;
   font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);transition:all 0.2s;user-select:none}
 .tog:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
 .tog input{accent-color:var(--orange);width:14px;height:14px;margin:0;cursor:pointer}
@@ -65,7 +66,7 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .ctl input[type=number]{font-family:var(--mono)}
 .ctl input::placeholder{color:var(--subtle)}
 .seg{display:flex;border:1px solid var(--border-strong);border-radius:6px;overflow:hidden;background:transparent}
-.seg button{flex:1;border:0;background:none;padding:0 0.85rem;cursor:pointer;min-height:38px;font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);transition:all 0.2s}
+.seg button{flex:1;border:0;background:none;padding:0 0.7rem;cursor:pointer;min-height:38px;font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);transition:all 0.2s}
 .seg button+button{border-left:1px solid var(--border-strong)}
 .seg button:hover{color:#fff}
 .seg button[aria-pressed=true]{background:rgba(204,85,0,0.14);color:#fff;box-shadow:inset 0 0 0 1px var(--orange)}
@@ -188,8 +189,8 @@ table.main th.is-proj{font-style:italic}
 .f-toggle{display:none}
 
 /* WEAPON BUTTONS + BADGES */
-.wchips{display:flex;flex-wrap:wrap;gap:0.35rem}
-.wchip{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--border-strong);border-radius:6px;padding:0 0.75rem;min-height:40px;cursor:pointer;transition:all 0.2s}
+.wchips{display:flex;flex-wrap:wrap;gap:0.3rem}
+.wchip{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--border-strong);border-radius:6px;padding:0 0.6rem;min-height:40px;cursor:pointer;transition:all 0.2s}
 .wchip:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
 .wchip.on{color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
 .badge{display:inline-block;font-family:var(--mono);font-size:0.58rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--orange-bright);border:1px solid var(--border-orange);background:var(--orange-tint);border-radius:3px;padding:0.1rem 0.4rem;margin-left:0.45rem;vertical-align:0.12em;white-space:nowrap;cursor:help}
