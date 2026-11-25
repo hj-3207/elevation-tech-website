@@ -19,6 +19,7 @@ Then commit and push. The build never touches git.
   - the tags and notes CSVs you edit
   - `raw/` downloads, kept for a rolling 5 years
 - `img/drawodds-*.png` — species icons, app icon and screenshot.
+- `img/drawodds-og.jpg` — the link-preview card (1200×630), made from `tools/draw-odds/og-card.html` with headless Edge.
 
 ## Next year's tag numbers
 DWR approves permit numbers in the spring. Until they're loaded, the page projects with last year's tags and says so.
@@ -48,4 +49,6 @@ The plain projection assumes nobody switches hunts, and history shows it runs lo
 - **How it's tested:** fit on all years but one, then project the held-out year.
 - **Where it's used:** only where it lowers the average error versus the plain projection.
 
-The page adds `rate × bonus tags` people above the split before running next year's draw.
+The page adds `rate × bonus tags` people above the split before running next year's draw. "About the projections" on the page shows every species' rates and whether each species uses them.
+
+Splitting the rates by weapon type was tested in 2026 and didn't improve accuracy, so it's one rate per species.

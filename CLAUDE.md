@@ -288,6 +288,9 @@ generator, so there's still no build step on deploy: Pages serves the committed 
   besides Google Fonts is an anonymous click count when someone follows an app link
   (`referrals_drawodds`: which app, where on the page, when). The page says so in its
   sources line. See `tools/draw-odds/CLAUDE.md`.
+- It is the only page with link-preview tags (`og:` / `twitter:`), pointing at
+  `img/drawodds-og.jpg` (made from `tools/draw-odds/og-card.html`). Other pages have none
+  yet; copy that pattern (absolute URLs, 1200×630 image) if one needs a preview.
 
 **The nav is `position: fixed`,** so anchor targets need to reserve room or they
 land underneath it. `style.css` handles this globally:
