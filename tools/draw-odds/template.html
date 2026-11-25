@@ -135,11 +135,7 @@ table.main th[aria-sort=ascending],table.main th[aria-sort=descending]{color:var
 table.main th .arr{font-size:0.6rem;margin-left:0.3rem}
 table.main th .sbtn-sub{color:var(--subtle);margin-left:0.1rem}
 table.main th .sbtn-sub.on{color:var(--orange)}
-table.main td .s-dates{color:var(--orange-bright)}
-table.main td ul.s-parts{list-style:none;margin:0.25rem 0 0;padding:0 0 0 0.6rem;border-left:1px solid var(--border-strong);font-family:var(--mono);font-size:0.66rem;line-height:1.55;color:var(--muted)}
-table.main td ul.s-parts li{white-space:nowrap}
-table.main td ul.s-parts b{font-weight:500;color:var(--soft)}
-table.main th.l,table.main td.l{text-align:left}
+table.main td .s-dates{color:var(--orange-bright)}table.main th.l,table.main td.l{text-align:left}
 table.main td.hunt{white-space:normal;min-width:160px;max-width:260px}
 .c-star{width:34px;padding-right:0!important}
 .controls[hidden],.summary[hidden],.filter-bar[hidden],.tbl-wrap[hidden],.star-view[hidden]{display:none!important}
@@ -1099,16 +1095,11 @@ function render(){
 const seasonStart = h => (h.seasons || []).map(s => s[1]).filter(Boolean).sort()[0] || "";
 const seasonEnd = h => (h.seasons || []).map(s => s[2]).filter(Boolean).sort().pop() || "";
 // Season dates for the "Season dates" sort: "Sep 1 – Sep 30". A multi-season hunt (one
-// tag, several windows) shows its whole span, first opening day to last closing day,
-// with each window's weapon and dates underneath once that hunt is opened.
-const seasonList = h => (h.seasons || []).filter(s => s[1]).sort((a, b) => a[1].localeCompare(b[1]));
+// tag, several windows) shows its whole span, first opening day to last closing day;
+// each window is listed in the hunt's detail view.
 function seasonDatesHtml(h){
-  const ss = seasonList(h);
-  if (!ss.length) return `<div class="meta s-dates">No season dates</div>`;
-  let html = `<div class="meta s-dates">${esc(fmtDate(seasonStart(h)))} – ${esc(fmtDate(seasonEnd(h)))}</div>`;
-  if (ss.length > 1 && ui.open.has(h.code)) html += `<ul class="s-parts">` +
-    ss.map(s => `<li><b>${esc(s[0])}</b> ${esc(fmtDate(s[1]))} – ${esc(fmtDate(s[2]))}</li>`).join("") + `</ul>`;
-  return html;
+  const s = seasonStart(h);
+  return `<div class="meta s-dates">${s ? `${esc(fmtDate(s))} – ${esc(fmtDate(seasonEnd(h)))}` : "No season dates"}</div>`;
 }
 
 function rowHtml(st, sp, h, a, p, inGroup){
