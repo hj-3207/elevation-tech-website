@@ -163,6 +163,8 @@ tr.row:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
 .meta{color:var(--muted);font-size:0.8rem;margin-top:0.15rem}
 .code{font-family:var(--mono);font-size:0.72rem;color:var(--muted)}
 .star{background:none;border:0;cursor:pointer;font-size:1.05rem;line-height:1;color:var(--subtle);padding:2px;transition:color 0.2s}
+.d-close,.m-pin{display:none}
+.m-only{display:none}
 .star:hover{color:var(--soft)}
 .star[aria-pressed=true]{color:var(--orange)}
 .big{font-weight:800;font-size:0.98rem;color:#fff}
@@ -398,7 +400,6 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   table.main>tbody>tr>td.k-unit{grid-column:1/-1;padding-right:2rem}
   table.main>tbody>tr>td.k-sp{grid-column:1/-1;padding-right:2rem}
   table.main>tbody>tr>td.k-sp + td.k-unit{margin-top:-0.3rem}
-  table.main>tbody>tr.srow>td.k-psplit{display:none}
   /* Every desktop column is on the card: the four key numbers first, then a smaller
      row (applicants, split, harvest, projected split), then the trend columns when
      "Trend columns" is on. CSS order rearranges the cells; the DOM keeps table order. */
@@ -423,6 +424,36 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   table.main>tbody>tr.srow>td.k-mine:nth-child(n+9){grid-column:span 2}
   table.main>tbody>tr.grp{display:block}
   table.main>tbody>tr.grp>td{display:block;border:0;padding:1rem 0.2rem 0.5rem;background:none;white-space:normal}
+  /* Unit headings: name on its own line, counts in small type underneath. */
+  table.main>tbody>tr.grp .grp-meta{display:block;margin:0.2rem 0 0 1.55rem;font-size:0.62rem}
+  /* Bigger tap area for the star (about 40px), same look. */
+  table.main>tbody>tr>td.k-star{top:0.1rem;right:0.05rem}
+  table.main>tbody>tr>td.k-star .star{padding:0.6rem;font-size:1.4rem}
+  /* Odds at a glance: a colored left edge for the active hunter's odds. */
+  table.main>tbody>tr[data-odds="p-good"]{box-shadow:inset 3px 0 0 var(--orange)}
+  table.main>tbody>tr[data-odds="p-mid"]{box-shadow:inset 3px 0 0 rgba(204,85,0,0.45)}
+  table.main>tbody>tr[data-odds="p-bad"]{box-shadow:inset 3px 0 0 var(--border-strong)}
+  /* Close, small and right-aligned at the bottom of an opened card. */
+  .d-close{display:block;margin:0.6rem 0 0 auto;background:none;border:1px solid var(--border-strong);border-radius:6px;padding:0.35rem 0.7rem;
+    font-family:var(--mono);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+  .d-close:hover{color:#fff;border-color:var(--orange)}
+  /* Starred cards: same layout as species cards (key numbers, then a smaller row). */
+  table.main>tbody>tr.srow>td.k-sp,table.main>tbody>tr.srow>td.k-unit{order:0}
+  table.main>tbody>tr.srow>td.k-tags{order:1} table.main>tbody>tr.srow>td.k-guar{order:2}
+  table.main>tbody>tr.srow>td.k-proj{order:3} table.main>tbody>tr.srow>td.k-mine{order:4}
+  table.main>tbody>tr.srow>td.k-mine2{order:5;grid-column:span 2}
+  table.main>tbody>tr.srow>td.k-apps{order:10;grid-column:1} table.main>tbody>tr.srow>td.k-split{order:11}
+  table.main>tbody>tr.srow>td.k-harv{order:12} table.main>tbody>tr.srow>td.k-psplit{order:13}
+  table.main>tbody>tr.srow>td:is(.k-apps,.k-split,.k-harv,.k-psplit){border-top:1px solid var(--border)!important;padding-top:0.55rem}
+  table.main>tbody>tr.srow>td:is(.k-apps,.k-split,.k-harv,.k-psplit) .big{font-size:0.8rem;font-weight:700}
+  /* Pinned strip under the nav. */
+  .m-pin{display:flex;position:fixed;left:0;right:0;z-index:40;align-items:center;gap:0.55rem;padding:0.5rem 1rem;border:0;border-bottom:1px solid var(--border-strong);
+    background:rgba(10,10,10,0.94);backdrop-filter:blur(8px);color:var(--soft);font-family:var(--mono);font-size:0.66rem;letter-spacing:0.05em;text-transform:uppercase;
+    cursor:pointer;transform:translateY(-120%);opacity:0;pointer-events:none;transition:transform 0.2s,opacity 0.2s}
+  .m-pin.on{transform:none;opacity:1;pointer-events:auto}
+  .m-pin img{height:16px;width:auto}
+  .m-pin b{color:#fff;font-weight:600}
+  .m-pin i{margin-left:auto;font-style:normal;color:var(--muted)}
   table.main>tbody>tr.detail{display:block;margin-bottom:0.6rem}
   table.main>tbody>tr.detail>td{display:block;border:1px solid var(--border-orange);border-top:0;border-radius:0 0 10px 10px;padding:0.9rem 0.75rem 1.1rem}
   /* Opened card: the desktop row marker (orange bar on the first cell) lands beside
@@ -431,7 +462,7 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   table.main>tbody>tr.row.open{background:var(--orange-tint)}
   /* The detail inside a card: full width, tighter tables, and no share-drawn bars
      (the table can't fit them at phone width; the numbers carry the same story). */
-  .detail-grid{position:static;max-width:none!important;min-width:0}
+  .detail-grid{position:static;max-width:none!important;min-width:0;row-gap:0}
   .detail-grid>div{min-width:0}
   table.pts{font-size:0.76rem}
   table.pts th,table.pts td{padding:0.32rem 0.3rem}
@@ -440,7 +471,7 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   /* Year by year: each number stays with its change; the split's "(1 of 5)" drops under it. */
   table.pts.trend td{white-space:nowrap;font-size:0.72rem}
   /* Point-level and year-by-year tables fold (closed by default): heading with +/–. */
-  details.dsec{border:1px solid var(--border);border-radius:8px;padding:0.65rem 0.7rem;margin-bottom:0.7rem}
+  details.dsec{border:1px solid var(--border);border-radius:8px;padding:0.65rem 0.7rem;margin-bottom:0.5rem}
   details.dsec>summary{cursor:pointer}
   details.dsec>summary h3{margin:0;align-items:center}
   details.dsec>summary h3::after{content:'+';margin-left:auto;color:var(--muted);font-size:0.95rem;line-height:1}
@@ -639,6 +670,9 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 </main>
 
 <div class="fpop" id="fpop" role="dialog" aria-modal="false" hidden></div>
+<!-- Phones: pinned under the nav once the species buttons scroll away, so a long
+     list still says whose odds and which species. Tap to go back up. -->
+<button type="button" class="m-pin" id="mPin" aria-label="Back to the species and points"></button>
 
 <footer>
   <div class="footer-logo"><img src="TechLogoPrimary-White.png" alt="Elevation Technology Solutions"></div>
@@ -960,6 +994,7 @@ function render(){
   $("#subtitle").innerHTML = `Results from the <b>${st.drawYear} draw</b>, harvest from the <b>${st.harvestYear} season</b>, and projections for the <b>${N} draw</b>.`;
   renderSpeciesTabs(); renderWeaponChips(); renderHunter(); renderExplain(st, sp);
   if (typeof showCurrentSpecies === "function") showCurrentSpecies();
+  if (typeof renderPin === "function") renderPin();
   $("#starView").hidden = !ui.starView;
   [".controls", "#summary", "#filterBar", "#mainWrap"].forEach(s => { $(s).hidden = ui.starView; });
   if (ui.starView){ $("#eyebrow").textContent = "Starred hunts"; renderStarred(st); return; }
@@ -1067,7 +1102,8 @@ function rowHtml(st, sp, h, a, p, inGroup){
   };
   // Each cell carries its column key (k-*) and a short label: on phones the row
   // becomes a card and shows only some cells, each under its label.
-  return `<tr class="row${open ? " open" : ""}${inGroup ? " in-grp" : ""}" data-code="${esc(h.code)}" tabindex="0" aria-expanded="${open}">` +
+  // data-odds drives the colored left edge on phone cards (p-good / p-mid / p-bad).
+  return `<tr class="row${open ? " open" : ""}${inGroup ? " in-grp" : ""}" data-code="${esc(h.code)}" data-odds="${o == null ? "" : oddsClass(o)}" tabindex="0" aria-expanded="${open}">` +
     columns(st).map(c => `<td class="k-${c.key}${c.key === "star" ? " c-star l" : c.key === "unit" ? " l hunt" : ""}${c.proj ? " is-proj" : ""}"` +
       `${c.short ? ` data-label="${esc(c.short)}"` : ""}>${cell[c.key]}</td>`).join("") + `</tr>`;
 }
@@ -1154,7 +1190,7 @@ function detailHtml(st, sp, h, a, p, ncol){
       <dt>${esc(st.harvestYear)} harvest</dt><dd>${hv ? `${hv[3].toFixed(1)}% · ${fmt(hv[2])} harvested by ${fmt(hv[1])} hunters afield (${fmt(hv[0])} permits)` : "No harvest record for this hunt #"}</dd>
       <dt>${N} projection</dt><dd>${projText(a, st)}</dd>
     </dl>${promoHtml(sp, a, p)}</div>
-  </div></td></tr>`;
+  </div><button type="button" class="d-close" data-close="${esc(h.code)}">Close ▴</button></td></tr>`;
 }
 
 // One row per draw year (2024, 2025 from DWR's PDFs; 2026 from utahdraws.com), plus
@@ -1402,17 +1438,22 @@ function renderStarred(st){
     const pGuar = !m ? `<span class="na">—</span>` : m.randomOnly ? `<span class="na">random only</span>`
       : `<span class="big">${m.guarPts}</span><span class="small">${m.all ? "all would draw" : "points"}</span>`;
     const pSplit = !m || m.randomOnly || m.all ? `<span class="na">—</span>` : `<span class="big">${m.split} pts</span><span class="small">${fmt(m.k)} of ${fmt(m.n)} draw</span>`;
-    const odds = ui.profiles.map(prof => {
+    const odds = ui.profiles.map((prof, i) => {
       const p = ptsOf(prof, s.key), o = oddsAt(m, p);
-      return `<td class="k-mine" data-label="${esc(prof.name)}'s odds">${p == null ? `<span class="na">add points</span>` : o == null ? `<span class="na">—</span>`
+      return `<td class="k-mine${i ? " k-mine2" : ""}" data-label="${esc(prof.name)}'s odds">${p == null ? `<span class="na">add points</span>` : o == null ? `<span class="na">—</span>`
         : `<span class="pill ${oddsClass(o)}">${pct(o)}</span><span class="small">${p} pt${p === 1 ? "" : "s"}</span>`}</td>`;
     }).join("");
-    return `<tr class="srow" data-sp="${esc(s.key)}" data-code="${esc(h.code)}" tabindex="0">
+    const ao = oddsAt(m, ptsOf(activeProfile(), s.key));
+    return `<tr class="srow" data-sp="${esc(s.key)}" data-code="${esc(h.code)}" data-odds="${ao == null ? "" : oddsClass(ao)}" tabindex="0">
       <td class="c-star l k-star"><button type="button" class="star" data-star="${esc(id)}" aria-pressed="true" aria-label="Unstar ${esc(h.unit)} ${esc(h.code)}">★</button></td>
       <td class="l sp k-sp">${s.icon ? `<img src="${esc(s.icon)}" alt="">` : ""}<span>${esc(s.short || s.label)}</span></td>
       <td class="l hunt k-unit"><div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div></td>
       <td class="k-tags" data-label="${tagYear(st)} tags">${tags}</td><td class="k-guar" data-label="${D} guaranteed">${guar}</td>
-      <td class="k-proj is-proj" data-label="${N} projected">${pGuar}</td><td class="k-psplit is-proj">${pSplit}</td>${odds}</tr>`;
+      <td class="k-proj is-proj" data-label="${N} projected">${pGuar}</td><td class="k-psplit is-proj" data-label="${N} proj. split">${pSplit}</td>${odds}` +
+      // Phone-only cells (hidden on desktop, where the starred table keeps its columns).
+      `<td class="m-only k-apps" data-label="${D} applicants"><span class="big">${fmt(a.apps)}</span></td>` +
+      `<td class="m-only k-split" data-label="${D} split">${a.split ? `<span class="big">${a.split[0]} pts</span><span class="small">${fmt(a.split[2])} of ${fmt(a.split[1])} drew</span>` : `<span class="na">—</span>`}</td>` +
+      `<td class="m-only k-harv" data-label="${st.harvestYear} harvest">${h.harvest ? `<span class="big">${h.harvest[3].toFixed(0)}%</span><span class="small">${fmt(h.harvest[2])} of ${fmt(h.harvest[1])}</span>` : `<span class="na">—</span>`}</td></tr>`;
   }).join("");
 }
 function renderHunter(){
@@ -1442,6 +1483,28 @@ function renderHunter(){
 }
 
 // ---------- controls ----------
+// Height of what's fixed at the top (the site nav, plus the pinned strip when shown).
+const topOffset = () => { const n = document.querySelector("nav"); const pin = $("#mPin");
+  return (n ? n.offsetHeight : 0) + (pin.classList.contains("on") ? pin.offsetHeight : 0); };
+function renderPin(){
+  const st = curState(), sp = curSpecies(), prof = activeProfile(), p = ptsOf(prof);
+  $("#mPin").innerHTML = ui.starView
+    ? `<b>★ Starred</b><span>${esc(prof.name)}</span><i aria-hidden="true">▴</i>`
+    : `${sp.icon ? `<img src="${esc(sp.icon)}" alt="">` : ""}<b>${esc(sp.short || sp.label)}</b><span>${esc(prof.name)} · ${p == null ? "no points" : `${p} pts`}</span><i aria-hidden="true">▴</i>`;
+}
+(function(){
+  const pin = $("#mPin"), anchor = $("#speciesTabs");
+  const place = () => { const n = document.querySelector("nav"); pin.style.top = (n ? n.offsetHeight : 0) + "px"; };
+  const check = () => {
+    if (!isPhone()){ pin.classList.remove("on"); return; }
+    place();
+    const navH = document.querySelector("nav") ? document.querySelector("nav").offsetHeight : 0;
+    pin.classList.toggle("on", anchor.getBoundingClientRect().bottom < navH);
+  };
+  window.addEventListener("scroll", check, {passive: true});
+  window.addEventListener("resize", check);
+  pin.onclick = () => window.scrollTo({top: Math.max(0, anchor.getBoundingClientRect().top + window.scrollY - document.querySelector("nav").offsetHeight - 70), behavior: "smooth"});
+})();
 // Phones: open/close the folded filters.
 $("#fToggle").onclick = () => {
   const open = $(".controls").classList.toggle("open");
@@ -1643,6 +1706,13 @@ $("#tbody").addEventListener("toggle", e => {
 }, true);
 $("#tbody").addEventListener("click", e => {
   if (!isPhone() && e.target.closest("details.dsec > summary")) e.preventDefault();
+});
+// Phones: "Close" at the bottom of an opened card closes it and scrolls back to it.
+$("#tbody").addEventListener("click", e => {
+  const c = e.target.closest("[data-close]"); if (!c) return;
+  const code = c.dataset.close; ui.open.delete(code); render();
+  const row = document.querySelector(`#tbody tr.row[data-code="${CSS.escape(code)}"]`);
+  if (row) window.scrollTo({top: row.getBoundingClientRect().top + window.scrollY - topOffset() - 10});
 });
 $("#tbody").addEventListener("keydown", e => {
   if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.row, tr.grp")){ e.preventDefault(); e.target.click(); }

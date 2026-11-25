@@ -125,6 +125,14 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
     - **Opened card:** the detail fills the card width with tighter tables. The share-drawn bars and their legend colors are hidden (the split-group key stays). Year-by-year cells don't wrap; the split's "(1 of 5)" sits under its number. Hunt facts put each label above its value. The desktop orange row marker is hidden and the whole card is tinted instead. Checked at 375 px in an iframe (headless Edge won't go below about 525 px).
     - **Folding sections in the opened card:** "draw by point level" and "year by year" are `<details class="dsec">` built by `dsec(key, title, inner)`. On phones they start **closed** and stay as toggled while the page is open (`ui.dsecOpen`); on desktop they're always open and a click on the heading is ignored.
     - **App suggestions on phones** stay 2x2 (icon, name, pitch clamped to four lines) instead of one column.
+    - **Card extras (added 2026-11-24):**
+      - A small "Close ▴" at the bottom of an opened card (`.d-close`, `data-close`) closes it and scrolls back to it.
+      - The star's tap area is about 40 px; the look is unchanged.
+      - A 3px left edge colored by the active hunter's odds (`data-odds` = `p-good`/`p-mid`/`p-bad` on the row): orange, faded orange, gray. The owner skipped "x pts short".
+      - Unit headings put the counts on their own small line.
+      - Starred cards get the same second row (applicants, split, harvest, projected split) via phone-only `td.m-only` cells; other hunters' odds sit in a row of their own.
+      - **Pinned strip** (`#mPin`, `renderPin`): fixed under the nav once the species buttons scroll out of view, showing the species and "Hunter · 12 pts" (or "★ Starred"). Tapping it scrolls back up.
+    - **Testing scroll in headless Edge:** the site sets `html{scroll-behavior:smooth}`, so use `window.scrollTo({top, behavior:"instant"})` in test scripts or nothing moves. The template's functions live inside an IIFE, so test scripts can't call them directly.
     - **Keep the card CSS scoped with `>`** (`table.main>tbody>tr.row>td`): the hunt detail has its own tables inside the row, and descendant selectors broke them.
 - **Badges** come from DWR labels:
   - Management buck (rule R657-5-45: 3 points or less on at least one antler, eye guards don't count), Cactus buck, Premium, Restricted (restricted rifle: open or peep sights, no semi-auto, per R657-5-48), HAMSS, and bison Cow only / Hunter's choice.
