@@ -385,18 +385,21 @@ def apply_bear_ho(species, refresh):
     sp = next((s for s in species if s["key"] == "bear"), None)
     if not sp:
         return
-    pdf = RAW / "utah_bear_guidebook.pdf"
+    # Reuse the newest saved copy unless --refresh; otherwise download and save it under
+    # the year printed on its cover.
+    saved = sorted(RAW.glob("utah_bear_guidebook_*.pdf"))
     try:
-        fetch(BEAR_GUIDEBOOK_URL, pdf, refresh)
-        ho = parse_bear_ho(pdf)
+        if saved and not refresh:
+            ho = parse_bear_ho(saved[-1])
+        else:
+            tmp = RAW / "utah_bear_guidebook.pdf"
+            fetch(BEAR_GUIDEBOOK_URL, tmp, True)
+            ho = parse_bear_ho(tmp)
+            dated = RAW / f"utah_bear_guidebook_{ho['year'] or 'unknown'}.pdf"
+            tmp.replace(dated)
     except Exception as e:
         print(f"  ! bear guidebook not available ({e})", file=sys.stderr)
         return
-    if ho["year"]:   # keep a copy named for its year, like the other cached reports
-        dated = RAW / f"utah_bear_guidebook_{ho['year']}.pdf"
-        if not dated.exists():
-            dated.write_bytes(pdf.read_bytes())
-    pdf.unlink(missing_ok=True)
     fee = f"${ho['fee'][0]} resident / ${ho['fee'][1]} nonresident" if ho["fee"] else "see the guidebook for the fee"
     sale = f", on sale from {ho['sale']}" if ho["sale"] else ""
     n, units = 0, set()
