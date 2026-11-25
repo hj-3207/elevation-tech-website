@@ -138,7 +138,7 @@ table.main td.hunt{white-space:normal;min-width:160px;max-width:260px}
 .c-star{width:34px;padding-right:0!important}
 .controls[hidden],.summary[hidden],.filter-bar[hidden],.tbl-wrap[hidden],.star-view[hidden]{display:none!important}
 .vtab.star-tab{color:var(--soft)}
-.vtab.star-tab b{color:var(--orange);font-size:0.95rem;line-height:1}
+.vtab.star-tab b{color:var(--orange);font-size:1.1rem;line-height:1}
 .vtab.star-tab .cnt{color:var(--subtle)}
 .star-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem 1.5rem;margin-bottom:1rem}
 .star-sum{color:var(--muted);font-size:0.86rem;line-height:1.6;max-width:760px}
@@ -1441,7 +1441,7 @@ $("#weaponChips").addEventListener("click", e => {
 function renderSpeciesTabs(){
   const st = curState(), sp = curSpecies();
   $("#speciesTabs").innerHTML =
-    `<button type="button" class="vtab star-tab${ui.starView ? " is-on" : ""}" data-starview aria-pressed="${ui.starView}"><b aria-hidden="true">★</b><span>Starred</span><span class="cnt">${starredHunts(st).length}</span></button>` +
+    `<button type="button" class="vtab star-tab${ui.starView ? " is-on" : ""}" data-starview aria-pressed="${ui.starView}" aria-label="Starred hunts (${starredHunts(st).length})" title="Starred hunts"><b aria-hidden="true">★</b><span class="cnt" aria-hidden="true">${starredHunts(st).length}</span></button>` +
     st.species.map(s =>
     `<button type="button" class="vtab${s.key === sp.key && !ui.starView ? " is-on" : ""}" data-species="${esc(s.key)}" aria-pressed="${s.key === sp.key && !ui.starView}">` +
     (s.icon ? `<img src="${esc(s.icon)}" alt="" onerror="this.remove()">` : "") + `<span>${esc(s.short || s.label)}</span></button>`).join("");
