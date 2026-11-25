@@ -72,7 +72,7 @@ def weapon_type(weapon):
     if "muzzleloader" in w:
         return "Muzzleloader"
     if "rifle" in w or "any legal weapon" in w:
-        return "Any Legal Weapon"
+        return "Rifle"
     return "Other"
 
 
@@ -119,17 +119,23 @@ def fetch(url, dest, refresh):
     return body
 
 
+def plain_weapon(name):
+    """DWR says "Any Legal Weapon"; hunters say "Rifle". The owner asked for the common
+    term everywhere on the page ("Early Any Legal Weapon" -> "Early Rifle")."""
+    return re.sub(r"(?i)any legal weapon", "Rifle", name or "")
+
+
 def weapon_label(h):
     if h.get("IsMultiseasonHunt") or len(h.get("SeasonWeapons") or []) > 1:
         return "Multi-Season"
     sw = (h.get("SeasonWeapons") or [{}])[0]
-    return (sw.get("WeaponName") or "").strip() or "—"
+    return plain_weapon((sw.get("WeaponName") or "").strip()) or "—"
 
 
 def seasons(h):
     out = []
     for s in h.get("SeasonWeapons") or []:
-        out.append([s.get("WeaponName", ""), (s.get("SeasonStartDate") or "")[:10], (s.get("SeasonEndDate") or "")[:10]])
+        out.append([plain_weapon(s.get("WeaponName", "")), (s.get("SeasonStartDate") or "")[:10], (s.get("SeasonEndDate") or "")[:10]])
     return out
 
 

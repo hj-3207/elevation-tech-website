@@ -1383,7 +1383,7 @@ $("#filterBar").addEventListener("click", e => {
 });
 
 // ---------- weapon buttons ----------
-const WTYPE_ORDER = ["Archery", "Muzzleloader", "Any Legal Weapon", "Multi-Season", "HAMSS", "Other"];
+const WTYPE_ORDER = ["Archery", "Muzzleloader", "Rifle", "Multi-Season", "HAMSS", "Other"];
 function renderWeaponChips(){
   const present = new Set(curSpecies().hunts.map(h => h.wtype));
   const types = WTYPE_ORDER.filter(w => present.has(w));
