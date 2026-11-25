@@ -6,7 +6,7 @@ the owner kept by hand for years (`OneDrive\Documents\Hunting\DrawOdds2025.xlsx`
 - **Pages:**
   - `draw-odds.html` (https://elevationtechsolutions.net/draw-odds.html) is the **state picker**: a map of the West plus Kansas, and a list.
   - Each working state has its own page, e.g. `draw-odds-utah.html`, so it can be linked directly.
-- **Scope (2026-11-25):** Utah works. Colorado, Wyoming, Arizona, New Mexico, Nevada, Montana, Idaho and Kansas show as "Coming later". The owner's plan is to add them **one state at a time**; Colorado and Wyoming are the likely first ones (the owner tracks those points).
+- **Scope (2026-11-25):** Utah works. Colorado, Wyoming, Arizona, New Mexico, Nevada, Montana, Idaho, Kansas and Oregon (added the same day) show as "Coming later". The owner's plan is to add them **one state at a time**; Colorado and Wyoming are the likely first ones (the owner tracks those points).
 - **Old links:** before 2026-11-25 Utah lived at `draw-odds.html`. The picker forwards any link carrying view settings (`?sp=`, `q=`, `h=`, …) to `draw-odds-utah.html` with them, so old shared links still open the right view.
 - **History:** built Nov 2026 in `OneDrive\Documents\Hunting\DrawOdds`, then **moved into this repo on 2026-11-24** so it lives in one place. That OneDrive folder is now only an archive; don't build from it.
 
@@ -224,7 +224,7 @@ There's no test suite. Checks are done by:
   - The owner agreed (2026-11-25): keep one rate per species; don't revisit without new data.
 - **Link preview:** `og:`/`twitter:` tags in the template head point at `img/drawodds-og-<state>.jpg` (1200×630), and the picker's at `img/drawodds-og-states.jpg`. Both are rendered from `tools/draw-odds/og-card.html` with headless Edge (see the comment in that file). Re-render them if the pages' look changes a lot. The static `<title>` is "<State> Draw Odds | Elevation Technology", so crawlers that don't run JS get the right name.
 - **State picker and switcher (built 2026-11-25, owner's design):**
-  - **Picker:** the map covers the West only plus Kansas. Washington, Oregon and California are dim outlines for context, not clickable, with no label. Working states are orange links; the others say "Coming later". A list beside the map (below it on phones) repeats the states with their draw system. If this browser has hunters with points, Utah's row says "Your points are saved".
+  - **Picker:** the map covers the West only plus Kansas. Washington and California are dim outlines for context, not clickable, with no label. Any map state not in `states.json` shows that way, so adding one to the list is all it takes to label it. Working states are orange links; the others say "Coming later". A list beside the map (below it on phones) repeats the states with their draw system. If this browser has hunters with points, Utah's row says "Your points are saved".
   - **Switcher:** each state page has a "State: Utah ▾" button at the top right of the title (on phones a compact "Utah ▾" beside the eyebrow). It lists working states, the coming ones (greyed) and "All states (map) →".
   - **Saved points:** hunters and points sit in one localStorage (`drawodds:` keys) shared by every state page. Utah's species keys (`le-elk`, …) are unprefixed. A new state's species keys must not clash, so prefix them (e.g. `co-elk`).
   - **Site copy:** apps.html and index.html still say "Utah" (true while it's the only working state). Update them when the second state goes live.

@@ -7,5 +7,6 @@
   {"code": "NV", "name": "Nevada", "page": "draw-odds-nevada.html", "live": false, "system": "Bonus points (squared)"},
   {"code": "MT", "name": "Montana", "page": "draw-odds-montana.html", "live": false, "system": "Bonus points (squared)"},
   {"code": "ID", "name": "Idaho", "page": "draw-odds-idaho.html", "live": false, "system": "Random draw"},
-  {"code": "KS", "name": "Kansas", "page": "draw-odds-kansas.html", "live": false, "system": "Preference points"}
+  {"code": "KS", "name": "Kansas", "page": "draw-odds-kansas.html", "live": false, "system": "Preference points"},
+  {"code": "OR", "name": "Oregon", "page": "draw-odds-oregon.html", "live": false, "system": "Preference points"}
 ]

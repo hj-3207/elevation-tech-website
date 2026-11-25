@@ -590,7 +590,7 @@ def build_picker(states, template):
         s = by_code.get(code)
         dx, dy = nudge.get(code, (0, 0))
         x, y = g["cx"] + dx, g["cy"] + dy
-        if not s:   # context only (WA, OR, CA): outline, no label
+        if not s:   # context only (on the map but not in states.json, e.g. WA, CA): outline, no label
             parts.append(f'<g class="ctx"><path d="{g["d"]}"/></g>')
             continue
         label = (f'<text class="code" x="{x}" y="{y}">{code}</text>'
