@@ -44,7 +44,7 @@ python tools/draw-odds/build_utah.py --refresh  # re-download PDFs and current-y
 | `data/draw-odds/utah-hunt-notes.csv` | Owner's own hunt badges (`hunt_code,badge,note`), e.g. "Stag". Empty so far. |
 | `data/draw-odds/raw/` | Downloads and caches, rolling 5 years: `utah_<year>_<typeId>.json` (utahdraws), `utah_odds_<year>_{0,1}.pdf` plus `.parsed.json`, `utah_harvest_<year>.pdf`. About 36 MB, committed on purpose as the backup. |
 | `img/drawodds-*.png` | Species button icons: white PNGs from `C:\Users\hayden.j\Desktop\RackScore\rackscoreflutter\assets`, cropped and resized to 64 px tall. |
-| `img/drawodds-icon.png`, `img/drawodds-screenshot.jpg` | App icon (a dice placeholder) and screenshot used on `apps.html` and `index.html`. |
+| `img/drawodds-icon.png`, `img/drawodds-screenshot.jpg` | App icon (orange notched tag, black antler, transparent; source `tools/draw-odds/drawodds-icon.svg`) and screenshot used on `apps.html` and `index.html`. |
 
 ## Data sources
 
@@ -204,7 +204,8 @@ There's no test suite. Checks are done by:
 
 ## Backlog / ideas (owner agreed to "later")
 
-- A real Draw Odds app icon to replace the dice placeholder (`img/drawodds-icon.png`).
 - Possibly calibrate pronghorn and general deer differently, since drop-ins didn't help there.
 - A flat-number-per-hunt drop-in variant was never backtested. The owner asked; it was offered, not done.
 - Separate Colorado and Wyoming pages. Colorado uses preference points; Wyoming uses preference plus random.
+- Offered 2026-11-24 and skipped "for now": every hunter's odds as columns in the main table, a "best odds" panel (the active hunter's top hunts across species), and a CSV download of the filtered table.
+- Phone ideas offered and skipped: "x pts short" under the odds; a "(DWR: any legal weapon)" note on Rifle hunts.

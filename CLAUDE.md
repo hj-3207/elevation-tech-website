@@ -41,6 +41,25 @@ python -m http.server 8000 --bind 0.0.0.0     # from the repo root
   more closely.
 - **`Ctrl+F5` after editing `style.css` or any `.js`** — browsers cache them hard,
   and they are no longer inline.
+- **After a push, the live site can look unchanged for up to 10 minutes.** GitHub Pages
+  serves `style.css` with `Cache-Control: max-age=600`, so a phone or browser that already
+  has it keeps the old copy. Close and reopen the tab, use a private tab, or hard-refresh.
+  (A `?v=` tag on the stylesheet link was offered and not wanted.)
+- **Checking phone layouts without a phone:** headless Edge won't go narrower than about
+  525 px, so load a temp copy of the page in an `<iframe style="width:375px">` from a
+  second temp file and screenshot that. The copy can scroll itself
+  (`scrollTo({top, behavior:"instant"})`; `html` has smooth scrolling) and report
+  anything wider than the screen to the parent page with `postMessage`. A full
+  375 px pass of every public page was done on 2026-11-24.
+
+**Phone layout notes (style.css, 680 px and under), from that pass:**
+- Nav logo 36 px tall (54 px on desktop), with slightly less nav padding.
+- The home hero stacks the logo (120 px) above the headline; side by side it ran ~70 px
+  past the screen.
+- `footer p a` is styled like `.footer-links a`, because the terms pages and the two
+  older privacy policies have footer links without that class (they showed default blue).
+- Left as is on purpose: the apps-page comparison table still scrolls sideways (see
+  Known open items), and an arrow that wraps alone in one Rack Detector card.
 
 ⚠️ Over `http://localhost` the Supabase download counters actually fire, inserting
 real rows into the production tables. Don't click Download buttons while testing.
@@ -95,7 +114,7 @@ free web tool used *before* the hunt, when you apply for tags (the owner's call,
   - `apps.html`: its own `.hero-pre` card under the trust strip, an `#drawodds` app-row after Rack Scorer, a row in the comparison table ("All five at a glance"), and a button.
   - `index.html`: a full-width `.app-tile.wide` under the four tiles.
 - **Same sentence:** its hero card and app-row lead share one sentence, like the others. The index tile adds "Before the hunt:".
-- **Icon:** `img/drawodds-icon.png`, a white die on burnt orange. It's a placeholder the owner chose for now.
+- **Icon:** `img/drawodds-icon.png` (and the 64 px `img/menu-drawodds.png`): an orange notched hunting tag, tilted 6°, with the black antler mark and a punch hole, on a transparent background. Chosen by the owner on 2026-11-24 to replace the dice placeholder. Source: `tools/draw-odds/drawodds-icon.svg`.
 - **Facts the copy states:** free, runs in the browser, no account, Utah only for now. Its buttons open the tool itself; there's no product page and nothing to download.
 
 Every app is offline-first and stores data on the user's own device. That claim is
