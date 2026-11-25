@@ -172,6 +172,12 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - **Summary line shrinks** to "145 hunts in 28 units · 3,051 tags · 50,869 applicants"; the draw-type line and the "enter points" prompt are hidden (`.d-only`).
   - **Species buttons are one swipeable row** with a fade at the right edge until scrolled to the end (`.at-end`); `showCurrentSpecies()` keeps the selected one in view.
   - **Filters fold behind a "Filters" button** beside the search box, with a count of what's on ("Filters · 2": weapons, the two toggles and column filters). The open panel holds the weapon buttons, residency, toggles, and the Sort / Filter-a-column bar (`#mBar`, moved inside `.controls`).
+- **Desktop extras (added 2026-11-24):**
+  - **Shareable link** (`writeURL` after every render, `readURL` on load): the address carries the view, e.g. `?sp=le-elk&res=N&q=manti&w=Archery,Rifle&run=1&trends=1&sort=proj:-1&f=guar:5:10&u=Manti|Boulder&h=EB3142` (`sp=starred` for the Starred list). A link wins over what the browser saved. **Hunters, points and "Starred only" are never in it.** "Copy link" buttons sit in the summary line and the Starred list (clipboard needs https, so it only works on the live site).
+  - **Point creep chart** (`creepChart`) at the top of the year-by-year section: guaranteed points per draw, then a dashed orange line to next year's projection. Inline SVG, theme colors via CSS vars.
+  - **Odds edge on desktop rows**: the same orange / faded / gray left edge as the phone cards, on the row's first cell (`tr.row[data-odds]`).
+  - **"/" jumps to the search box** from anywhere outside a text field.
+  - Done from the owner's list; "all hunters' odds in the table", a "best odds" panel and CSV download were offered and skipped for now.
 - **Copy voice:** plain, concrete, and honest about limitations, like the website.
 
 ## Yearly / seasonal tasks
@@ -198,7 +204,6 @@ There's no test suite. Checks are done by:
 
 ## Backlog / ideas (owner agreed to "later")
 
-- Shareable view: species, residency, search and filters in the URL.
 - A real Draw Odds app icon to replace the dice placeholder (`img/drawodds-icon.png`).
 - Possibly calibrate pronghorn and general deer differently, since drop-ins didn't help there.
 - A flat-number-per-hunt drop-in variant was never backtested. The owner asked; it was offered, not done.

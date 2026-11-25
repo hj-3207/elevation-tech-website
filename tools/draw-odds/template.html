@@ -165,6 +165,20 @@ tr.row:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
 .code{font-family:var(--mono);font-size:0.72rem;color:var(--muted)}
 .star{background:none;border:0;cursor:pointer;font-size:1.05rem;line-height:1;color:var(--subtle);padding:2px;transition:color 0.2s}
 .d-close,.m-pin{display:none}
+/* Point creep chart (year by year). */
+figure.creep{margin:0 0 0.9rem;max-width:420px}
+figure.creep figcaption{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem}
+figure.creep figcaption span{text-transform:none;letter-spacing:0.02em;color:var(--orange-bright)}
+figure.creep svg{display:block;width:100%;height:auto}
+figure.creep .cc-v{font-family:var(--mono);font-size:10px;fill:var(--text)}
+figure.creep .cc-y{font-family:var(--mono);font-size:9px;fill:var(--muted)}
+figure.creep .cc-p{fill:var(--orange-bright)}
+/* Desktop rows: thin left edge colored by the active hunter's odds (phones color the card). */
+tr.row[data-odds="p-good"]>td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
+tr.row[data-odds="p-mid"]>td:first-child{box-shadow:inset 3px 0 0 rgba(204,85,0,0.45)}
+tr.row[data-odds="p-bad"]>td:first-child{box-shadow:inset 3px 0 0 var(--border-strong)}
+.copy-link{color:var(--orange-bright)}
+.star-head .copy-link{margin-left:auto}
 .m-only{display:none}
 .star:hover{color:var(--soft)}
 .star[aria-pressed=true]{color:var(--orange)}
@@ -462,6 +476,7 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   /* Opened card: the desktop row marker (orange bar on the first cell) lands beside
      the star on a card, so drop it; tint the whole card instead. */
   table.main>tbody>tr.row>td:first-child::before{display:none}
+  table.main>tbody>tr.row>td:first-child{box-shadow:none!important}   /* phones color the whole card edge instead */
   table.main>tbody>tr.row.open{background:var(--orange-tint)}
   /* The detail inside a card: full width, tighter tables, and no share-drawn bars
      (the table can't fit them at phone width; the numbers carry the same story). */
@@ -600,6 +615,7 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   <div class="star-view" id="starView" hidden>
     <div class="star-head">
       <p class="star-sum" id="starSum"></p>
+      <button type="button" class="link-btn copy-link" data-copylink>Copy link</button>
       <div class="seg" role="group" aria-label="Residency">
         <button type="button" data-res="R" aria-pressed="true">Resident</button>
         <button type="button" data-res="N" aria-pressed="false">Nonres</button>
@@ -1000,7 +1016,7 @@ function render(){
   if (typeof renderPin === "function") renderPin();
   $("#starView").hidden = !ui.starView;
   [".controls", "#summary", "#filterBar", "#mainWrap"].forEach(s => { $(s).hidden = ui.starView; });
-  if (ui.starView){ $("#eyebrow").textContent = "Starred hunts"; renderStarred(st); return; }
+  if (ui.starView){ $("#eyebrow").textContent = "Starred hunts"; renderStarred(st); writeURL(); return; }
   const cols = columns(st);
   const q = ui.q.trim().toLowerCase();
 
@@ -1031,7 +1047,8 @@ function render(){
     `<span class="s-stat"><b>${fmt(totApps)}</b> <span class="d-only">${st.drawYear} first-choice </span>applicants</span>` +
     (sp.system === "preference" ? `<span class="d-only">Preference-point draw (no random half)</span>` : `<span class="d-only">Bonus-point draw (half to top points, half random)</span>`) +
     (p == null ? `<span class="d-only">Enter ${esc(prof.name)}'s ${esc(sp.short || sp.label)} points above to see odds.</span>` : `<span class="d-only">${esc(prof.name)}: <b>${p}</b> pts</span>`) +
-    (grouped && list.length ? `<span class="grp-acts"><button type="button" class="link-btn" data-groups="collapse">Collapse all</button><button type="button" class="link-btn" data-groups="expand">Expand all</button></span>` : "");
+    `<span class="grp-acts">` + (grouped && list.length ? `<button type="button" class="link-btn" data-groups="collapse">Collapse all</button><button type="button" class="link-btn" data-groups="expand">Expand all</button>` : "") +
+    `<button type="button" class="link-btn copy-link" data-copylink title="Copies a link to this exact view (species, filters, open hunts). Hunters and points aren't included.">Copy link</button></span>`;
   renderFilterBar(cols);
 
   renderHead(cols); renderMobileBar(cols);
@@ -1041,7 +1058,7 @@ function render(){
   $("#fToggle").classList.toggle("has", nOn > 0);
   if (!list.length){
     $("#tbody").innerHTML = `<tr><td colspan="${cols.length}" class="empty">No hunts match these filters.</td></tr>`;
-    return;
+    writeURL(); return;
   }
   let html = "";
   if (grouped){
@@ -1061,6 +1078,7 @@ function render(){
     html = list.map(({h,a}) => rowHtml(st, sp, h, a, p, false) + (ui.open.has(h.code) ? detailHtml(st, sp, h, a, p, cols.length) : "")).join("");
   }
   $("#tbody").innerHTML = html;
+  writeURL();
 }
 const seasonStart = h => (h.seasons && h.seasons[0] && h.seasons[0][1]) || "";
 
@@ -1198,6 +1216,26 @@ function detailHtml(st, sp, h, a, p, ncol){
 
 // One row per draw year (2024, 2025 from DWR's PDFs; 2026 from utahdraws.com), plus
 // the projection, so trends in tags, applicants and guaranteed points are visible.
+// Guaranteed points over the past draws, plus next year's projection (dashed, orange).
+function creepChart(rows, proj, projYear){
+  const pts = rows.map(r => ({y: r.y, v: r.guar})).filter(p => p.v != null);
+  if (proj != null) pts.push({y: String(projYear), v: proj, proj: true});
+  if (pts.length < 2) return "";
+  const W = 320, H = 96, L = 18, R = 18, T = 18, B = 20;
+  const vs = pts.map(p => p.v), lo = Math.min(...vs), hi = Math.max(...vs), span = Math.max(1, hi - lo);
+  const x = i => L + i * (W - L - R) / (pts.length - 1), y = v => T + (hi - v) / span * (H - T - B);
+  const real = pts.filter(p => !p.proj);
+  const line = real.map((p, i) => `${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(" ");
+  const last = real.length - 1, pj = pts[pts.length - 1];
+  const dash = pj.proj && last >= 0 ? `<line x1="${x(last).toFixed(1)}" y1="${y(real[last].v).toFixed(1)}" x2="${x(pts.length - 1).toFixed(1)}" y2="${y(pj.v).toFixed(1)}" style="stroke:var(--orange-bright)" stroke-width="2" stroke-dasharray="4 3"/>` : "";
+  const dots = pts.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="3.2" style="fill:${p.proj ? "var(--orange-bright)" : "#fff"}"/>` +
+    `<text x="${x(i).toFixed(1)}" y="${(y(p.v) - 7).toFixed(1)}" text-anchor="middle" class="cc-v${p.proj ? " cc-p" : ""}">${p.v}</text>` +
+    `<text x="${x(i).toFixed(1)}" y="${H - 4}" text-anchor="middle" class="cc-y${p.proj ? " cc-p" : ""}">${p.proj ? p.y + "*" : p.y}</text>`).join("");
+  return `<figure class="creep"><figcaption>Guaranteed points by draw${proj != null ? ` <span>· * ${projYear} projected</span>` : ""}</figcaption>` +
+    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Guaranteed points: ${pts.map(p => `${p.y} ${p.v}`).join(", ")}">` +
+    `<polyline points="${line}" fill="none" style="stroke:var(--soft)" stroke-width="2"/>${dash}${dots}</svg></figure>`;
+}
+
 function trendHtml(st, sp, h, a){
   const years = Object.keys(h.hist || {}).sort();
   if (!years.length) return "";
@@ -1218,6 +1256,7 @@ function trendHtml(st, sp, h, a){
     `<td>${r.tags ? cell(r, rows[i-1], "guar") : "—"}</td><td>${r.split ? `${r.split[0]} <span class="na">(${fmt(r.split[2])} of ${fmt(r.split[1])})</span>` : "—"}</td></tr>`).join("") +
     (m && !m.randomOnly ? `<tr class="proj-row"><td>${nextYear(st)} proj.</td><td>${fmt(a.next[0])}</td><td class="na">—</td><td>${m.guarPts}</td><td>${m.all ? "—" : `${m.split} <span class="na">(${fmt(m.k)} of ${fmt(m.n)})</span>`}</td></tr>` : "");
   return dsec("yby", `Year by year (${ui.res === "R" ? "residents" : "nonresidents"})`,
+    creepChart(rows, m && !m.randomOnly ? m.guarPts : null, nextYear(st)) +
     `<table class="pts trend"><thead><tr><th>Draw</th><th>Tags</th><th>Applicants</th><th>Guaranteed</th><th>Split (drew)</th></tr></thead><tbody>${body}</tbody></table>`);
 }
 
@@ -1485,7 +1524,70 @@ function renderHunter(){
   if (!storageOk) $("#ptsNote").textContent = "This browser isn't letting the page save. Points will be lost when you close it; use Export to keep a copy.";
 }
 
+// ---------- shareable link ----------
+// The view lives in the address, so a copied link opens the same species, residency,
+// search, weapons, toggles, sort, column filters and open hunts. Hunters and points
+// never go in it (they stay in this browser), and neither does "Starred only", which
+// would be empty for anyone else.
+//   ?sp=le-elk&res=N&q=manti&w=Archery,Rifle&run=1&trends=1&sort=proj:-1
+//   &f=guar:5:10,tags::3&u=Manti|Boulder&h=EB3142
+function writeURL(){
+  const P = new URLSearchParams();
+  P.set("sp", ui.starView ? "starred" : ui.species);
+  if (ui.res !== "R") P.set("res", ui.res);
+  if (!ui.starView){
+    if (ui.q.trim()) P.set("q", ui.q.trim());
+    if (ui.wtypes.size) P.set("w", [...ui.wtypes].join(","));
+    if (ui.onlyRun) P.set("run", "1");
+    if (ui.showTrends) P.set("trends", "1");
+    if (!(ui.sort.key === "unit" && ui.sort.dir === 1)) P.set("sort", ui.sort.key + ":" + ui.sort.dir);
+    const f = Object.entries(ui.filters).filter(([k, v]) => k !== "unit" && (v.min != null || v.max != null))
+      .map(([k, v]) => `${k}:${v.min ?? ""}:${v.max ?? ""}`);
+    if (f.length) P.set("f", f.join(","));
+    if (ui.filters.unit && ui.filters.unit.units && ui.filters.unit.units.length) P.set("u", ui.filters.unit.units.join("|"));
+    if (ui.open.size) P.set("h", [...ui.open].join(","));
+  }
+  const qs = P.toString();
+  const url = location.pathname + (qs ? "?" + qs : "") + location.hash;
+  if (url !== location.pathname + location.search + location.hash) history.replaceState(null, "", url);
+}
+function readURL(){
+  const P = new URLSearchParams(location.search);
+  if (![...P.keys()].length) return;
+  const st = curState(), sp = P.get("sp");
+  if (sp === "starred") ui.starView = true;
+  else if (sp && st.species.some(s => s.key === sp)){ ui.species = sp; ui.starView = false; }
+  if (P.get("res") === "N" || P.get("res") === "R") ui.res = P.get("res");
+  if (P.has("q")){ ui.q = P.get("q"); $("#q").value = ui.q; }
+  if (P.has("w")) ui.wtypes = new Set(P.get("w").split(",").filter(Boolean));
+  ui.onlyRun = P.get("run") === "1";
+  if (P.has("trends")) ui.showTrends = P.get("trends") === "1";
+  if (P.has("sort")){ const [k, d] = P.get("sort").split(":"); if (k) ui.sort = {key: k, dir: d === "-1" ? -1 : 1}; }
+  ui.filters = {};
+  if (P.has("f")) for (const part of P.get("f").split(",")){
+    const [k, lo, hi] = part.split(":"); const num = v => v === "" || v == null || isNaN(+v) ? null : +v;
+    if (k) ui.filters[k] = {min: num(lo), max: num(hi)};
+  }
+  if (P.has("u")) ui.filters.unit = {units: P.get("u").split("|").filter(Boolean)};
+  if (P.has("h")) ui.open = new Set(P.get("h").split(",").filter(Boolean));
+}
+// "Copy link" buttons (summary line and the Starred list).
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-copylink]"); if (!b) return;
+  const done = ok => { b.textContent = ok ? "Link copied" : "Copy the address bar"; setTimeout(() => { b.textContent = "Copy link"; }, 1800); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(location.href).then(() => done(true), () => done(false));
+  else done(false);
+});
+
 // ---------- controls ----------
+// "/" anywhere (outside a text box) jumps to the search box.
+document.addEventListener("keydown", e => {
+  if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+  const tag = (e.target.tagName || "").toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable) return;
+  const q = $("#q"); if (!q || q.offsetParent === null) return;
+  e.preventDefault(); q.focus(); q.select();
+});
 // Height of what's fixed at the top (the site nav, plus the pinned strip when shown).
 const topOffset = () => { const n = document.querySelector("nav"); const pin = $("#mPin");
   return (n ? n.offsetHeight : 0) + (pin.classList.contains("on") ? pin.offsetHeight : 0); };
@@ -1722,7 +1824,9 @@ $("#tbody").addEventListener("keydown", e => {
 });
 
 if (!STATES.length){ $("#tbody").innerHTML = `<tr><td class="empty">No data loaded.</td></tr>`; return; }
-fillSelects(); render();
+readURL(); fillSelects(); render();
+// Open hunts named in a shared link: scroll to the first one.
+if (ui.open.size){ const r = document.querySelector(`#tbody tr.row.open`); if (r) setTimeout(() => window.scrollTo({top: r.getBoundingClientRect().top + window.scrollY - topOffset() - 10, behavior: "instant"}), 0); }
 })();
 </script>
 <script src="nav.js"></script>
