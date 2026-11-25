@@ -183,8 +183,9 @@ table.pts tr.me td.est{color:#fff}
 .hunters-tbl td:first-child{font-weight:600}
 .na{color:var(--subtle);font-family:var(--mono);font-size:0.78rem}
 /* Projections (next year's guaranteed and split): italic, so an estimate never
-   reads as a result. Same in the header. */
-td.is-proj .big{font-style:italic}
+   reads as a result, and orange, because they're the numbers to look at first.
+   Same treatment (italic) in the header. */
+td.is-proj .big{font-style:italic;color:var(--orange-bright)}
 table.main th.is-proj{font-style:italic}
 .m-bar{display:none}
 .f-toggle{display:none}
@@ -404,13 +405,14 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   table.main>tbody>tr>td.k-sp{grid-column:1/-1;padding-right:2rem}
   table.main>tbody>tr>td.k-sp + td.k-unit{margin-top:-0.3rem}
   /* Every desktop column is on the card: the four key numbers first, then a smaller
-     row (applicants, split, harvest, projected split), then the trend columns when
+     row (applicants, split, projected split, harvest: the split sits beside its
+     projection, and both projections stack in the third column), then the trend columns when
      "Trend columns" is on. CSS order rearranges the cells; the DOM keeps table order. */
   table.main>tbody>tr.row>td.k-unit{order:0}
   table.main>tbody>tr.row>td.k-tags{order:1} table.main>tbody>tr.row>td.k-guar{order:2}
   table.main>tbody>tr.row>td.k-proj{order:3} table.main>tbody>tr.row>td.k-mine{order:4}
   table.main>tbody>tr.row>td.k-apps{order:5} table.main>tbody>tr.row>td.k-split{order:6}
-  table.main>tbody>tr.row>td.k-harv{order:7} table.main>tbody>tr.row>td.k-psplit{order:8}
+  table.main>tbody>tr.row>td.k-psplit{order:7} table.main>tbody>tr.row>td.k-harv{order:8}
   table.main>tbody>tr.row>td.k-dtags{order:9} table.main>tbody>tr.row>td.k-creep{order:10} table.main>tbody>tr.row>td.k-demand{order:11}
   table.main>tbody>tr.row>td:is(.k-apps,.k-split,.k-harv,.k-psplit,.k-dtags,.k-creep,.k-demand) .big{font-size:0.8rem;font-weight:700}
   table.main>tbody>tr.row>td.k-apps{grid-column:1;border-top:1px solid var(--border)!important;padding-top:0.55rem}
@@ -446,7 +448,7 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   table.main>tbody>tr.srow>td.k-proj{order:3} table.main>tbody>tr.srow>td.k-mine{order:4}
   table.main>tbody>tr.srow>td.k-mine2{order:5;grid-column:span 2}
   table.main>tbody>tr.srow>td.k-apps{order:10;grid-column:1} table.main>tbody>tr.srow>td.k-split{order:11}
-  table.main>tbody>tr.srow>td.k-harv{order:12} table.main>tbody>tr.srow>td.k-psplit{order:13}
+  table.main>tbody>tr.srow>td.k-psplit{order:12} table.main>tbody>tr.srow>td.k-harv{order:13}
   table.main>tbody>tr.srow>td:is(.k-apps,.k-split,.k-harv,.k-psplit){border-top:1px solid var(--border)!important;padding-top:0.55rem}
   table.main>tbody>tr.srow>td:is(.k-apps,.k-split,.k-harv,.k-psplit) .big{font-size:0.8rem;font-weight:700}
   /* Pinned strip under the nav. */
