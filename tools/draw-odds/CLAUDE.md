@@ -121,6 +121,8 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
     - **Each card:** hunt name, code and dates across the top, star at the top right, then four numbers: tags, guaranteed, projected guaranteed and the active hunter's odds. Other cells are hidden; tapping the card opens the full detail underneath.
     - **Sorting and filters:** the header row is hidden, so a phone-only bar (`#mBar`, `renderMobileBar`) has a Sort menu, a direction button and a Filter menu that opens the same popover.
     - The Starred list uses the same card layout, with one odds box per hunter.
+    - **Numbers line up:** every label is clamped to exactly two lines, and every number, odds pill or "add points" sits in one 1.3rem line.
+    - **Opened card:** the detail fills the card width with tighter tables. The share-drawn bars and their legend colors are hidden (the split-group key stays). Year-by-year cells don't wrap; the split's "(1 of 5)" sits under its number. Hunt facts put each label above its value. The desktop orange row marker is hidden and the whole card is tinted instead. Checked at 375 px in an iframe (headless Edge won't go below about 525 px).
     - **Keep the card CSS scoped with `>`** (`table.main>tbody>tr.row>td`): the hunt detail has its own tables inside the row, and descendant selectors broke them.
 - **Badges** come from DWR labels:
   - Management buck (rule R657-5-45: 3 points or less on at least one antler, eye guards don't count), Cactus buck, Premium, Restricted (restricted rifle: open or peep sights, no semi-auto, per R657-5-48), HAMSS, and bison Cow only / Hunter's choice.

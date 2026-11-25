@@ -415,7 +415,26 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   table.main>tbody>tr.grp{display:block}
   table.main>tbody>tr.grp>td{display:block;border:0;padding:1rem 0.2rem 0.5rem;background:none;white-space:normal}
   table.main>tbody>tr.detail{display:block;margin-bottom:0.6rem}
-  table.main>tbody>tr.detail>td{display:block;border:1px solid var(--border-orange);border-top:0;border-radius:0 0 10px 10px}
+  table.main>tbody>tr.detail>td{display:block;border:1px solid var(--border-orange);border-top:0;border-radius:0 0 10px 10px;padding:0.9rem 0.75rem 1.1rem}
+  /* Opened card: the desktop row marker (orange bar on the first cell) lands beside
+     the star on a card, so drop it; tint the whole card instead. */
+  table.main>tbody>tr.row>td:first-child::before{display:none}
+  table.main>tbody>tr.row.open{background:var(--orange-tint)}
+  /* The detail inside a card: full width, tighter tables, and no share-drawn bars
+     (the table can't fit them at phone width; the numbers carry the same story). */
+  .detail-grid{position:static;max-width:none!important;min-width:0}
+  .detail-grid>div{min-width:0}
+  table.pts{font-size:0.76rem}
+  table.pts th,table.pts td{padding:0.32rem 0.3rem}
+  table.pts th{font-size:0.52rem;letter-spacing:0.04em}
+  table.pts td.bar,table.pts th.l:last-child{display:none}
+  /* Year by year: each number stays with its change; the split's "(1 of 5)" drops under it. */
+  table.pts.trend td{white-space:nowrap;font-size:0.72rem}
+  table.pts.trend td:last-child .na{display:block;font-size:0.6rem;line-height:1.3}
+  .detail .legend span:not(.s){display:none}
+  /* Hunt facts: label above value, so long values get the full width. */
+  dl.facts{grid-template-columns:1fr;gap:0.15rem}
+  dl.facts dd{margin-bottom:0.55rem}
   table.main>tbody>tr.row.in-grp>td.k-unit{padding-left:0}
   table.main>tbody>tr>td.empty,table.main>tbody>tr>td.star-empty{display:block;background:var(--card);border:1px solid var(--border);border-radius:10px}
 }
