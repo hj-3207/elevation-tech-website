@@ -119,6 +119,7 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - **Trend columns** (Tag change, Point creep, 2026 vs projected) are **hidden by default** behind the "Trend columns" toggle in the filter bar. Turning it off clears their filters and sort.
   - Removed at the owner's request: the top group column and the average random-odds column.
   - Units are **grouped** (collapsible) when sorted by Hunt. Weapon buttons, search and the unit picker keep the grouping. Sorting by another column or a number filter makes the list flat.
+  - **Season dates sort** (owner's request, 2026-11-25): a "· Season dates" button in the Hunt header (phones: "Season dates" in the Sort menu). Sort key `season`: earliest opening day, then unit name A–Z, then latest end date and hunt code. Hunts with no dates go last in either direction. The list is flat, and each row shows its dates in orange. Multi-season hunts are one row (one tag) with several windows. They show the whole span, first opening day to last closing day (e.g. Aug 15 – Nov 15), and each window's weapon and dates are listed underneath only once that hunt is opened (owner's call; the owner also preferred this to "(+4 more)").
   - Every column has a **filter button**: min/max for numbers, a unit multi-select for Hunt.
   - The **header row is frozen**: the table scrolls inside its own pane.
   - The table must fit at **1,400 px** width. Check `.tbl-wrap` scrollWidth vs clientWidth after adding anything.

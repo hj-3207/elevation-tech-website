@@ -133,6 +133,12 @@ table.main th button:hover{color:#fff}
 table.main th button:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 table.main th[aria-sort=ascending],table.main th[aria-sort=descending]{color:var(--orange)}
 table.main th .arr{font-size:0.6rem;margin-left:0.3rem}
+table.main th .sbtn-sub{color:var(--subtle);margin-left:0.1rem}
+table.main th .sbtn-sub.on{color:var(--orange)}
+table.main td .s-dates{color:var(--orange-bright)}
+table.main td ul.s-parts{list-style:none;margin:0.25rem 0 0;padding:0 0 0 0.6rem;border-left:1px solid var(--border-strong);font-family:var(--mono);font-size:0.66rem;line-height:1.55;color:var(--muted)}
+table.main td ul.s-parts li{white-space:nowrap}
+table.main td ul.s-parts b{font-weight:500;color:var(--soft)}
 table.main th.l,table.main td.l{text-align:left}
 table.main td.hunt{white-space:normal;min-width:160px;max-width:260px}
 .c-star{width:34px;padding-right:0!important}
@@ -988,8 +994,11 @@ function renderHead(cols){
     const on = ui.sort.key === c.key && !(c.key === "unit" && isGrouped());
     const aria = ui.sort.key === c.key ? (ui.sort.dir > 0 ? "ascending" : "descending") : "none";
     const fOn = activeFilters().some(([k]) => k === c.key);
+    // The Hunt header also sorts by season dates (earliest opening day, then unit name).
+    const sOn = c.key === "unit" && ui.sort.key === "season";
+    const seasonBtn = c.key === "unit" ? `<button type="button" class="sbtn sbtn-sub${sOn ? " on" : ""}" data-sort="season" aria-pressed="${sOn}" title="Sort by opening day, then unit name">· Season dates${sOn ? `<span class="arr">${ui.sort.dir > 0 ? "▲" : "▼"}</span>` : ""}</button>` : "";
     return `<th class="${c.cls||""}${fOn ? " f-on" : ""}${c.proj ? " is-proj" : ""}" scope="col" aria-sort="${aria}"><span class="th-in">` +
-      `<button type="button" class="sbtn" data-sort="${c.key}">${esc(c.label)}${on ? `<span class="arr">${ui.sort.dir > 0 ? "▲" : "▼"}</span>` : ""}</button>` +
+      `<button type="button" class="sbtn" data-sort="${c.key}">${esc(c.label)}${on ? `<span class="arr">${ui.sort.dir > 0 ? "▲" : "▼"}</span>` : ""}</button>` + seasonBtn +
       `<button type="button" class="fbtn${fOn ? " on" : ""}" data-filter="${c.key}" aria-label="Filter ${esc(c.label)}" aria-haspopup="dialog">${FUNNEL}</button></span></th>`;
   }).join("");
 }
@@ -997,7 +1006,8 @@ function renderHead(cols){
 // Phone sort/filter bar: the same sorting and filters as the header buttons.
 function renderMobileBar(cols){
   const sortable = cols.filter(c => c.sort !== false);
-  $("#mSort").innerHTML = sortable.map(c => `<option value="${c.key}"${ui.sort.key === c.key ? " selected" : ""}>${esc(c.key === "unit" ? "Hunt (grouped by unit)" : c.label)}</option>`).join("");
+  $("#mSort").innerHTML = sortable.map(c => `<option value="${c.key}"${ui.sort.key === c.key ? " selected" : ""}>${esc(c.key === "unit" ? "Hunt (grouped by unit)" : c.label)}</option>` +
+    (c.key === "unit" ? `<option value="season"${ui.sort.key === "season" ? " selected" : ""}>Season dates</option>` : "")).join("");
   $("#mDir").textContent = ui.sort.dir > 0 ? "▲" : "▼";
   $("#mFilter").innerHTML = `<option value="">Choose a column…</option>` +
     sortable.map(c => `<option value="${c.key}">${esc(c.key === "unit" ? "Units" : c.label)}</option>`).join("");
@@ -1034,6 +1044,12 @@ function render(){
 
   const k = ui.sort.key, d = ui.sort.dir;
   list.sort((x,y) => {
+    if (k === "season"){
+      // Opening day (in either direction), then unit name A-Z; hunts without dates last.
+      const sx = seasonStart(x.h), sy = seasonStart(y.h);
+      if (!sx !== !sy) return sx ? -1 : 1;
+      return sx.localeCompare(sy) * d || x.h.unit.localeCompare(y.h.unit) || seasonEnd(x.h).localeCompare(seasonEnd(y.h)) || x.h.code.localeCompare(y.h.code);
+    }
     const vx = sortVal(x.h, x.a, k, p), vy = sortVal(y.h, y.a, k, p);
     return (vx < vy ? -1 : vx > vy ? 1 : 0) * d || x.h.unit.localeCompare(y.h.unit) || seasonStart(x.h).localeCompare(seasonStart(y.h)) || x.h.code.localeCompare(y.h.code);
   });
@@ -1080,7 +1096,20 @@ function render(){
   $("#tbody").innerHTML = html;
   writeURL();
 }
-const seasonStart = h => (h.seasons && h.seasons[0] && h.seasons[0][1]) || "";
+const seasonStart = h => (h.seasons || []).map(s => s[1]).filter(Boolean).sort()[0] || "";
+const seasonEnd = h => (h.seasons || []).map(s => s[2]).filter(Boolean).sort().pop() || "";
+// Season dates for the "Season dates" sort: "Sep 1 – Sep 30". A multi-season hunt (one
+// tag, several windows) shows its whole span, first opening day to last closing day,
+// with each window's weapon and dates underneath once that hunt is opened.
+const seasonList = h => (h.seasons || []).filter(s => s[1]).sort((a, b) => a[1].localeCompare(b[1]));
+function seasonDatesHtml(h){
+  const ss = seasonList(h);
+  if (!ss.length) return `<div class="meta s-dates">No season dates</div>`;
+  let html = `<div class="meta s-dates">${esc(fmtDate(seasonStart(h)))} – ${esc(fmtDate(seasonEnd(h)))}</div>`;
+  if (ss.length > 1 && ui.open.has(h.code)) html += `<ul class="s-parts">` +
+    ss.map(s => `<li><b>${esc(s[0])}</b> ${esc(fmtDate(s[1]))} – ${esc(fmtDate(s[2]))}</li>`).join("") + `</ul>`;
+  return html;
+}
 
 function rowHtml(st, sp, h, a, p, inGroup){
   const id = st.state + ":" + h.code, starred = ui.stars.has(id), open = ui.open.has(h.code);
@@ -1114,7 +1143,9 @@ function rowHtml(st, sp, h, a, p, inGroup){
   const badges = (h.notes || []).map(n => `<span class="badge" title="${esc(n[1])}">${esc(n[0])}</span>`).join("");
   const name = inGroup
     ? `<div class="unit">${esc(h.weapon)}${badges}</div><div class="meta"><span class="code">${esc(h.code)}</span>${esc(dates)}</div>`
-    : `<div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div>${badges ? `<div class="badges">${badges}</div>` : ""}`;
+    : `<div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div>` +
+      (ui.sort.key === "season" ? seasonDatesHtml(h) : "") +
+      `${badges ? `<div class="badges">${badges}</div>` : ""}`;
   const cell = {
     star: `<button type="button" class="star" data-star="${esc(id)}" aria-pressed="${starred}" aria-label="${starred ? "Unstar" : "Star"} ${esc(h.unit)} ${esc(h.code)}">★</button>`,
     unit: name, tags, apps: `<span class="big">${fmt(a.apps)}</span>`, guar, split, harv: hv,
@@ -1325,7 +1356,7 @@ function renderExplain(st, sp){
     [`${D} vs projected`, `Using the ${D-1} results, project ${D} the same way the ${N} projection works: returning applicants plus the usual number of drop-ins for the species. Then compare with the points it actually took. The number is actual minus projected. 0 is "as projected". Above 0 is "jumped in" (more people moved into the hunt than usual); below 0 is "left" (fewer dropped in than usual, or people moved out). Hover the number for the projected and actual points.`],
     [`Point creep`,`Change in guaranteed points from ${D-1} to ${D}, with the change since ${D-2} underneath. Orange means more points needed. "New hunt" means it didn't exist in the earlier draws.`],
     [`Your entries`, `Under your odds, "15 of 21,453 entries" means you hold 15 (14 points + 1) of all the entries in the ${N} random draw. With one random tag that's about your chance; with more tags it's higher, since several get drawn.`],
-    [`Grouping and filters`, `Hunts are grouped by unit while sorted by Hunt. The weapon buttons, search and the Hunt column's unit picker keep the groups. Sorting by another column, or a number filter, switches to a flat list.`],
+    [`Grouping and filters`, `Hunts are grouped by unit while sorted by Hunt. The weapon buttons, search and the Hunt column's unit picker keep the groups. Sorting by another column, or a number filter, switches to a flat list. "Season dates" (next to Hunt) sorts by opening day, then unit name.`],
     [`Badges`, `Management buck, cactus buck, premium, restricted weapon, HAMSS and bison cow/hunter's choice come from DWR's hunt labels. Hover a badge, or open the hunt, for the rule.`],
   ];
   if (sp.system === "preference") items.push([`Preference points`, `General-season deer gives every tag to the highest point holders, so there's no random half. The ${D} split is the highest level where fewer than 90% drew; group applications blur it slightly.`]);
@@ -1766,10 +1797,10 @@ $("#thead").addEventListener("click", e => {
   if (fb){ e.stopPropagation(); if (popKey === fb.dataset.filter) closeFilter(true); else openFilter(fb.dataset.filter, fb); return; }
   const b = e.target.closest("[data-sort]"); if (!b) return;
   const k = b.dataset.sort;
-  ui.sort = ui.sort.key === k ? {key:k, dir:-ui.sort.dir} : {key:k, dir: k === "unit" || k === "guar" || k === "split" || k === "proj" || k === "psplit" ? 1 : -1};
+  ui.sort = ui.sort.key === k ? {key:k, dir:-ui.sort.dir} : {key:k, dir: defaultDir(k)};
   render();
 });
-const defaultDir = k => k === "unit" || k === "guar" || k === "split" || k === "proj" || k === "psplit" ? 1 : -1;
+function defaultDir(k){ return k === "unit" || k === "season" || k === "guar" || k === "split" || k === "proj" || k === "psplit" ? 1 : -1; }
 $("#mSort").onchange = e => { const k = e.target.value; ui.sort = {key: k, dir: defaultDir(k)}; render(); };
 $("#mDir").onclick = () => { ui.sort = {key: ui.sort.key, dir: -ui.sort.dir}; render(); };
 $("#mFilter").onchange = e => { const k = e.target.value; if (k) openFilter(k, e.target); e.target.value = ""; };
