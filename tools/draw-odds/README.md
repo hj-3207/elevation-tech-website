@@ -40,7 +40,7 @@ Points for each hunter are saved in the visitor's own browser (localStorage), no
 - each browser and device keeps its own copy
 - clearing browser data, or using a private window, loses them
 
-Export / Import on the page backs them up or moves them.
+Export / Import on the page backs them up or moves them. The export file (`draw-odds-points.json`) holds the hunters, their points and the starred hunts; importing merges hunters by name and adds stars without removing any.
 
 ## Drop-ins (projection calibration)
 The plain projection assumes nobody switches hunts, and history shows it runs low. Every year people show up with points who weren't in that hunt's pool before.

@@ -194,7 +194,9 @@
     /* The link row drops onto its own full-width line under the logo, collapsed
        until nav.js adds .open. It used to be display:none here, which left phones
        with no navigation at all beyond the logo. */
-    nav { flex-wrap: wrap; padding: 0.9rem 1.25rem; }
+    nav { flex-wrap: wrap; padding: 0.75rem 1.25rem; }
+    /* Smaller logo on phones (54px -> 42px) so the fixed nav takes less of the screen. */
+    .nav-logo img { height: 42px; }
     .nav-toggle { display: flex; }
     .nav-links {
       display: none; flex-basis: 100%; flex-direction: column; align-items: stretch;

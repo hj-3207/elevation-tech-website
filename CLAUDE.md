@@ -19,6 +19,11 @@ The one piece of CI is `.github/workflows/keep-supabase-awake.yml`, which keeps 
 Supabase project from pausing. It is not a build step — what Pages serves is still exactly
 what is committed.
 
+**Commit messages carry no AI attribution** (no `Co-Authored-By: Claude`). The owner
+asked for this on 2026-11-24, and the older ones were stripped from `main` with a history
+rewrite and force-push the same day, so commit IDs from before then changed. Any other
+clone should reset to `origin/main` rather than pull. Ask before each push to `main`.
+
 **The site is served from a subpath, not a domain root.** Never use
 root-relative paths (`/img/foo.png`) — they resolve to `hj-3207.github.io/img/...`
 and 404. Always relative (`img/foo.png`). This bit the web manifest once already.

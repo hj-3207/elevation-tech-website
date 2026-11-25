@@ -21,6 +21,11 @@ python tools/draw-odds/build_utah.py --refresh  # re-download PDFs and current-y
   - `data/draw-odds/utah-<year>.json`.
   - It also prunes `data/draw-odds/raw/` to a **rolling 5 years** and refreshes `data/draw-odds/README.md`.
 - **No git:** it never runs git. Commit and push like any other change; pushing `main` publishes (see the root `CLAUDE.md`).
+- **How changes have been published** (owner's standing rules):
+  - Work on the local `draw-odds` branch (no upstream set). Before pushing: `git fetch origin`, check `git merge-base --is-ancestor origin/main HEAD`, then `git push origin draw-odds:main`. The local `main` branch is stale; don't use it.
+  - **Ask before every push to main**; approval for one push doesn't carry to the next.
+  - **No `Co-Authored-By: Claude` or other AI attribution** in commit messages or PR text. Old ones were stripped from main's history on 2026-11-24 (force-push; commit IDs from before then changed).
+  - After pushing, wait for GitHub Pages and confirm the live page has the change.
 - **Inline data:** the draw data is inlined because browsers block `fetch()` over `file://`. The same file works opened from disk and on the site. All paths are relative.
 - **Windows console:** build output must stay ASCII (no `→`), or Python's cp1252 console crashes. Or set `PYTHONIOENCODING=utf-8`.
 - **Never hand-edit `draw-odds.html`.** Edit `tools/draw-odds/template.html` (markup, CSS and all the JS odds math) or `build_utah.py` (data), then rebuild.
@@ -100,8 +105,8 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
 - **Top of the page:**
   - Species are **buttons with icons**, not a dropdown. Labels spell out "(Once-in-a-lifetime)", not OIAL.
   - **No state dropdown** while there's one state.
-  - Weapon-type buttons sit at the top: Archery, Muzzleloader, Any Legal Weapon, Multi-Season, HAMSS. They allow more than one.
-- **Hunters (profiles):** the panel is titled **"Your points"** (the owner's pick, 2026-11-24). each has a name and points per species. They're saved in **localStorage** only, separate per browser, device and address, with Export/Import of JSON (`draw-odds-points.json`, version 2: `profiles` plus `stars`; import merges hunters by name and adds stars without removing any; version 1 files still import). No real family data is embedded; the owner's sheets hold private points.
+  - Weapon-type buttons (Archery, Muzzleloader, Any Legal Weapon, Multi-Season, HAMSS) are in the filter bar under the species buttons. They allow more than one.
+- **Hunters (profiles):** the panel is titled **"Your points"** (the owner's pick, 2026-11-24). Each hunter has a name and points per species. They're saved in **localStorage** only, separate per browser, device and address, with Export/Import of JSON (`draw-odds-points.json`, version 2: `profiles` plus `stars`; import merges hunters by name and adds stars without removing any; version 1 files still import). No real family data is embedded; the owner's sheets hold private points.
   - The default hunter is named **"Hunter"** (it was "Me"; browsers that already saved "Me" keep it).
 - **Starred tab** (added 2026-11-24). The page **reopens where it was left**, Starred included (`starView` in localStorage); only a first visit, with nothing saved, opens on LE elk. It is a "★ Starred" button before the species buttons (first, at the far left), with a count. It replaces the filters and table with one list of every starred hunt across species (`starredHunts`, `renderStarred`).
   - **Columns:** species, hunt, tags, guaranteed, projected guaranteed and split, then one 2027-odds column **per hunter**, each at that hunter's points for the hunt's species. It has its own residency toggle.
@@ -110,7 +115,7 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
 - **Table:**
   - Columns: Hunt · 2026 tags · 2026 applicants · 2026 guaranteed at · 2026 split group · 2025 harvest success · [trend columns] · 2027 projected guaranteed · 2027 projected split · **<Name>'s 2027 odds (far right)**.
   - Every header carries its year.
-  - **Trend columns** (Tag change, Point creep, 2026 vs projected) are **hidden by default** behind a "Show trend columns" checkbox. Turning it off clears their filters and sort.
+  - **Trend columns** (Tag change, Point creep, 2026 vs projected) are **hidden by default** behind the "Trend columns" toggle in the filter bar. Turning it off clears their filters and sort.
   - Removed at the owner's request: the top group column and the average random-odds column.
   - Units are **grouped** (collapsible) when sorted by Hunt. Weapon buttons, search and the unit picker keep the grouping. Sorting by another column or a number filter makes the list flat.
   - Every column has a **filter button**: min/max for numbers, a unit multi-select for Hunt.
@@ -119,7 +124,7 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - **Projections look different** (added 2026-11-24): the next-year projected guaranteed and split numbers are *italic* (`td.is-proj`, `th.is-proj`, column flag `proj:true`), with italic headers. The numbers are also **orange** (`--orange-bright`), on desktop and phones, because they're the ones the eye should catch first (owner, 2026-11-24). No dimmer color, no key in the summary line, no tooltip. The odds pill is also a next-year figure but keeps its colors; its header says "2027 odds".
   - **Phones (680 px and under) get cards, not the table** (added 2026-11-24). It's CSS only, on the same rows: every cell has a `k-<column>` class and, for the card's numbers, a `data-label` from the column's `short` label.
     - **Each card:** hunt name, code and dates across the top, star at the top right, then **every desktop column**: the four key numbers (tags, guaranteed, projected guaranteed, the active hunter's odds), a thin line, a smaller row (applicants, split, projected split, harvest: the split sits beside its projection, and the two projections stack in the third column, the owner's request), and, when "Trend columns" is on, a third row (tag change, point creep, vs projected). CSS `order` on the `k-*` cells arranges them; the DOM keeps table order. Tapping the card opens the full detail underneath. The owner asked for the hidden columns to be reachable on phones.
-    - **Sorting and filters:** the header row is hidden, so a phone-only bar (`#mBar`, `renderMobileBar`) has a Sort menu, a direction button and a Filter menu that opens the same popover.
+    - **Sorting and filters:** the header row is hidden, so a phone-only bar (`#mBar`, `renderMobileBar`, inside the folded Filters panel) has a Sort menu, a direction button and a "Filter a column" menu that opens the same popover.
     - The Starred list uses the same card layout, with one odds box per hunter.
     - **Numbers line up:** every label is clamped to exactly two lines, and every number, odds pill or "add points" sits in one 1.3rem line.
     - **Opened card:** the detail fills the card width with tighter tables. The share-drawn bars and their legend colors are hidden (the split-group key stays). Year-by-year cells don't wrap; the split's "(1 of 5)" sits under its number. Hunt facts put each label above its value. The desktop orange row marker is hidden and the whole card is tinted instead. Checked at 375 px in an iframe (headless Edge won't go below about 525 px).
@@ -144,7 +149,7 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
 - **On the rest of the site:** Draw Odds is listed as the fifth app, **outside** the Sort → View → Track → Score workflow. See the root `CLAUDE.md`.
 - **Advertising the paid apps** (added 2026-11-24). The page is free, and the owner wants it to show off the paid apps without being annoying. The owner chose three placements:
   1. **Maker row** (`.maker-strip`): one quiet row under the intro, "Check out these other useful apps:", then each app's icon and name as a link, then "See the apps →". The owner picked this icon row over a featured card or a dismissible bar.
-  2. **Hunt detail suggestions** (`promoHtml` / `promoFor`): **all four apps** in a compact 2x2 grid (one column on phones) at the bottom of a hunt's right-hand column, in Sort → View → Track → Score order, with one short line each worded for that species. The owner chose all four over a per-species pick.
+  2. **Hunt detail suggestions** (`promoHtml` / `promoFor`): **all four apps** in a compact 2x2 grid (2x2 on phones too) at the bottom of a hunt's right-hand column, in Sort → View → Track → Score order, with one short line each worded for that species. The owner chose all four over a per-species pick.
      - The lead line is "Looks like you may draw this one. Get ready with:" when the active hunter's 2027 odds are 90% or better, otherwise "Getting ready for this hunt?".
      - **Only claim what each app supports:** Scorer covers elk, mule deer, whitetail, bighorn, pronghorn, bear and lion; Tracker covers elk, mule deer, whitetail, bighorn and bear; Detector identifies elk and deer.
      - Where an app doesn't cover the hunt's species, its line uses generic wording that names no species (Scorer lists the species it does cover). Recheck this if an app adds species.
@@ -153,12 +158,12 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - Icons are the 64px `img/menu-*.png` used by the nav dropdown. None of this shows when printing.
 - **Click counters to the apps** (built 2026-11-24). Every app link on the page carries `data-ref="<app>:<placement>"`: the top row (`top`, including "See the apps" as app `apps`), the hunt-detail grid (`detail`) and the After the draw cards (`after`).
   - **How it records:** one document click listener at the end of the template calls `dlCount("referrals_drawodds", {app, placement})` from the site's `downloads.js` (so the key lives in one place), with `keepalive` because these links navigate in the same tab.
-  - **The table:** `referrals_drawodds(id, created_at, app, placement)`, with check constraints on both values. Anyone may insert; only the admin may read. `tools/draw-odds/referrals_drawodds.sql` creates it and copies the admin read rule from the `downloads` table, so no email is in the repo. **It must be run once in the Supabase SQL editor**; until then the inserts fail silently and nothing breaks.
-  - **Where to see counts:** `download-log.html`, tab "Draw Odds → apps": a table by app page × placement (all rows are loaded, so it's a true total), plus every click.
+  - **The table:** `referrals_drawodds(id, created_at, app, placement)`, with check constraints on both values. Anyone may insert; only the admin may read. `tools/draw-odds/referrals_drawodds.sql` creates it and copies the admin read rule from the `downloads` table, so no email is in the repo. The owner **ran it on 2026-11-24**, so the table exists. If it's ever recreated, run the same file; until a table exists the inserts fail silently and nothing breaks.
+  - **Where to see counts:** `license-admin.html`, **Statistics** tab, row "Draw Odds > app clicks" (one all-time box per app), which links to `download-log.html`, tab "Draw Odds → apps": a table by app page × placement (all rows are loaded, so it's a true total), plus every click.
   - **Disclosure:** the sources line at the bottom of the page says hunters and points stay in the browser and that app-link clicks are counted anonymously. Adding a new app link means adding a `data-ref`, and a new app or placement value means changing the table's check constraint.
   - **Testing:** over `file://` the insert fails on CORS (harmless). Over `http://localhost` it writes real rows. To test the tagging, stub `window.fetch` in a temp copy.
 - **Tag-number note:** "2027 tag numbers aren't out yet, so projections use 2026 tags" (or "Projections use the released 2027 tag numbers") is at the **bottom**, starting the sources line. The owner moved it out of the intro.
-- **Order at the top:** intro, app icon row, **Hunter panel**, then the species buttons, then the filters. The owner moved the Hunter panel above the species buttons.
+- **Order at the top:** intro, app icon row, **"Your points" panel**, then the species buttons (Starred first), then the filter bar. The owner moved the points panel above the species buttons.
 - **Filter bar** (restyled 2026-11-24): no panel box and no field labels, just one compact row of buttons in the species-bar style (transparent, thin border, orange border and tint when on): weapon buttons, a Resident/Nonres pair, a search box, and three toggle buttons ("Within 1 pt", "Starred only", "Trend columns", checkboxes inside `label.tog`, lit with `:has(input:checked)`). At 1,400 px it fits **on one line for every species** (tightened 2026-11-24), with the **search box first, at the far left** (`order:-3`), so it's the first thing seen (the owner's request). Below about 1,300 px it wraps for LE elk and LE deer, which have the most weapon buttons. On phones the search box still comes first, beside the Filters button. Labels live in `aria-label`s.
 - **Species buttons fit on one line at 1,400 px** (tightened 2026-11-24: 0.78rem side padding, 0.4rem gap). Below about 1,300 px they wrap.
 - **Phone top of page** (680 px and under, added 2026-11-24), to cut what sat above the first hunt from about 14 rows to 4:
@@ -186,7 +191,8 @@ There's no test suite. Checks are done by:
 - Headless Edge (`C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe --headless=new`):
   - `--screenshot` for visuals and `--dump-dom` with an injected script for measurements.
   - Seed localStorage with a `<script>` injected before `const STATES` in a temp copy (e.g. `_t.html` in the repo root, so `style.css` resolves), then delete the temp file.
-  - Headless enforces a minimum width of about 490 px.
+  - Headless enforces a minimum width of about 525 px. To see a real phone width, load the temp page in an `<iframe style="width:375px">` from a second temp file and screenshot that.
+  - To look at part of the page, hide the elements before it in the injected script (scrolling a screenshot is unreliable); see the scroll note under "Phones" above.
 - The owner's spreadsheets may be open in Excel (file locked). Copy to a scratch folder before reading with openpyxl.
 
 ## Backlog / ideas (owner agreed to "later")
