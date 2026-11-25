@@ -301,7 +301,6 @@ tr.grp:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
 tr.grp .caret{display:inline-block;color:var(--orange);margin:0 0.55rem 0 0.35rem;transition:transform 0.2s;font-size:0.8rem}
 tr.grp.closed .caret{transform:rotate(-90deg)}
 .grp-name{font-weight:800;color:#fff;font-size:1rem;letter-spacing:-0.01em}
-.grp-badge{margin-left:0.7rem;vertical-align:1px;cursor:help}
 .grp-meta{font-family:var(--mono);font-size:0.68rem;color:var(--muted);margin-left:0.9rem;letter-spacing:0.03em}
 tr.row.in-grp td.hunt{padding-left:1.6rem}
 tr.row.in-grp .unit{font-weight:600;font-size:0.9rem;color:var(--text)}
@@ -371,7 +370,9 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 
 /* HOW IT WORKS */
 .assume-wrap{margin-top:1.75rem;max-width:860px}
-.assume-wrap.explain-wrap{margin-top:2.5rem}
+.assume-wrap.explain-wrap,.assume-wrap.otc-wrap{margin-top:2.5rem}
+.otc-wrap:not([hidden]) + .explain-wrap{margin-top:1.75rem}
+.otc-wrap[hidden]{display:none}
 #explainList p+p{margin-top:0.6rem}
 .assume-wrap:not(.open) .assume{max-height:10.5rem;overflow:hidden;-webkit-mask-image:linear-gradient(#000 45%,transparent);mask-image:linear-gradient(#000 45%,transparent)}
 .assume-more{margin:0.5rem 0 0 1.1rem;color:var(--orange-bright)}
@@ -382,6 +383,8 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 .assume li::before{content:'› ';color:var(--orange)}
 .assume p+p{margin-top:0.6rem}
 .assume b{color:var(--text)}
+.assume a{color:var(--orange-bright);text-decoration:none;border-bottom:1px solid var(--border-orange)}
+.assume a:hover{color:#fff;border-color:var(--orange)}
 .assume-tbl{border-collapse:collapse;margin:0.6rem 0 0.8rem;font-size:0.82rem;font-variant-numeric:tabular-nums}
 .assume-tbl th,.assume-tbl td{padding:0.3rem 0.9rem 0.3rem 0;border-bottom:1px solid var(--border);text-align:right;color:var(--muted)}
 .assume-tbl th:first-child,.assume-tbl td:first-child{text-align:left}
@@ -752,6 +755,12 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 
   <!-- Both notes sections share one format: orange rule, small heading, paragraphs with
        bold lead-ins, collapsed by default to a short preview that "Read more" expands. -->
+  <!-- Bear only: over-the-counter (harvest-objective) hunts, same format as the notes below,
+       short enough to show in full (no Read more). Filled by renderExplain(). -->
+  <div class="assume-wrap otc-wrap open" id="otcWrap" hidden>
+    <div class="assume" id="otc"></div>
+  </div>
+
   <div class="assume-wrap explain-wrap">
     <div class="assume" id="explain"><h2>How the numbers are calculated</h2><div id="explainList"></div></div>
     <button type="button" class="link-btn assume-more" aria-controls="explain" aria-expanded="false">Read more ↓</button>
@@ -1213,10 +1222,7 @@ function render(){
       const best = p == null ? null : Math.max(...grp.map(x => oddsAt(x.a.model, p) ?? -1));
       html += `<tr class="grp${closed ? " closed" : ""}" data-unit="${esc(unit)}" tabindex="0" aria-expanded="${!closed}"><td colspan="${cols.length}" class="l">` +
         `<span class="caret" aria-hidden="true">▾</span><span class="grp-name">${esc(unit)}</span>` +
-        `<span class="grp-meta">${grp.length} hunt${grp.length > 1 ? "s" : ""} · ${fmt(gTags)} tags${best != null && best >= 0 ? ` · ${esc(prof.name)}'s best: ${pct(best)}` : ""}</span>` +
-        // Unit-level badge (bear: an over-the-counter harvest-objective hunt on the unit), once per unit.
-        ((grp.find(x => x.h.ho) || {}).h ? (ho => `<span class="badge grp-badge" title="${esc(ho[1])}">${esc(ho[0])}</span>`)(grp.find(x => x.h.ho).h.ho) : "") +
-        `</td></tr>`;
+        `<span class="grp-meta">${grp.length} hunt${grp.length > 1 ? "s" : ""} · ${fmt(gTags)} tags${best != null && best >= 0 ? ` · ${esc(prof.name)}'s best: ${pct(best)}` : ""}</span></td></tr>`;
       if (!closed) html += grp.map(({h,a}) => rowHtml(st, sp, h, a, p, true) + (ui.open.has(h.code) ? detailHtml(st, sp, h, a, p, cols.length) : "")).join("");
     }
   } else {
@@ -1264,8 +1270,7 @@ function rowHtml(st, sp, h, a, p, inGroup){
     : `<span class="big">${m.split} pts</span><span class="small">${fmt(m.k)} of ${fmt(m.n)} draw</span>`;
   const s0 = h.seasons && h.seasons[0];
   const dates = s0 && h.seasons.length === 1 ? ` · ${fmtDate(s0[1])} – ${fmtDate(s0[2])}` : "";
-  // h.ho (unit-level) sits on the unit heading when grouped; flat lists show it per hunt.
-  const badges = [...(h.notes || []), ...(h.ho && !inGroup ? [h.ho] : [])].map(n => `<span class="badge" title="${esc(n[1])}">${esc(n[0])}</span>`).join("");
+  const badges = (h.notes || []).map(n => `<span class="badge" title="${esc(n[1])}">${esc(n[0])}</span>`).join("");
   const name = inGroup
     ? `<div class="unit">${esc(h.weapon)}${badges}</div><div class="meta"><span class="code">${esc(h.code)}</span>${esc(dates)}</div>`
     : `<div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div>` +
@@ -1360,7 +1365,7 @@ function detailHtml(st, sp, h, a, p, ncol){
       <table class="pts hunters-tbl"><thead><tr><th class="l">Hunter</th><th>Points</th><th>${N} odds</th></tr></thead><tbody>${hunters}</tbody></table>
       ${a.model && !a.model.all && a.model.randTags > 0 ? `<p class="hat">${N} random draw: ${fmt(a.model.randTags)} tag${a.model.randTags === 1 ? "" : "s"} drawn from about <b>${fmt(Math.round(a.model.entries))}</b> entries held by ${fmt(a.model.rest.reduce((s,x) => s + x[1], 0))} applicants.${p != null ? ` ${esc(activeProfile().name)} holds ${p + 1}.` : ""}</p>` : ""}
       <h3 style="margin-top:1.4rem">Hunt</h3><dl class="facts">
-      ${(h.notes || []).length || h.ho ? `<dt>Notes</dt><dd>${[...(h.notes || []), ...(h.ho ? [h.ho] : [])].map(n => `<span class="badge">${esc(n[0])}</span> ${esc(n[1])}`).join("<br>")}</dd>` : ""}
+      ${(h.notes || []).length ? `<dt>Notes</dt><dd>${h.notes.map(n => `<span class="badge">${esc(n[0])}</span> ${esc(n[1])}`).join("<br>")}</dd>` : ""}
       <dt>Hunt #</dt><dd><span class="code">${esc(h.code)}</span>${h.map ? ` · <a href="${esc(h.map)}" target="_blank" rel="noopener">Boundary map</a>` : ""}</dd>
       <dt>${st.drawYear} season${(h.seasons||[]).length > 1 ? "s" : ""}</dt><dd>${seasons || "—"}</dd>
       <dt>Tags</dt><dd>${tagLine}</dd>
@@ -1488,12 +1493,25 @@ function renderExplain(st, sp){
     [`Point creep`,`Change in guaranteed points from ${D-1} to ${D}, with the change since ${D-2} underneath. Orange means more points needed. "New hunt" means it didn't exist in the earlier draws.`],
     [`Your entries`, `Under your odds, "15 of 21,453 entries" means you hold 15 (14 points + 1) of all the entries in the ${N} random draw. With one random tag that's about your chance; with more tags it's higher, since several get drawn.`],
     [`Grouping and filters`, `Hunts are grouped by unit while sorted by Hunt. The weapon buttons, search and the Hunt column's unit picker keep the groups. Sorting by another column, or a number filter, switches to a flat list. "Season dates" (next to Hunt) sorts by opening day, then unit name.`],
-    [`Badges`, `Management buck, cactus buck, premium, restricted weapon, HAMSS and bison cow/hunter's choice come from DWR's hunt labels. Hover a badge, or open the hunt, for the rule.`],
+    [`Badges`, sp.key === "bear"
+      ? `Hounds, Bait, Hounds or bait and No hounds or bait show what each bear season allows, from DWR's black bear guidebook: dogs in spring and fall, bait only in summer (with a bait station registration), each season's rules on a multi-season permit. Hover a badge, or open the hunt, for the details.`
+      : `Management buck, cactus buck, premium, restricted weapon, HAMSS and bison cow/hunter's choice come from DWR's hunt labels. Hover a badge, or open the hunt, for the rule.`],
   ];
   if (sp.pooled) items.push([`One pool`, `Limited-entry turkey doesn't split permits between residents and nonresidents: everyone, youth included, draws from the same permits, so the tables count everyone and the Resident and Nonres buttons show the same numbers. Youth get a first pass at 15% of the permits before the main draw, which takes a tag or two from adults; the odds don't model that.`]);
   if (sp.key === "bear") items.push([`Bear seasons`, `Bear hunts are grouped by season (spring, summer, fall, multi-season) instead of weapon; the season buttons filter them.`]);
   if (sp.system === "preference") items.push([`Preference points`, `General-season deer gives every tag to the highest point holders, so there's no random half. The ${D} split is the highest level where fewer than 90% drew; group applications blur it slightly.`]);
-  $("#explainList").innerHTML = items.map(([b, t]) => `<p><b>${esc(b)}.</b> ${esc(t)}</p>`).join("");
+  // Over-the-counter bear: its own section above this one (the owner preferred one note to a
+  // badge on every unit, since most units have one), linking DWR's live unit list and the guidebook.
+  const otc = sp.key === "bear" && sp.ho;
+  $("#otcWrap").hidden = !otc;
+  if (otc){
+    const ho = sp.ho, a = (u, t) => `<a href="${esc(u)}" target="_blank" rel="noopener">${t}</a>`;
+    $("#otc").innerHTML = `<h2>Over-the-counter bear hunts</h2><p>${ho.units} units also have a harvest-objective hunt: a permit you buy without drawing` +
+      (ho.fee ? ` ($${ho.fee[0]} resident, $${ho.fee[1]} nonresident` + (ho.sale ? `, on sale from ${esc(ho.sale)}` : "") + `)` : "") +
+      `, good until that unit's quota is taken. No bait on any of them, and most allow no dogs either. You can't buy one if you drew a limited-entry bear permit.</p>` +
+      `<p>${a(ho.status, "See the units, quotas and which are still open")} (DWR, updated daily during the season) or the hunt tables in the ${a(ho.guide, `${ho.year || ""} bear guidebook`)}.</p>`;
+  }
+  $("#explainList").innerHTML = items.map(([b, t, html]) => `<p><b>${esc(b)}.</b> ${html ? t : esc(t)}</p>`).join("");
 }
 
 // ---------- column filters ----------

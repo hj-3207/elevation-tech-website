@@ -333,6 +333,9 @@ def apply_species_harvest(species, refresh):
 # ("Harvest-objective hunts": unit, harvest quota, season dates, hunting method). The
 # guidebook URL has no year in it; the cached copy is named for the year on its cover.
 BEAR_GUIDEBOOK_URL = "https://wildlife.utah.gov/guidebooks/black-bear-cougar-furbearer-guidebook.pdf"
+# DWR's live list: each harvest-objective unit's quota, harvest to date, remaining, open or
+# closed, and method. (The guidebook's "wildlife.utah.gov/bearharvest" link was a 404 in Nov 2026.)
+BEAR_HO_STATUS_URL = "https://wildlife.utah.gov/bear/harvest"
 _MON = r"(?:Jan|Feb|March|April|May|June|July|Aug|Sept|Oct|Nov|Dec)\.?"
 _DATES = rf"{_MON} \d+[–-]{_MON} \d+"
 HO_ROW = re.compile(rf"^(.+?) (\d+)(?: ({_DATES}))? (No bait(?:/no dogs)?)$")
@@ -400,29 +403,12 @@ def apply_bear_ho(species, refresh):
     except Exception as e:
         print(f"  ! bear guidebook not available ({e})", file=sys.stderr)
         return
-    fee = f"${ho['fee'][0]} resident / ${ho['fee'][1]} nonresident" if ho["fee"] else "see the guidebook for the fee"
-    sale = f", on sale from {ho['sale']}" if ho["sale"] else ""
-    n, units = 0, set()
-    for h in sp["hunts"]:
-        rows = ho["units"].get(h["unit"])
-        if not rows:
-            continue
-        method = lambda m: "no bait or dogs" if "dogs" in m.lower() else "no bait, dogs allowed"
-        hunts = "; ".join(f"{' and '.join(w) or 'see guidebook'} (quota {q}, {method(m)})" for q, w, m in rows)
-        # A unit-level fact: the page shows it once on the unit heading when grouped,
-        # and on each hunt in flat lists and the hunt detail.
-        h["ho"] = (["OTC hunt on this unit",
-            f"This unit also has {'an over-the-counter (harvest-objective) bear hunt' if len(rows) == 1 else f'{len(rows)} over-the-counter (harvest-objective) bear hunts'}: {hunts}. "
-            f"Buy the permit without drawing ({fee}{sale}); the unit closes once its quota is taken, so check "
-            f"wildlife.utah.gov/bearharvest before each trip. No bait on any harvest-objective hunt. "
-            f"Not available if you draw a limited-entry bear permit (one bear permit a year). "
-            f"From DWR's {ho['year'] or ''} bear guidebook."])
-        h["ho"] = list(h["ho"])
-        n += 1; units.add(h["unit"])
-    missing = sorted(set(ho["units"]) - {h["unit"] for h in sp["hunts"]})
-    sp["hoYear"] = ho["year"]
-    print(f"  bear harvest-objective ({ho['year']} guidebook): {len(ho['units'])} units, badge on {n} hunts in {len(units)} units"
-          + (f"; no limited-entry match: {', '.join(missing)}" if missing else ""))
+    # The owner first had a badge on every unit with an OTC hunt, then (same day) asked for
+    # one note at the bottom instead, since most units have one. The page builds that note
+    # from this summary and links DWR's live unit list and the guidebook.
+    sp["ho"] = {"year": ho["year"], "units": len(ho["units"]), "fee": ho["fee"], "sale": ho["sale"],
+                "status": BEAR_HO_STATUS_URL, "guide": BEAR_GUIDEBOOK_URL}
+    print(f"  bear harvest-objective ({ho['year']} guidebook): {len(ho['units'])} units with an OTC hunt")
 
 
 def split_quota(total, system):
