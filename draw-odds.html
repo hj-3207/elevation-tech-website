@@ -48,7 +48,17 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 
 /* CONTROLS */
 .panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.35rem;position:relative;overflow:hidden;margin-bottom:1rem}
-.controls{display:grid;gap:1rem 1.1rem;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));align-items:end}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem 0.9rem;margin:0 0 0.5rem}
+.controls .q{flex:1 1 200px;min-width:170px;max-width:300px;background:transparent;border:1px solid var(--border-strong);border-radius:6px;padding:0 0.85rem;min-height:40px;color:var(--text);font-family:var(--mono);font-size:0.74rem;transition:border-color 0.2s}
+.controls .q::placeholder{color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-size:0.7rem}
+.controls .q:hover{border-color:rgba(255,255,255,0.25)}
+.controls .q:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-tint-2)}
+.toggles{display:flex;flex-wrap:wrap;gap:0.4rem}
+.tog{display:inline-flex;align-items:center;gap:0.45rem;min-height:40px;padding:0 0.8rem;border:1px solid var(--border-strong);border-radius:6px;cursor:pointer;
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);transition:all 0.2s;user-select:none}
+.tog:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
+.tog input{accent-color:var(--orange);width:14px;height:14px;margin:0;cursor:pointer}
+.tog:has(input:checked){color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
 .panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:0.6}
 .ctl label,.ctl .lbl{display:block;font-family:var(--mono);font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem}
 .ctl select,.ctl input[type=text],.ctl input[type=number]{width:100%;min-width:0;background:var(--bg2);border:1px solid var(--border-strong);border-radius:6px;padding:0.55rem 0.75rem;min-height:40px;color:var(--text);transition:border-color 0.2s}
@@ -57,10 +67,11 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .ctl select option{background:var(--card);color:var(--text)}
 .ctl input[type=number]{font-family:var(--mono)}
 .ctl input::placeholder{color:var(--subtle)}
-.seg{display:flex;border:1px solid var(--border-strong);border-radius:6px;overflow:hidden;background:var(--bg2)}
-.seg button{flex:1;border:0;background:none;padding:0.5rem 0.4rem;cursor:pointer;min-height:38px;font-family:var(--mono);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);transition:all 0.2s}
+.seg{display:flex;border:1px solid var(--border-strong);border-radius:6px;overflow:hidden;background:transparent}
+.seg button{flex:1;border:0;background:none;padding:0 0.85rem;cursor:pointer;min-height:38px;font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);transition:all 0.2s}
+.seg button+button{border-left:1px solid var(--border-strong)}
 .seg button:hover{color:#fff}
-.seg button[aria-pressed=true]{background:var(--orange);color:#fff;font-weight:600}
+.seg button[aria-pressed=true]{background:rgba(204,85,0,0.14);color:#fff;box-shadow:inset 0 0 0 1px var(--orange)}
 .ctl.checks{display:flex;flex-direction:column;gap:0.45rem}
 .checks label{display:flex;gap:0.6rem;align-items:center;font-family:var(--sans);font-size:0.86rem;letter-spacing:0;text-transform:none;color:var(--soft);margin:0;cursor:pointer}
 .checks input{accent-color:var(--orange);width:16px;height:16px}
@@ -69,12 +80,12 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .summary b{color:#fff;font-weight:600}
 
 /* SPECIES (same look as the site's .vtab buttons) */
-.species-tabs{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem}
+.species-tabs{display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.9rem}
 .vtab{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);background:transparent;
   border:1px solid var(--border-strong);border-radius:6px;padding:0.6rem 1.05rem;cursor:pointer;transition:all 0.2s}
 .vtab:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
 .vtab.is-on{color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
-.vtab{display:inline-flex;align-items:center;gap:0.55rem;min-height:40px}
+.vtab{display:inline-flex;align-items:center;gap:0.45rem;min-height:40px;padding:0.6rem 0.78rem}
 .vtab img{height:20px;width:auto;opacity:0.55;transition:opacity 0.2s}
 .vtab:hover img,.vtab.is-on img{opacity:1}
 
@@ -175,11 +186,10 @@ table.main th.is-proj{font-style:italic}
 .m-bar{display:none}
 
 /* WEAPON BUTTONS + BADGES */
-.wtypes-ctl{grid-column:span 2}
 .wchips{display:flex;flex-wrap:wrap;gap:0.35rem}
-.wchip{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);background:var(--bg2);border:1px solid var(--border-strong);border-radius:6px;padding:0 0.75rem;min-height:40px;cursor:pointer;transition:all 0.2s}
+.wchip{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--border-strong);border-radius:6px;padding:0 0.75rem;min-height:40px;cursor:pointer;transition:all 0.2s}
 .wchip:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
-.wchip.on{color:#fff;background:var(--orange);border-color:var(--orange)}
+.wchip.on{color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
 .badge{display:inline-block;font-family:var(--mono);font-size:0.58rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--orange-bright);border:1px solid var(--border-orange);background:var(--orange-tint);border-radius:3px;padding:0.1rem 0.4rem;margin-left:0.45rem;vertical-align:0.12em;white-space:nowrap;cursor:help}
 .badges{margin-top:0.3rem}
 .badges .badge{margin:0 0.3rem 0 0}
@@ -327,9 +337,9 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 
 @media (max-width:680px){
   main{padding:7.5rem 1rem 3rem}
-  .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .controls .q{max-width:none;flex-basis:100%}
   .panel{padding:1rem}
-  .controls .wtypes-ctl,.controls .ctl:nth-child(3),.controls .ctl.checks{grid-column:1/-1}
+
   .detail-grid{max-width:calc(100vw - 4.75rem)}
 }
 /* PHONES: each hunt becomes a card. The hunt name runs across the top, then four
@@ -439,18 +449,19 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 
   <div class="species-tabs" id="speciesTabs" role="group" aria-label="Species"></div>
 
-  <div class="panel controls" role="region" aria-label="Filters">
-    <div class="ctl wtypes-ctl"><span class="lbl" id="wtLbl">Weapon</span><div class="wchips" id="weaponChips" role="group" aria-labelledby="wtLbl"></div></div>
-    <div class="ctl"><span class="lbl" id="resLbl">Residency</span>
-      <div class="seg" role="group" aria-labelledby="resLbl">
-        <button type="button" data-res="R" aria-pressed="true">Resident</button>
-        <button type="button" data-res="N" aria-pressed="false">Nonres</button>
-      </div></div>
-    <div class="ctl"><label for="q">Search unit or hunt #</label><input id="q" type="text" placeholder="Manti, Boulder, EB3006…" autocomplete="off"></div>
-    <div class="ctl checks">
-      <label><input type="checkbox" id="onlyRun"> Within 1 point of guaranteed</label>
-      <label><input type="checkbox" id="onlyStar"> Starred hunts only</label>
-      <label><input type="checkbox" id="showTrends"> Show trend columns</label>
+  <!-- Filters: one compact row of buttons in the same style as the species bar
+       (no panel box, no field labels; screen readers get aria-labels). -->
+  <div class="controls" role="region" aria-label="Filters">
+    <div class="wchips" id="weaponChips" role="group" aria-label="Weapon"></div>
+    <div class="seg" role="group" aria-label="Residency">
+      <button type="button" data-res="R" aria-pressed="true">Resident</button>
+      <button type="button" data-res="N" aria-pressed="false">Nonres</button>
+    </div>
+    <input id="q" class="q" type="search" placeholder="Search unit or hunt #" aria-label="Search unit or hunt number" autocomplete="off">
+    <div class="toggles" role="group" aria-label="Options">
+      <label class="tog" title="Within 1 point of guaranteed"><input type="checkbox" id="onlyRun"> Within 1 pt</label>
+      <label class="tog"><input type="checkbox" id="onlyStar"> Starred only</label>
+      <label class="tog"><input type="checkbox" id="showTrends"> Trend columns</label>
     </div>
   </div>
 

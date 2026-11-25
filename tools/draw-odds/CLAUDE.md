@@ -147,6 +147,8 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
   - **Testing:** over `file://` the insert fails on CORS (harmless). Over `http://localhost` it writes real rows. To test the tagging, stub `window.fetch` in a temp copy.
 - **Tag-number note:** "2027 tag numbers aren't out yet, so projections use 2026 tags" (or "Projections use the released 2027 tag numbers") is at the **bottom**, starting the sources line. The owner moved it out of the intro.
 - **Order at the top:** intro, app icon row, **Hunter panel**, then the species buttons, then the filters. The owner moved the Hunter panel above the species buttons.
+- **Filter bar** (restyled 2026-11-24): no panel box and no field labels, just one compact row of buttons in the species-bar style (transparent, thin border, orange border and tint when on): weapon buttons, a Resident/Nonres pair, a search box, and three toggle buttons ("Within 1 pt", "Starred only", "Trend columns", checkboxes inside `label.tog`, lit with `:has(input:checked)`). At 1,400 px it takes two short rows. Labels live in `aria-label`s.
+- **Species buttons fit on one line at 1,400 px** (tightened 2026-11-24: 0.78rem side padding, 0.4rem gap). Below about 1,300 px they wrap.
 - **Copy voice:** plain, concrete, and honest about limitations, like the website.
 
 ## Yearly / seasonal tasks
