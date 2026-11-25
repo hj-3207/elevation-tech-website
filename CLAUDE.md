@@ -131,8 +131,8 @@ single network call in the desktop line, and it is disclosed.
 - `terms-rack{detector,viewer}.html` — Tracker and Scorer have no terms page yet
 - `privacy-policy-rackracker.html` — **typo filename, kept deliberately.** Was
   published first and may be linked externally; it redirects to the correct page.
-- `draw-odds.html` — Utah big game draw odds tool. **Generated, do not edit here**
-  (see "Draw Odds page" below).
+- `draw-odds.html` — Draw Odds state picker (map), and `draw-odds-utah.html` — the Utah
+  draw odds page. **Both generated, do not edit here** (see "Draw Odds page" below).
 - `google4f30917507f29334.html` — Search Console verification, do not touch
 - `license-admin.html`, `download-log.html` — internal admin, `noindex`, and linked
   from nowhere. Reached by **Ctrl-clicking (or Cmd-clicking) the footer logo** on desktop
@@ -258,14 +258,15 @@ change it there and rebuild.
 
 ## Draw Odds page (generated)
 
-`draw-odds.html` is **generated** from `tools/draw-odds/` (template plus Python build
+`draw-odds.html` (the state picker) and `draw-odds-<state>.html` (one page per working
+state; only Utah so far) are **generated** from `tools/draw-odds/` (templates plus Python build
 script). Full context, including the odds logic, the owner's decisions and the yearly
 tasks, is in **`tools/draw-odds/CLAUDE.md`**; read it before touching the page. The
 source moved here from OneDrive on 2026-11-24 so everything lives in one repo. To
 rebuild:
 
 ```
-python tools/draw-odds/build_utah.py      # writes draw-odds.html and data/draw-odds/
+python tools/draw-odds/build_utah.py      # writes draw-odds.html, draw-odds-utah.html and data/draw-odds/
 ```
 
 then commit and push as usual. The build never touches git. It's a local
@@ -289,7 +290,7 @@ generator, so there's still no build step on deploy: Pages serves the committed 
   (`referrals_drawodds`: which app, where on the page, when). The page says so in its
   sources line. See `tools/draw-odds/CLAUDE.md`.
 - It is the only page with link-preview tags (`og:` / `twitter:`), pointing at
-  `img/drawodds-og.jpg` (made from `tools/draw-odds/og-card.html`). Other pages have none
+  `img/drawodds-og-utah.jpg` / `img/drawodds-og-states.jpg` (made from `tools/draw-odds/og-card.html`). Other pages have none
   yet; copy that pattern (absolute URLs, 1200×630 image) if one needs a preview.
 
 **The nav is `position: fixed`,** so anchor targets need to reserve room or they

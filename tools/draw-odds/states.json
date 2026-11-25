@@ -1,0 +1,11 @@
+[
+  {"code": "UT", "name": "Utah", "page": "draw-odds-utah.html", "live": true, "system": "Bonus points", "blurb": "Half the tags to top points, half random"},
+  {"code": "CO", "name": "Colorado", "page": "draw-odds-colorado.html", "live": false, "system": "Preference points"},
+  {"code": "WY", "name": "Wyoming", "page": "draw-odds-wyoming.html", "live": false, "system": "Preference points + random"},
+  {"code": "AZ", "name": "Arizona", "page": "draw-odds-arizona.html", "live": false, "system": "Bonus points"},
+  {"code": "NM", "name": "New Mexico", "page": "draw-odds-new-mexico.html", "live": false, "system": "Random draw"},
+  {"code": "NV", "name": "Nevada", "page": "draw-odds-nevada.html", "live": false, "system": "Bonus points (squared)"},
+  {"code": "MT", "name": "Montana", "page": "draw-odds-montana.html", "live": false, "system": "Bonus points (squared)"},
+  {"code": "ID", "name": "Idaho", "page": "draw-odds-idaho.html", "live": false, "system": "Random draw"},
+  {"code": "KS", "name": "Kansas", "page": "draw-odds-kansas.html", "live": false, "system": "Preference points"}
+]

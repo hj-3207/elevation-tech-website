@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<!-- Source for img/drawodds-og.jpg, the 1200x630 link-preview image (og:image).
-     Render with headless Edge from the site root:
-       msedge --headless=new --window-size=1200,630 --screenshot=img/drawodds-og.png tools/draw-odds/og-card.html
-     then save as JPEG. -->
+<!-- Source for the 1200x630 link-preview images (og:image):
+       og-card.html          -> img/drawodds-og-utah.jpg   (Utah page)
+       og-card.html?states   -> img/drawodds-og-states.jpg (the state picker, draw-odds.html)
+     Render with headless Edge (add --allow-file-access-from-files for ?states):
+       msedge --headless=new --hide-scrollbars --window-size=1200,630 --screenshot=out.png "file:///.../tools/draw-odds/og-card.html"
+     then save as JPEG. A new state needs its own card: copy the Utah text. -->
 <html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -34,4 +36,15 @@ p b{color:#fff;font-weight:700}
 </div>
 <div class="foot"><img src="../../img/drawodds-icon.png" alt="">elevationtechsolutions.net</div>
 <div class="shot"><img src="../../img/drawodds-screenshot.jpg" alt=""></div>
+<script>
+// og-card.html?states makes the picker's card (img/drawodds-og-states.jpg): the map
+// from the built draw-odds.html instead of the Utah table.
+if (location.search.indexOf("states") >= 0){
+  document.querySelector("h1").innerHTML = "Western<b>Draw Odds</b>";
+  document.querySelector("p").innerHTML = "Pick a state: guaranteed points, split groups, <b>your random-draw odds</b> and next year's projections by hunt.";
+  const s = document.querySelector(".shot");
+  s.innerHTML = '<iframe src="../../draw-odds.html" scrolling="no" style="position:absolute;left:-84px;top:-291px;width:1400px;height:1200px;border:0;transform:scale(0.82);transform-origin:0 0"></iframe>';
+  s.style.width = "536px"; s.style.right = "56px"; s.style.height = "502px"; s.style.border = "0"; s.style.boxShadow = "none";
+}
+</script>
 </body></html>

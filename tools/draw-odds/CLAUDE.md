@@ -1,9 +1,13 @@
 # Draw Odds — project context
 
-`draw-odds.html` (live at https://elevationtechsolutions.net/draw-odds.html) is a Utah big
-game draw odds tool. It replaces the spreadsheets the owner kept by hand for years
-(`OneDrive\Documents\Hunting\DrawOdds2025.xlsx`, `ElkDrawOdds2026.xlsx` and older).
-- **Scope:** Utah only for now. Other states (the owner also tracks Colorado and Wyoming points) will likely get **their own page**, not a state dropdown on this one.
+Draw Odds is a big game draw odds tool, one page per state. It replaces the spreadsheets
+the owner kept by hand for years (`OneDrive\Documents\Hunting\DrawOdds2025.xlsx`,
+`ElkDrawOdds2026.xlsx` and older).
+- **Pages:**
+  - `draw-odds.html` (https://elevationtechsolutions.net/draw-odds.html) is the **state picker**: a map of the West plus Kansas, and a list.
+  - Each working state has its own page, e.g. `draw-odds-utah.html`, so it can be linked directly.
+- **Scope (2026-11-25):** Utah works. Colorado, Wyoming, Arizona, New Mexico, Nevada, Montana, Idaho and Kansas show as "Coming later". The owner's plan is to add them **one state at a time**; Colorado and Wyoming are the likely first ones (the owner tracks those points).
+- **Old links:** before 2026-11-25 Utah lived at `draw-odds.html`. The picker forwards any link carrying view settings (`?sp=`, `q=`, `h=`, …) to `draw-odds-utah.html` with them, so old shared links still open the right view.
 - **History:** built Nov 2026 in `OneDrive\Documents\Hunting\DrawOdds`, then **moved into this repo on 2026-11-24** so it lives in one place. That OneDrive folder is now only an archive; don't build from it.
 
 ## Build and run
@@ -17,7 +21,8 @@ python tools/draw-odds/build_utah.py --refresh  # re-download PDFs and current-y
 ```
 
 - **What it writes:**
-  - `draw-odds.html` at the repo root: the template with the data inlined (~900 KB).
+  - `draw-odds-<state>.html` at the repo root for each state marked `live` in `states.json`: the template with that state's data inlined (~900 KB for Utah).
+  - `draw-odds.html`: the picker, from `picker.html`, with the map, the state list, and the nav and footer copied from the template.
   - `data/draw-odds/utah-<year>.json`.
   - It also prunes `data/draw-odds/raw/` to a **rolling 5 years** and refreshes `data/draw-odds/README.md`.
 - **No git:** it never runs git. Commit and push like any other change; pushing `main` publishes (see the root `CLAUDE.md`).
@@ -28,17 +33,21 @@ python tools/draw-odds/build_utah.py --refresh  # re-download PDFs and current-y
   - After pushing, wait for GitHub Pages and confirm the live page has the change.
 - **Inline data:** the draw data is inlined because browsers block `fetch()` over `file://`. The same file works opened from disk and on the site. All paths are relative.
 - **Windows console:** build output must stay ASCII (no `→`), or Python's cp1252 console crashes. Or set `PYTHONIOENCODING=utf-8`.
-- **Never hand-edit `draw-odds.html`.** Edit `tools/draw-odds/template.html` (markup, CSS and all the JS odds math) or `build_utah.py` (data), then rebuild.
+- **Never hand-edit `draw-odds.html` or `draw-odds-*.html`.** Edit `tools/draw-odds/template.html` (markup, CSS and all the JS odds math), `picker.html` (the map page), `states.json` or `build_utah.py` (data), then rebuild.
 - **Template rules:** the page links the site's `style.css` and `nav.js`, so its nav and footer match every other page. Avoid `<section>` and `.container` in the template, which `style.css` restyles; the page uses `div.panel` and `.do-container`. Its page styles are inline and come after `style.css`.
 
 ## Files
 
 | Path | What |
 |---|---|
-| `tools/draw-odds/template.html` | The page: styling, markup, all JS (analysis, projection, drop-ins, rendering). `/*__DATA__*/[]` is replaced with the data at build. |
-| `tools/draw-odds/build_utah.py` | Downloads and parses everything, fits drop-ins, writes the data JSON, builds the page, prunes old years. |
+| `tools/draw-odds/template.html` | A state page: styling, markup, all JS (analysis, projection, drop-ins, rendering). The build replaces `/*__DATA__*/[]` (that state's data), `/*__STATELIST__*/[]` (states.json, for the switcher) and `__PAGE__` / `__STATENAME__` / `__OGIMAGE__` in the head. |
+| `tools/draw-odds/picker.html` | The state picker page. The build fills `<!--__MAP__-->`, `<!--__LIST__-->`, `<!--__NAV__-->`, `<!--__FOOTER__-->`. |
+| `tools/draw-odds/states.json` | **The state list:** code, name, page file, `live`, draw system blurb. Flip `live` to true when a state's data and page are ready. Drives the map, the list and every page's switcher. |
+| `tools/draw-odds/west-map.json` | State outlines (SVG paths, Albers) for the map. Made by `make_map.py` from us-atlas (US Census, public domain); only rerun to add or drop a state. |
+| `tools/draw-odds/build_utah.py` | Downloads and parses Utah, fits drop-ins, writes the data JSON, builds every state page and the picker (`build_page`, `build_picker`), prunes old years. A new state will need its own fetch/parse script that writes `data/draw-odds/<code>-<year>.json`. |
+| `tools/draw-odds/og-card.html` | Source of the link-preview images: `img/drawodds-og-utah.jpg` and (`?states`) `img/drawodds-og-states.jpg`. |
 | `tools/draw-odds/README.md` | Shorter how-to notes. Keep in sync with this file. |
-| `draw-odds.html` | **Generated.** The published page. |
+| `draw-odds.html`, `draw-odds-utah.html` | **Generated.** The published picker and Utah page. |
 | `data/draw-odds/utah-2026.json` | Compact data the page uses (what `build_page()` injects). |
 | `data/draw-odds/utah-tags-2027.csv` | **Fill in each spring** with next year's tag numbers (blank = not released). Auto-generated template. |
 | `data/draw-odds/utah-hunt-notes.csv` | Owner's own hunt badges (`hunt_code,badge,note`), e.g. "Stag". Empty so far. |
@@ -213,7 +222,12 @@ There's no test suite. Checks are done by:
   - Nonresidents: worse for LE elk (1.66 → 1.74).
   - Pronghorn improved slightly (0.725 → 0.697) but still lost to no drop-ins (0.660).
   - The owner agreed (2026-11-25): keep one rate per species; don't revisit without new data.
-- **Link preview:** `og:`/`twitter:` tags in the template head point at `img/drawodds-og.jpg` (1200×630), rendered from `tools/draw-odds/og-card.html` with headless Edge (see the comment in that file). Re-render it if the page's look changes a lot. The static `<title>` is "Utah Draw Odds | Elevation Technology" so crawlers that don't run JS get the right name.
+- **Link preview:** `og:`/`twitter:` tags in the template head point at `img/drawodds-og-<state>.jpg` (1200×630), and the picker's at `img/drawodds-og-states.jpg`. Both are rendered from `tools/draw-odds/og-card.html` with headless Edge (see the comment in that file). Re-render them if the pages' look changes a lot. The static `<title>` is "<State> Draw Odds | Elevation Technology", so crawlers that don't run JS get the right name.
+- **State picker and switcher (built 2026-11-25, owner's design):**
+  - **Picker:** the map covers the West only plus Kansas. Washington, Oregon and California are dim outlines for context, not clickable, with no label. Working states are orange links; the others say "Coming later". A list beside the map (below it on phones) repeats the states with their draw system. If this browser has hunters with points, Utah's row says "Your points are saved".
+  - **Switcher:** each state page has a "State: Utah ▾" button at the top right of the title (on phones a compact "Utah ▾" beside the eyebrow). It lists working states, the coming ones (greyed) and "All states (map) →".
+  - **Saved points:** hunters and points sit in one localStorage (`drawodds:` keys) shared by every state page. Utah's species keys (`le-elk`, …) are unprefixed. A new state's species keys must not clash, so prefix them (e.g. `co-elk`).
+  - **Site copy:** apps.html and index.html still say "Utah" (true while it's the only working state). Update them when the second state goes live.
 - Separate Colorado and Wyoming pages. Colorado uses preference points; Wyoming uses preference plus random.
 - Offered 2026-11-24 and skipped "for now": every hunter's odds as columns in the main table, a "best odds" panel (the active hunter's top hunts across species), and a CSV download of the filtered table.
 - Phone ideas offered and skipped: "x pts short" under the odds; a "(DWR: any legal weapon)" note on Rifle hunts.

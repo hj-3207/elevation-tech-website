@@ -3,20 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Utah Draw Odds | Elevation Technology</title>
-<meta name="description" content="Big game draw odds by hunt: points that guaranteed a tag last year, the split group, random-draw odds, and harvest success.">
-<!-- Link previews (texts, Facebook, Slack, etc.). The image is made from
+<title>__STATENAME__ Draw Odds | Elevation Technology</title>
+<meta name="description" content="__STATENAME__ big game draw odds by hunt: points that guaranteed a tag last year, the split group, random-draw odds, and harvest success.">
+<!-- Link previews (texts, Facebook, Slack, etc.). The build fills in __PAGE__,
+     __STATENAME__ and __OGIMAGE__ per state. The image is made from
      tools/draw-odds/og-card.html; URLs must be absolute. -->
-<link rel="canonical" href="https://elevationtechsolutions.net/draw-odds.html">
+<link rel="canonical" href="https://elevationtechsolutions.net/__PAGE__">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Elevation Technology">
-<meta property="og:title" content="Utah Draw Odds">
-<meta property="og:description" content="Guaranteed points, split groups, your random-draw odds and next year's projections for every Utah big game hunt.">
-<meta property="og:url" content="https://elevationtechsolutions.net/draw-odds.html">
-<meta property="og:image" content="https://elevationtechsolutions.net/img/drawodds-og.jpg">
+<meta property="og:title" content="__STATENAME__ Draw Odds">
+<meta property="og:description" content="Guaranteed points, split groups, your random-draw odds and next year's projections for every __STATENAME__ big game hunt.">
+<meta property="og:url" content="https://elevationtechsolutions.net/__PAGE__">
+<meta property="og:image" content="https://elevationtechsolutions.net/img/__OGIMAGE__">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Utah Draw Odds: a hunt's draw results by point level, with 2027 estimates">
+<meta property="og:image:alt" content="__STATENAME__ Draw Odds: a hunt's draw results by point level, with next year's estimates">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
@@ -52,6 +53,33 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .section-eyebrow::before{content:'//';color:var(--subtle)}
 .page-title{font-size:clamp(2.2rem,5vw,3.4rem);font-weight:900;color:#fff;letter-spacing:-0.02em;line-height:1.05}
 .page-title span{color:var(--orange)}
+/* State switcher, top right of the title. */
+.head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+.st-switch{position:relative;flex:none;z-index:40}
+.st-switch summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:0.55rem;min-height:40px;padding:0 0.9rem;border:1px solid var(--border-strong);border-radius:6px;
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);transition:border-color 0.2s}
+.st-switch summary::-webkit-details-marker{display:none}
+.st-switch summary:hover,.st-switch[open] summary{border-color:var(--orange)}
+.st-switch summary b{color:#fff;font-weight:600}
+.st-switch .caret{font-size:0.6rem;transition:transform 0.2s}
+.st-switch[open] .caret{transform:rotate(180deg)}
+.st-menu{position:absolute;right:0;top:calc(100% + 6px);width:250px;background:var(--bg2);border:1px solid var(--border-strong);border-radius:8px;box-shadow:0 12px 32px rgba(0,0,0,0.55);padding:0.4rem}
+.st-menu a,.st-menu span{display:flex;justify-content:space-between;align-items:center;gap:0.6rem;padding:0.5rem 0.65rem;border-radius:5px;font-size:0.88rem;text-decoration:none}
+.st-menu a{color:#fff}
+.st-menu a:hover{background:rgba(204,85,0,0.14)}
+.st-menu a.cur{color:var(--orange-bright);font-weight:700}
+.st-menu span{color:var(--subtle)}
+.st-menu small{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--subtle)}
+.st-menu a.cur small{color:var(--orange-bright)}
+@media (max-width:680px){
+  /* Phones: a compact "Utah ▾" beside the eyebrow line, so the title keeps the full width. */
+  .head-row{display:block;position:relative}
+  .st-switch{position:absolute;top:-9px;right:0}
+  .st-switch summary{min-height:32px;padding:0 0.65rem;gap:0.4rem}
+  .st-switch .st-lbl{display:none}
+  .st-menu{width:min(250px,calc(100vw - 2rem))}
+}
+.st-menu .st-all{border-top:1px solid var(--border);margin-top:0.3rem;padding-top:0.6rem;border-radius:0 0 5px 5px;font-family:var(--mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--orange-bright)}
 .divider{width:40px;height:2px;background:var(--orange);margin:1.1rem 0 1.25rem;border-radius:1px}
 .page-sub{color:var(--muted);font-family:var(--mono);font-size:0.84rem;line-height:1.85;max-width:760px;margin-bottom:2.25rem}
 .page-sub b{color:var(--soft);font-weight:400}
@@ -599,8 +627,17 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 
 <main>
 <div class="do-container">
-  <div class="section-eyebrow" id="eyebrow">Draw Odds</div>
-  <h1 class="page-title" id="title">Draw <span>Odds</span></h1>
+  <!-- Title, with the state switcher at the top right (states from tools/draw-odds/states.json). -->
+  <div class="head-row">
+    <div class="head-main">
+      <div class="section-eyebrow" id="eyebrow">Draw Odds</div>
+      <h1 class="page-title" id="title">Draw <span>Odds</span></h1>
+    </div>
+    <details class="st-switch" id="stSwitch">
+      <summary><span class="st-lbl">State</span><b id="stName"></b><span class="caret" aria-hidden="true">▾</span></summary>
+      <div class="st-menu" id="stMenu"></div>
+    </details>
+  </div>
   <div class="divider"></div>
   <p class="page-sub" id="subtitle"></p>
   <!-- Cross-promotion, part 1 of 3: one quiet row of app icons saying who built this. -->
@@ -767,6 +804,8 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 
 <script>
 const STATES = /*__DATA__*/[];
+// Every state on the picker map (tools/draw-odds/states.json): {code, name, page, live, system}.
+const STATE_LIST = /*__STATELIST__*/[];
 
 (function(){
 "use strict";
@@ -1983,6 +2022,21 @@ $("#tbody").addEventListener("keydown", e => {
 });
 
 if (!STATES.length){ $("#tbody").innerHTML = `<tr><td class="empty">No data loaded.</td></tr>`; return; }
+// State switcher: live states link to their pages, the rest say "Coming later", and the
+// last row goes back to the map. Built once; the state doesn't change on a page.
+function renderStateSwitch(){
+  const cur = curState().state;
+  const me = STATE_LIST.find(s => s.code === cur);
+  $("#stName").textContent = me ? me.name : curState().name;
+  $("#stMenu").innerHTML = [...STATE_LIST].sort((a, b) => (b.live - a.live) || a.name.localeCompare(b.name)).map(s => s.live
+    ? `<a href="${esc(s.page)}"${s.code === cur ? ` class="cur" aria-current="page"` : ""}>${esc(s.name)}<small>${s.code === cur ? "Viewing" : esc(s.system)}</small></a>`
+    : `<span aria-disabled="true">${esc(s.name)}<small>Coming later</small></span>`).join("") +
+    `<a class="st-all" href="draw-odds.html">All states (map) →</a>`;
+  if (!STATE_LIST.length) $("#stSwitch").hidden = true;
+}
+document.addEventListener("click", e => { const d = $("#stSwitch"); if (d.open && !e.target.closest("#stSwitch")) d.open = false; });
+document.addEventListener("keydown", e => { const d = $("#stSwitch"); if (e.key === "Escape" && d.open){ d.open = false; d.querySelector("summary").focus(); } });
+renderStateSwitch();
 readURL(); fillSelects(); render();
 // Open hunts named in a shared link: scroll to the first one.
 if (ui.open.size){ const r = document.querySelector(`#tbody tr.row.open`); if (r) setTimeout(() => window.scrollTo({top: r.getBoundingClientRect().top + window.scrollY - topOffset() - 10, behavior: "instant"}), 0); }

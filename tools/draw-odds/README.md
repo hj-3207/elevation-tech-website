@@ -1,6 +1,6 @@
 # Draw Odds
 
-Builds `draw-odds.html`, the site's Utah big game draw odds page. Full context
+Builds the site's big game draw odds pages: `draw-odds.html` (state picker) and `draw-odds-utah.html`. Full context
 (logic, decisions, yearly tasks) is in `CLAUDE.md` next to this file.
 
 ## Rebuild
@@ -19,7 +19,12 @@ Then commit and push. The build never touches git.
   - the tags and notes CSVs you edit
   - `raw/` downloads, kept for a rolling 5 years
 - `img/drawodds-*.png` — species icons, app icon and screenshot.
-- `img/drawodds-og.jpg` — the link-preview card (1200×630), made from `tools/draw-odds/og-card.html` with headless Edge.
+- `img/drawodds-og-utah.jpg`, `img/drawodds-og-states.jpg` — link-preview cards (1200×630), made from `tools/draw-odds/og-card.html` with headless Edge.
+- `tools/draw-odds/picker.html`, `states.json`, `west-map.json` — the state picker (`draw-odds.html`): the map page, the list of states (set `live` when a state is ready), and the map outlines.
+
+## Pages
+- `draw-odds.html` — pick a state on the map. Old Utah links with settings (`?sp=…`) forward to the Utah page.
+- `draw-odds-utah.html` — Utah. Each state gets its own `draw-odds-<state>.html`.
 
 ## Next year's tag numbers
 DWR approves permit numbers in the spring. Until they're loaded, the page projects with last year's tags and says so.

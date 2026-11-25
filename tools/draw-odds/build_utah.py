@@ -1,11 +1,13 @@
 """
-Build draw-odds.html, the website's Utah draw odds page.
+Build draw-odds-utah.html, the website's Utah draw odds page, and draw-odds.html,
+the state picker (map) in front of every state's page.
 
 1. Downloads the per-point draw results for each big game hunt type from
    utahdraws.com (the same JSON the official "Draw Odds" page uses), plus the
    four earlier draws from DWR's PDF reports and the DWR harvest report.
 2. Compacts it all into data/draw-odds/utah-<year>.json and injects it into
-   tools/draw-odds/template.html -> draw-odds.html at the repo root.
+   tools/draw-odds/template.html -> draw-odds-utah.html at the repo root, and
+   builds tools/draw-odds/picker.html -> draw-odds.html (states.json, west-map.json).
 3. Keeps data/draw-odds/raw/ to a rolling 5 years of draws.
 
 Run from anywhere in the repo:
@@ -543,20 +545,78 @@ NOTICE = """<!-- GENERATED FILE - do not edit. Source: tools/draw-odds/template.
 
 
 def build_page():
-    """Inject the latest data/draw-odds/<state>-<year>.json per state into the
-    template and write draw-odds.html at the repo root. The data stays inline
-    so the page also opens straight from disk (browsers block fetch() over file://)."""
+    """One page per live state, plus the state picker.
+
+    - draw-odds-<state>.html: the template with that state's latest
+      data/draw-odds/<state>-<year>.json inlined (so the page also opens straight from
+      disk; browsers block fetch() over file://) and the state list for the switcher.
+    - draw-odds.html: the map picker (tools/draw-odds/picker.html), with the map, the
+      state list, and the nav and footer copied from the template so they stay in sync.
+    The state list (names, pages, which are live) is tools/draw-odds/states.json."""
+    states = json.loads((TOOL / "states.json").read_text(encoding="utf-8"))
     latest = {}
     for f in sorted(DATA.glob("*-*.json")):
         st = json.loads(f.read_text(encoding="utf-8"))
         if st["state"] not in latest or st["drawYear"] > latest[st["state"]]["drawYear"]:
             latest[st["state"]] = st
     template = (TOOL / "template.html").read_text(encoding="utf-8")
-    blob = json.dumps(list(latest.values()), separators=(",", ":")).replace("</", "<\\/")
-    page = template.replace("/*__DATA__*/[]", blob).replace("<!DOCTYPE html>\n", "<!DOCTYPE html>\n" + NOTICE, 1)
+    slist = json.dumps(states, separators=(",", ":")).replace("</", "<\\/")
+    for s in states:
+        if not s["live"]:
+            continue
+        st = latest.get(s["code"])
+        if not st:
+            raise SystemExit(f"states.json marks {s['name']} live but there is no data/draw-odds/{s['code'].lower()}-<year>.json")
+        blob = json.dumps([st], separators=(",", ":")).replace("</", "<\\/")
+        page = (template.replace("/*__DATA__*/[]", blob).replace("/*__STATELIST__*/[]", slist)
+                .replace("__PAGE__", s["page"]).replace("__STATENAME__", s["name"])
+                .replace("__OGIMAGE__", f"drawodds-og-{s['page'][len('draw-odds-'):-len('.html')]}.jpg")
+                .replace("<!DOCTYPE html>\n", "<!DOCTYPE html>\n" + NOTICE, 1))
+        out = ROOT / s["page"]
+        out.write_text(page, encoding="utf-8")
+        print(f"  wrote {out.name} ({out.stat().st_size // 1024} KB)")
+    build_picker(states, template)
+
+
+def build_picker(states, template):
+    """draw-odds.html: the Western states map (tools/draw-odds/west-map.json) and list."""
+    from html import escape
+    m = json.loads((TOOL / "west-map.json").read_text(encoding="utf-8"))
+    by_code = {s["code"]: s for s in states}
+    # Label nudges where the bounding-box centre sits badly (Idaho's panhandle, etc.).
+    nudge = {"ID": (6, 38), "CA": (-14, 8), "MT": (0, -4), "NV": (-4, -14), "WA": (0, 4), "AZ": (0, 6)}
+    parts = []
+    for code, g in m["states"].items():
+        s = by_code.get(code)
+        dx, dy = nudge.get(code, (0, 0))
+        x, y = g["cx"] + dx, g["cy"] + dy
+        if not s:   # context only (WA, OR, CA): outline, no label
+            parts.append(f'<g class="ctx"><path d="{g["d"]}"/></g>')
+            continue
+        label = (f'<text class="code" x="{x}" y="{y}">{code}</text>'
+                 f'<text class="sub" x="{x}" y="{y + 12}">{"Open" if s["live"] else "Coming later"}</text>')
+        title = f'<title>{escape(s["name"])}: {"open" if s["live"] else "coming later"}</title>'
+        if s["live"]:
+            parts.append(f'<a class="live" href="{s["page"]}" aria-label="{escape(s["name"])} draw odds">{title}<path d="{g["d"]}"/>{label}</a>')
+        else:
+            parts.append(f'<g class="soon">{title}<path d="{g["d"]}"/>{label}</g>')
+    svg = (f'<svg viewBox="{m["viewBox"]}" role="img" aria-label="Map of the Western states and Kansas. '
+           f'{", ".join(s["name"] for s in states if s["live"])} ready; the others are coming later.">' + "".join(parts) + "</svg>")
+    items = []
+    for s in sorted(states, key=lambda s: (not s["live"], s["name"])):
+        inner = (f'<span class="nm">{escape(s["name"])}</span><span class="sys">{escape(s["system"])}</span>'
+                 f'<span class="go">{"Open →" if s["live"] else "Coming later"}</span>')
+        items.append(f'<li><a class="st live" data-code="{s["code"]}" href="{s["page"]}">{inner}</a></li>' if s["live"]
+                     else f'<li><div class="st soon" data-code="{s["code"]}">{inner}</div></li>')
+    nav = re.search(r"<nav>.*?</nav>", template, re.S).group(0)
+    footer = re.search(r"<footer>.*?</footer>", template, re.S).group(0)
+    page = ((TOOL / "picker.html").read_text(encoding="utf-8")
+            .replace("<!--__MAP__-->", svg).replace("<!--__LIST__-->", "<ul>" + "".join(items) + "</ul>")
+            .replace("<!--__NAV__-->", nav).replace("<!--__FOOTER__-->", footer)
+            .replace("<!DOCTYPE html>\n", "<!DOCTYPE html>\n" + NOTICE.replace("template.html", "picker.html"), 1))
     out = ROOT / "draw-odds.html"
     out.write_text(page, encoding="utf-8")
-    print(f"  wrote {out.name} ({out.stat().st_size // 1024} KB)")
+    print(f"  wrote {out.name} ({out.stat().st_size // 1024} KB, state picker)")
 
 
 def prune_raw(draw_year):
