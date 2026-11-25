@@ -195,8 +195,8 @@
        until nav.js adds .open. It used to be display:none here, which left phones
        with no navigation at all beyond the logo. */
     nav { flex-wrap: wrap; padding: 0.75rem 1.25rem; }
-    /* Smaller logo on phones (54px -> 42px) so the fixed nav takes less of the screen. */
-    .nav-logo img { height: 42px; }
+    /* Smaller logo on phones (54px -> 36px) so the fixed nav takes less of the screen. */
+    .nav-logo img { height: 36px; }
     .nav-toggle { display: flex; }
     .nav-links {
       display: none; flex-basis: 100%; flex-direction: column; align-items: stretch;
@@ -210,6 +210,12 @@
     .nav-menu-in::before { display: none; }
     .nav-links .nav-menu a { padding: 0.5rem 0.5rem; font-size: 0.92rem; }
     .nav-links .nav-menu a.nav-menu-sep { margin-top: 0; border-top: 0; padding-top: 0.5rem; }
+    /* Home hero: the logo and headline sat side by side and ran ~70px past a phone
+       screen. Stack them, centered, with a smaller logo. */
+    #home { padding: 6rem 1.25rem 4rem; }
+    .hero { width: 100%; min-width: 0; }
+    .hero-top { flex-direction: column; gap: 1.25rem; text-align: center; }
+    .hero-logo img { height: 92px; }
     .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
     .services-grid { grid-template-columns: 1fr; }
     footer { flex-direction: column; gap: 1rem; text-align: center; }
@@ -344,8 +350,10 @@
 .legal a { color: var(--orange-bright); text-decoration: none; }
 .legal a:hover { color: #fff; }
 .legal strong { color: #ccc; }
-.footer-links a { color: #444; text-decoration: none; font-size: 0.75rem; font-family: var(--mono); }
-.footer-links a:hover { color: var(--orange-bright); }
+/* Any link in the footer line, with or without .footer-links (the terms pages and the
+   older privacy policies lack the class, and their links showed as default blue). */
+.footer-links a, footer p a { color: #444; text-decoration: none; font-size: 0.75rem; font-family: var(--mono); }
+.footer-links a:hover, footer p a:hover { color: var(--orange-bright); }
 
 /* ---- IMAGE PREVIEW (lightbox.js) ----------------------------------------
    Click a content image to see it full size. The overlay is built on first use
