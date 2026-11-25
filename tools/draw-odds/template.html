@@ -247,6 +247,8 @@ tr.detail td{background:var(--bg2);padding:1.25rem 1.35rem 1.5rem;text-align:lef
 @media (max-width:860px){.detail-grid{grid-template-columns:1fr}}
 .detail h3{font-family:var(--mono);font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--orange);margin:0 0 0.75rem;display:flex;gap:0.5rem}
 .detail h3::before{content:'//';color:var(--subtle)}
+details.dsec>summary{list-style:none;cursor:default}
+details.dsec>summary::-webkit-details-marker{display:none}
 table.pts{border-collapse:collapse;width:100%;font-size:0.84rem;font-variant-numeric:tabular-nums}
 table.pts th,table.pts td{padding:0.3rem 0.55rem;border-bottom:1px solid var(--border);text-align:right}
 table.pts th{font-family:var(--mono);font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;vertical-align:bottom}
@@ -311,7 +313,6 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 .promo-item:hover{border-color:var(--border-orange);background:var(--card2)}
 .promo-item img{width:24px;height:24px;border-radius:5px;flex:none;margin-top:0.1rem}
 .promo-item b{color:#fff;font-weight:700}
-@media (max-width:560px){.promo-grid{grid-template-columns:1fr}}
 .after-draw{margin-top:3rem;padding-top:2.5rem;border-top:1px solid var(--border)}
 .after-title{font-size:clamp(1.5rem,2.6vw,2.1rem);font-weight:900;color:#fff;letter-spacing:-0.02em;line-height:1.15;margin-bottom:1.5rem}
 .after-title span{color:var(--orange)}
@@ -389,16 +390,27 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   table.main{min-width:0!important;display:block}
   table.main>thead{display:none}
   table.main>tbody{display:block}
-  table.main>tbody>tr.row,table.main>tbody>tr.srow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0.55rem 0.5rem;position:relative;
+  table.main>tbody>tr.row,table.main>tbody>tr.srow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0.55rem 0;position:relative;
     background:var(--card);border:1px solid var(--border);border-radius:10px;padding:0.8rem 0.85rem;margin-bottom:0.5rem}
   table.main>tbody>tr.row.open{border-color:var(--border-orange);border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0}
-  table.main>tbody>tr.row>td,table.main>tbody>tr.srow>td{display:block;border:0;padding:0;text-align:left;white-space:normal;min-width:0;max-width:none;background:none!important}
+  table.main>tbody>tr.row>td,table.main>tbody>tr.srow>td{display:block;border:0;padding:0 0.45rem 0 0;text-align:left;white-space:normal;min-width:0;max-width:none;background:none!important}
   table.main>tbody>tr>td.k-star{position:absolute;top:0.55rem;right:0.5rem;width:auto}
   table.main>tbody>tr>td.k-unit{grid-column:1/-1;padding-right:2rem}
   table.main>tbody>tr>td.k-sp{grid-column:1/-1;padding-right:2rem}
   table.main>tbody>tr>td.k-sp + td.k-unit{margin-top:-0.3rem}
-  table.main>tbody>tr.row>td:not(.k-star):not(.k-unit):not(.k-tags):not(.k-guar):not(.k-proj):not(.k-mine),
   table.main>tbody>tr.srow>td.k-psplit{display:none}
+  /* Every desktop column is on the card: the four key numbers first, then a smaller
+     row (applicants, split, harvest, projected split), then the trend columns when
+     "Trend columns" is on. CSS order rearranges the cells; the DOM keeps table order. */
+  table.main>tbody>tr.row>td.k-unit{order:0}
+  table.main>tbody>tr.row>td.k-tags{order:1} table.main>tbody>tr.row>td.k-guar{order:2}
+  table.main>tbody>tr.row>td.k-proj{order:3} table.main>tbody>tr.row>td.k-mine{order:4}
+  table.main>tbody>tr.row>td.k-apps{order:5} table.main>tbody>tr.row>td.k-split{order:6}
+  table.main>tbody>tr.row>td.k-harv{order:7} table.main>tbody>tr.row>td.k-psplit{order:8}
+  table.main>tbody>tr.row>td.k-dtags{order:9} table.main>tbody>tr.row>td.k-creep{order:10} table.main>tbody>tr.row>td.k-demand{order:11}
+  table.main>tbody>tr.row>td:is(.k-apps,.k-split,.k-harv,.k-psplit,.k-dtags,.k-creep,.k-demand) .big{font-size:0.8rem;font-weight:700}
+  table.main>tbody>tr.row>td.k-apps{grid-column:1;border-top:1px solid var(--border)!important;padding-top:0.55rem}
+  table.main>tbody>tr.row>td:is(.k-split,.k-harv,.k-psplit){border-top:1px solid var(--border)!important;padding-top:0.55rem}
   /* Labels always take two lines (clamped), and the number, pill or "add points" all
      sit in one 1.3rem line, so the big numbers line up across the card. */
   table.main>tbody>tr>td[data-label]::before{content:attr(data-label);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
@@ -427,6 +439,19 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   table.pts td.bar,table.pts th.l:last-child{display:none}
   /* Year by year: each number stays with its change; the split's "(1 of 5)" drops under it. */
   table.pts.trend td{white-space:nowrap;font-size:0.72rem}
+  /* Point-level and year-by-year tables fold (closed by default): heading with +/–. */
+  details.dsec{border:1px solid var(--border);border-radius:8px;padding:0.65rem 0.7rem;margin-bottom:0.7rem}
+  details.dsec>summary{cursor:pointer}
+  details.dsec>summary h3{margin:0;align-items:center}
+  details.dsec>summary h3::after{content:'+';margin-left:auto;color:var(--muted);font-size:0.95rem;line-height:1}
+  details.dsec[open]>summary h3{margin-bottom:0.7rem}
+  details.dsec[open]>summary h3::after{content:'–'}
+  .detail-grid h3[style]{margin-top:0.8rem!important}
+  /* App suggestions: 2x2 on phones too, with each pitch clamped to three lines. */
+  .promo-grid{gap:0.4rem}
+  .promo-item{flex-direction:column;gap:0.35rem;padding:0.55rem 0.6rem;font-size:0.7rem;line-height:1.4}
+  .promo-item img{width:22px;height:22px;margin:0}
+  .promo-item>span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
   table.pts.trend td:last-child .na{display:block;font-size:0.6rem;line-height:1.3}
   .detail .legend span:not(.s){display:none}
   /* Hunt facts: label above value, so long values get the full width. */
@@ -672,7 +697,7 @@ const ui = {
   showTrends: store.get("showTrends", false),   // tag change, point creep, vs projected
   sort: {key:"unit", dir:1},
   filters: {},            // column key -> {min, max} ; "unit" -> {units:[...]}
-  open: new Set(), collapsed: new Set(),
+  open: new Set(), collapsed: new Set(), dsecOpen: new Set(),
   // The "Starred" tab. Remembered, so the page reopens where it was left; a first
   // visit has nothing saved and opens on the first species (LE elk).
   starView: store.get("starView", false)
@@ -854,15 +879,15 @@ function columns(st){
     {key:"star", label:"", cls:"c-star l", sort:false},
     {key:"unit", label:"Hunt", cls:"l", filter:"units"},
     {key:"tags", label:`${tagYear(st)} tags`, short:`${tagYear(st)} tags`, filter:"num"},
-    {key:"apps", label:`${D} applicants`, filter:"num"},
+    {key:"apps", label:`${D} applicants`, short:`${D} applicants`, filter:"num"},
     {key:"guar", label:`${D} guaranteed at`, short:`${D} guaranteed`, filter:"num", unit:"pts"},
-    {key:"split", label:`${D} split group`, filter:"num", unit:"pts"},
-    {key:"harv", label:`${st.harvestYear} harvest success`, filter:"pct"},
-    {key:"dtags", label: st.nextTags ? `Tag change ${D}–${N}` : `Tag change ${D-1}–${D}`, filter:"num"},
-    {key:"creep", label:`Point creep ${D-1}–${D}`, filter:"num", unit:"pts"},
-    {key:"demand", label:`${D} vs projected`, filter:"num", unit:"pts"},
+    {key:"split", label:`${D} split group`, short:`${D} split`, filter:"num", unit:"pts"},
+    {key:"harv", label:`${st.harvestYear} harvest success`, short:`${st.harvestYear} harvest`, filter:"pct"},
+    {key:"dtags", label: st.nextTags ? `Tag change ${D}–${N}` : `Tag change ${D-1}–${D}`, short:"Tag change", filter:"num"},
+    {key:"creep", label:`Point creep ${D-1}–${D}`, short:"Point creep", filter:"num", unit:"pts"},
+    {key:"demand", label:`${D} vs projected`, short:`${D} vs proj.`, filter:"num", unit:"pts"},
     {key:"proj", label:`${N} projected guaranteed`, short:`${N} projected`, filter:"num", unit:"pts", proj:true},
-    {key:"psplit", label:`${N} projected split`, filter:"num", unit:"pts", proj:true},
+    {key:"psplit", label:`${N} projected split`, short:`${N} proj. split`, filter:"num", unit:"pts", proj:true},
     {key:"mine", label:`${prof.name}'s ${N} odds`, short:`${prof.name}'s odds`, filter:"pct"},
   ].filter(c => ui.showTrends || !TREND_KEYS.includes(c.key));
 }
@@ -1083,6 +1108,15 @@ function mineNote(m, p, o){
   return "no random tags";
 }
 
+// Sections of the hunt detail that fold on phones (closed by default there, and
+// remembered while the page is open). On desktop they're always open and the
+// heading is just a heading.
+const isPhone = () => window.matchMedia("(max-width:680px)").matches;
+function dsec(key, title, inner){
+  const open = !isPhone() || ui.dsecOpen.has(key);
+  return `<details class="dsec" data-sec="${key}"${open ? " open" : ""}><summary><h3>${title}</h3></summary>${inner}</details>`;
+}
+
 function detailHtml(st, sp, h, a, p, ncol){
   const N = nextYear(st), max = Math.max(1, ...a.rows.map(r => r[1]));
   const rows = a.rows.map(r => {
@@ -1103,9 +1137,9 @@ function detailHtml(st, sp, h, a, p, ncol){
     ? `${N}: ${fmt(h.next.R[0])} resident · ${fmt(h.next.N[0])} nonresident<br>${st.drawYear}: ${fmt(h.quota.R[0])} resident · ${fmt(h.quota.N[0])} nonresident`
     : `${st.drawYear}: ${fmt(h.quota.R[0])} resident · ${fmt(h.quota.N[0])} nonresident<br><span class="na">${N} numbers not released yet</span>`;
   return `<tr class="detail"><td colspan="${ncol}"><div class="detail detail-grid">
-    <div><h3>${st.drawYear} draw by point level (${ui.res === "R" ? "residents" : "nonresidents"})</h3>
+    <div>${dsec("pl", `${st.drawYear} draw by point level (${ui.res === "R" ? "residents" : "nonresidents"})`, `
       <table class="pts"><thead><tr><th>Points</th><th>Applied</th>${sp.system === "bonus" ? "<th>Bonus drew</th><th>Random drew</th>" : "<th>Drew</th>"}<th>${st.drawYear} success</th><th>${N} est.</th><th class="l">Share drawn</th></tr></thead><tbody>${rows}</tbody></table>
-      <div class="legend">${sp.system === "bonus" ? `<span>Bonus tag</span><span class="r">Random tag</span>` : `<span>Drew</span>`}<span class="s">Split group</span></div>
+      <div class="legend">${sp.system === "bonus" ? `<span>Bonus tag</span><span class="r">Random tag</span>` : `<span>Drew</span>`}<span class="s">Split group</span></div>`)}
     </div>
     <div>
       ${trendHtml(st, sp, h, a)}
@@ -1144,8 +1178,8 @@ function trendHtml(st, sp, h, a){
   const body = rows.map((r, i) => `<tr><td>${r.y}</td><td>${cell(r, rows[i-1], "tags")}</td><td>${cell(r, rows[i-1], "apps")}</td>` +
     `<td>${r.tags ? cell(r, rows[i-1], "guar") : "—"}</td><td>${r.split ? `${r.split[0]} <span class="na">(${fmt(r.split[2])} of ${fmt(r.split[1])})</span>` : "—"}</td></tr>`).join("") +
     (m && !m.randomOnly ? `<tr class="proj-row"><td>${nextYear(st)} proj.</td><td>${fmt(a.next[0])}</td><td class="na">—</td><td>${m.guarPts}</td><td>${m.all ? "—" : `${m.split} <span class="na">(${fmt(m.k)} of ${fmt(m.n)})</span>`}</td></tr>` : "");
-  return `<h3>Year by year (${ui.res === "R" ? "residents" : "nonresidents"})</h3>
-    <table class="pts trend"><thead><tr><th>Draw</th><th>Tags</th><th>Applicants</th><th>Guaranteed</th><th>Split (drew)</th></tr></thead><tbody>${body}</tbody></table>`;
+  return dsec("yby", `Year by year (${ui.res === "R" ? "residents" : "nonresidents"})`,
+    `<table class="pts trend"><thead><tr><th>Draw</th><th>Tags</th><th>Applicants</th><th>Guaranteed</th><th>Split (drew)</th></tr></thead><tbody>${body}</tbody></table>`);
 }
 
 // Cross-promotion, part 2 of 3: all four paid apps in a compact 2x2, in their
@@ -1600,6 +1634,15 @@ $("#starBody").addEventListener("click", e => {
 });
 $("#starBody").addEventListener("keydown", e => {
   if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.srow")){ e.preventDefault(); e.target.click(); }
+});
+// Detail sections: remember which are open (phones); on desktop they can't be closed.
+$("#tbody").addEventListener("toggle", e => {
+  const d = e.target;
+  if (!d.matches || !d.matches("details.dsec") || !isPhone()) return;
+  d.open ? ui.dsecOpen.add(d.dataset.sec) : ui.dsecOpen.delete(d.dataset.sec);
+}, true);
+$("#tbody").addEventListener("click", e => {
+  if (!isPhone() && e.target.closest("details.dsec > summary")) e.preventDefault();
 });
 $("#tbody").addEventListener("keydown", e => {
   if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.row, tr.grp")){ e.preventDefault(); e.target.click(); }
