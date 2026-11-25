@@ -103,6 +103,7 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .pt input::placeholder{color:var(--subtle)}
 .pt.cur span{color:var(--orange)}
 .pt.cur input{border-color:var(--border-orange)}
+.h-toggle{display:none}
 .hunter-actions{display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem 1rem;margin-top:0.9rem;align-items:center}
 .note{color:var(--subtle);font-family:var(--mono);font-size:0.68rem}
 .acts{display:flex;gap:1rem}
@@ -181,6 +182,7 @@ table.pts tr.me td.est{color:#fff}
 td.is-proj .big{font-style:italic}
 table.main th.is-proj{font-style:italic}
 .m-bar{display:none}
+.f-toggle{display:none}
 
 /* WEAPON BUTTONS + BADGES */
 .wchips{display:flex;flex-wrap:wrap;gap:0.35rem}
@@ -339,11 +341,42 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
 
   .detail-grid{max-width:calc(100vw - 4.75rem)}
 }
+/* PHONES: the Hunter panel folds to one line (who's active, and their points for
+   the species on screen); the toggle opens the name and points. */
+@media (max-width:680px){
+  .hunters .panel-head{margin-bottom:0}
+  .hunters.open .panel-head{margin-bottom:1rem}
+  .hunters:not(.open) #hunterMore{display:none}
+  .h-toggle{display:inline-flex;align-items:center;gap:0.4rem;margin-left:auto;background:none;border:1px solid var(--border-strong);border-radius:6px;
+    min-height:34px;padding:0 0.7rem;cursor:pointer;font-family:var(--mono);font-size:0.66rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--soft)}
+  .h-toggle.need{color:var(--orange-bright);border-color:var(--border-orange)}
+  .h-toggle .caret{transition:transform 0.2s}
+  .hunters.open .h-toggle .caret{transform:rotate(180deg)}
+}
+/* PHONES: species on one swipeable row (fades at the right edge until scrolled to
+   the end), and the filters fold behind a "Filters" button beside the search box. */
+@media (max-width:680px){
+  .species-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+    margin:0 -1rem 0.9rem;padding:0 1rem;scroll-padding:0 1rem}
+  .species-tabs::-webkit-scrollbar{display:none}
+  .species-tabs:not(.at-end){-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent);mask-image:linear-gradient(90deg,#000 82%,transparent)}
+  .species-tabs .vtab{flex:none}
+  .controls .q{order:-2;flex:1 1 0;min-width:0}
+  .f-toggle{order:-1;display:inline-flex;align-items:center;gap:0.45rem;min-height:40px;padding:0 0.85rem;background:none;border:1px solid var(--border-strong);border-radius:6px;
+    cursor:pointer;font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--soft)}
+  .f-toggle.has{color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
+  .f-count{color:var(--orange-bright)}
+  .f-toggle .caret{transition:transform 0.2s}
+  .controls.open .f-toggle .caret{transform:rotate(180deg)}
+  .controls:not(.open) .wchips,.controls:not(.open) .seg,.controls:not(.open) .toggles,.controls:not(.open) .m-bar{display:none}
+  .controls.open{padding-bottom:0.6rem;border-bottom:1px solid var(--border)}
+  .controls .wchips{flex-basis:100%}
+}
 /* PHONES: each hunt becomes a card. The hunt name runs across the top, then four
    numbers: tags, guaranteed, projected guaranteed, and the hunter's odds. The rest
    (applicants, split, harvest, trends) is one tap away in the hunt's detail. */
 @media (max-width:680px){
-  .m-bar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:0.6rem;margin:0 0 0.9rem}
+  .m-bar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:0.6rem;margin:0;flex-basis:100%}
   .m-bar label{display:flex;flex-direction:column;gap:0.3rem;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);flex:1;min-width:140px}
   .m-bar select{background:var(--bg2);color:var(--text);border:1px solid var(--border-strong);border-radius:6px;padding:0.5rem;font-size:0.85rem;min-height:38px;width:100%}
   .m-dir{background:var(--bg2);color:var(--text);border:1px solid var(--border-strong);border-radius:6px;min-height:38px;min-width:42px;cursor:pointer}
@@ -428,7 +461,10 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
     <div class="panel-head">
       <span class="lbl">Hunter</span>
       <div class="chips" id="profileChips"></div>
+      <!-- Phones only: the name and points fold away behind this button. -->
+      <button type="button" class="h-toggle" id="hToggle" aria-expanded="false" aria-controls="hunterMore"><span id="hSum"></span><span class="caret" aria-hidden="true">▾</span></button>
     </div>
+    <div id="hunterMore">
     <div class="hunter-body">
       <div class="ctl name-ctl"><label for="profName">Name</label><input id="profName" type="text" maxlength="30" autocomplete="off"></div>
       <div class="pts-grid" id="ptsGrid"></div>
@@ -441,6 +477,7 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
         <button type="button" class="link-btn danger" id="delProfBtn">Delete hunter</button>
         <input type="file" id="importFile" accept="application/json,.json" hidden>
       </span>
+    </div>
     </div>
   </div>
 
@@ -455,10 +492,19 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
       <button type="button" data-res="N" aria-pressed="false">Nonres</button>
     </div>
     <input id="q" class="q" type="search" placeholder="Search unit or hunt #" aria-label="Search unit or hunt number" autocomplete="off">
+    <!-- Phones only: everything but the search box folds behind this button. -->
+    <button type="button" class="f-toggle" id="fToggle" aria-expanded="false" aria-controls="filtersMore">Filters<span class="f-count" id="fCount"></span><span class="caret" aria-hidden="true">▾</span></button>
     <div class="toggles" role="group" aria-label="Options">
       <label class="tog" title="Within 1 point of guaranteed"><input type="checkbox" id="onlyRun"> Within 1 pt</label>
       <label class="tog"><input type="checkbox" id="onlyStar"> Starred only</label>
       <label class="tog"><input type="checkbox" id="showTrends"> Trend columns</label>
+    </div>
+    <!-- Phones only: the cards have no header row, so sorting and the column
+         filters live here, inside the folded filters. -->
+    <div class="m-bar" id="mBar">
+      <label>Sort <select id="mSort"></select></label>
+      <button type="button" class="m-dir" id="mDir" aria-label="Reverse sort order">▲</button>
+      <label>Filter a column <select id="mFilter"><option value="">Choose a column…</option></select></label>
     </div>
   </div>
 
@@ -480,13 +526,6 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   </div>
 
   <div class="summary" id="summary" aria-live="polite"></div>
-  <!-- Phones only: the table becomes cards with no header row, so sorting and the
-       column filters move here. -->
-  <div class="m-bar" id="mBar">
-    <label>Sort <select id="mSort"></select></label>
-    <button type="button" class="m-dir" id="mDir" aria-label="Reverse sort order">▲</button>
-    <label>Filter <select id="mFilter"><option value="">Choose a column…</option></select></label>
-  </div>
   <div class="filter-bar" id="filterBar"></div>
 
   <div class="tbl-wrap" id="mainWrap">
@@ -864,6 +903,7 @@ function render(){
   $("#eyebrow").textContent = sp.label;
   $("#subtitle").innerHTML = `Results from the <b>${st.drawYear} draw</b>, harvest from the <b>${st.harvestYear} season</b>, and projections for the <b>${N} draw</b>.`;
   renderSpeciesTabs(); renderWeaponChips(); renderHunter(); renderExplain(st, sp);
+  if (typeof showCurrentSpecies === "function") showCurrentSpecies();
   $("#starView").hidden = !ui.starView;
   [".controls", "#summary", "#filterBar", "#mainWrap"].forEach(s => { $(s).hidden = ui.starView; });
   if (ui.starView){ $("#eyebrow").textContent = "Starred hunts"; renderStarred(st); return; }
@@ -900,6 +940,10 @@ function render(){
   renderFilterBar(cols);
 
   renderHead(cols); renderMobileBar(cols);
+  // How many filters are on, for the phone "Filters" button.
+  const nOn = ui.wtypes.size + (ui.onlyRun ? 1 : 0) + (ui.onlyStar ? 1 : 0) + activeFilters().length;
+  $("#fCount").textContent = nOn ? ` · ${nOn}` : "";
+  $("#fToggle").classList.toggle("has", nOn > 0);
   if (!list.length){
     $("#tbody").innerHTML = `<tr><td colspan="${cols.length}" class="empty">No hunts match these filters.</td></tr>`;
     return;
@@ -1323,11 +1367,40 @@ function renderHunter(){
   } else {
     grid.querySelectorAll("label.pt").forEach(l => l.classList.toggle("cur", l.querySelector("input").dataset.pts === sp.key));
   }
+  const myPts = ptsOf(prof, sp.key), open = $(".hunters").classList.contains("open");
+  $("#hSum").textContent = open ? "Done" : myPts == null ? `Add ${sp.short || sp.label} points` : `${sp.short || sp.label}: ${myPts} pts`;
+  $("#hToggle").classList.toggle("need", !open && myPts == null);
   $("#delProfBtn").disabled = ui.profiles.length < 2;
   if (!storageOk) $("#ptsNote").textContent = "This browser isn't letting the page save. Points will be lost when you close it; use Export to keep a copy.";
 }
 
 // ---------- controls ----------
+// Phones: open/close the folded filters.
+$("#fToggle").onclick = () => {
+  const open = $(".controls").classList.toggle("open");
+  $("#fToggle").setAttribute("aria-expanded", String(open));
+};
+// Phones: the species row scrolls sideways. Drop the edge fade at the end, and keep
+// the selected species in view.
+const spRow = $("#speciesTabs");
+const spEdge = () => spRow.classList.toggle("at-end", spRow.scrollLeft + spRow.clientWidth >= spRow.scrollWidth - 4);
+spRow.addEventListener("scroll", spEdge, {passive: true});
+window.addEventListener("resize", spEdge);
+function showCurrentSpecies(){
+  const on = spRow.querySelector(".is-on");
+  if (on && spRow.scrollWidth > spRow.clientWidth){
+    const l = on.offsetLeft - spRow.offsetLeft, r = l + on.offsetWidth;
+    if (l < spRow.scrollLeft + 16 || r > spRow.scrollLeft + spRow.clientWidth - 40) spRow.scrollLeft = Math.max(0, l - 16);
+  }
+  spEdge();
+}
+// Hunter panel open/closed (only matters on phones; desktop always shows it).
+$("#hToggle").onclick = () => {
+  const open = $(".hunters").classList.toggle("open");
+  $("#hToggle").setAttribute("aria-expanded", String(open));
+  store.set("hunterOpen", open); renderHunter();
+};
+if (store.get("hunterOpen", false)){ $(".hunters").classList.add("open"); $("#hToggle").setAttribute("aria-expanded", "true"); }
 function fillSelects(){
   const st = curState();
   if (!st.species.some(s => s.key === ui.species)) ui.species = st.species[0].key;

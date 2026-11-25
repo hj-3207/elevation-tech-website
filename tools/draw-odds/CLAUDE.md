@@ -149,6 +149,10 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
 - **Order at the top:** intro, app icon row, **Hunter panel**, then the species buttons, then the filters. The owner moved the Hunter panel above the species buttons.
 - **Filter bar** (restyled 2026-11-24): no panel box and no field labels, just one compact row of buttons in the species-bar style (transparent, thin border, orange border and tint when on): weapon buttons, a Resident/Nonres pair, a search box, and three toggle buttons ("Within 1 pt", "Starred only", "Trend columns", checkboxes inside `label.tog`, lit with `:has(input:checked)`). At 1,400 px it takes two short rows. Labels live in `aria-label`s.
 - **Species buttons fit on one line at 1,400 px** (tightened 2026-11-24: 0.78rem side padding, 0.4rem gap). Below about 1,300 px they wrap.
+- **Phone top of page** (680 px and under, added 2026-11-24), to cut what sat above the first hunt from about 14 rows to 4:
+  - **Hunter panel folds to one line:** the hunter buttons plus a toggle (`#hToggle`) reading "LE ELK: 12 PTS" or, in orange, "ADD LE ELK POINTS". It opens the name and points (`#hunterMore`). Open/closed is remembered (`hunterOpen`). Desktop always shows the full panel.
+  - **Species buttons are one swipeable row** with a fade at the right edge until scrolled to the end (`.at-end`); `showCurrentSpecies()` keeps the selected one in view.
+  - **Filters fold behind a "Filters" button** beside the search box, with a count of what's on ("Filters · 2": weapons, the two toggles and column filters). The open panel holds the weapon buttons, residency, toggles, and the Sort / Filter-a-column bar (`#mBar`, moved inside `.controls`).
 - **Copy voice:** plain, concrete, and honest about limitations, like the website.
 
 ## Yearly / seasonal tasks
