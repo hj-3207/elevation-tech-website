@@ -60,6 +60,23 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .tog:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
 .tog input{accent-color:var(--orange);width:14px;height:14px;margin:0;cursor:pointer}
 .tog:has(input:checked){color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
+/* Points-to-draw slider: two range inputs stacked on one track (only the thumbs take
+   the pointer), with an orange fill between them. */
+.prange{--th:16px;display:flex;align-items:center;gap:0.9rem;min-height:40px;padding:0 0.85rem;border:1px solid var(--border-strong);border-radius:6px;flex:0 1 480px}
+.prange.on{border-color:var(--orange);background:rgba(204,85,0,0.14)}
+.pr-lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--soft);white-space:nowrap}
+.pr-lbl b{color:#fff;font-weight:600;margin-left:0.35rem}
+.prange.on .pr-lbl b{color:var(--orange-bright)}
+.pr-track{position:relative;flex:1;min-width:150px;height:28px}
+.pr-track::before{content:"";position:absolute;left:calc(var(--th) / 2);right:calc(var(--th) / 2);top:50%;height:3px;margin-top:-1.5px;background:var(--border-strong);border-radius:2px}
+.pr-fill{position:absolute;top:50%;height:3px;margin-top:-1.5px;background:var(--orange);border-radius:2px}
+.pr-track input{position:absolute;left:0;top:0;width:100%;height:28px;margin:0;background:none;-webkit-appearance:none;appearance:none;pointer-events:none;outline:none}
+.pr-track input::-webkit-slider-runnable-track{background:none;height:28px;border:0}
+.pr-track input::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;pointer-events:auto;width:var(--th);height:var(--th);margin-top:calc((28px - var(--th)) / 2);border-radius:50%;background:#fff;border:2px solid var(--orange);cursor:grab;box-sizing:border-box}
+.pr-track input::-moz-range-track{background:none;border:0}
+.pr-track input::-moz-range-thumb{pointer-events:auto;width:var(--th);height:var(--th);border-radius:50%;background:#fff;border:2px solid var(--orange);cursor:grab;box-sizing:border-box}
+.pr-track input:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(--orange-tint-2)}
+.pr-track input:focus-visible::-moz-range-thumb{box-shadow:0 0 0 3px var(--orange-tint-2)}
 .panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:0.6}
 .ctl label,.ctl .lbl{display:block;font-family:var(--mono);font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem}
 .ctl select,.ctl input[type=text],.ctl input[type=number]{width:100%;min-width:0;background:var(--bg2);border:1px solid var(--border-strong);border-radius:6px;padding:0.55rem 0.75rem;min-height:40px;color:var(--text);transition:border-color 0.2s}
@@ -392,7 +409,10 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   .f-count{color:var(--orange-bright)}
   .f-toggle .caret{transition:transform 0.2s}
   .controls.open .f-toggle .caret{transform:rotate(180deg)}
-  .controls:not(.open) .wchips,.controls:not(.open) .seg,.controls:not(.open) .toggles,.controls:not(.open) .m-bar{display:none}
+  .controls:not(.open) .wchips,.controls:not(.open) .seg,.controls:not(.open) .toggles,.controls:not(.open) .m-bar,.controls:not(.open) .prange{display:none}
+  .prange{--th:22px;flex-basis:100%;box-sizing:border-box;min-width:0;max-width:100%}
+  .prange{flex-wrap:wrap;gap:0.2rem;padding:0.55rem 0.85rem 0.35rem}
+  .pr-track{min-width:0;flex-basis:100%}
   .controls.open{padding-bottom:0.6rem;border-bottom:1px solid var(--border)}
   .controls .wchips{flex-basis:100%}
   /* Summary: one short line of stats; the draw type and points prompt are desktop-only
@@ -606,6 +626,15 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
       <label class="tog" title="Within 1 point of guaranteed"><input type="checkbox" id="onlyRun"> Within 1 pt</label>
       <label class="tog"><input type="checkbox" id="onlyStar"> Starred only</label>
       <label class="tog"><input type="checkbox" id="showTrends"> Trend columns</label>
+    </div>
+    <!-- Points to draw: a two-handled slider on the projected guaranteed points. It is
+         the same filter as that column's filter button (ui.filters.proj). -->
+    <div class="prange" id="pRange" role="group" aria-labelledby="prLbl">
+      <span class="pr-lbl" id="prLbl"><span id="prYear"></span> pts to draw <b id="prVal">Any</b></span>
+      <div class="pr-track"><div class="pr-fill" id="prFill"></div>
+        <input type="range" id="prMin" min="0" max="30" step="1" value="0" aria-label="Minimum points to draw">
+        <input type="range" id="prMax" min="0" max="30" step="1" value="30" aria-label="Maximum points to draw">
+      </div>
     </div>
     <!-- Phones only: the cards have no header row, so sorting and the column
          filters live here, inside the folded filters. -->
@@ -1029,8 +1058,10 @@ function render(){
   const cols = columns(st);
   const q = ui.q.trim().toLowerCase();
 
-  let list = sp.hunts.map(h => ({h, a: analyze(h, ui.res, sp.system)}))
-    .filter(({a}) => a.tags > 0 || a.apps > 0 || a.next[0] > 0)
+  const all = sp.hunts.map(h => ({h, a: analyze(h, ui.res, sp.system)}))
+    .filter(({a}) => a.tags > 0 || a.apps > 0 || a.next[0] > 0);
+  renderPRange(all, N);
+  let list = all
     .filter(({h}) => !ui.wtypes.size || ui.wtypes.has(h.wtype))
     .filter(({h}) => !q || (h.unit + " " + h.code + " " + h.weapon + " " + (h.notes || []).map(n => n[0]).join(" ")).toLowerCase().includes(q))
     .filter(({h}) => !ui.onlyStar || ui.stars.has(st.state + ":" + h.code))
@@ -1365,6 +1396,41 @@ function filterLabel(col, f){
   if (f.min != null) return `${col.label} ≥ ${f.min}${u}`;
   return `${col.label} ≤ ${f.max}${u}`;
 }
+// Points-to-draw slider. Runs from 0 to the highest projected guaranteed points among
+// this species' hunts; a handle at either end means no limit on that side.
+function renderPRange(all, N){
+  const vals = all.map(({a}) => colVal(null, a, "proj")).filter(v => v != null);
+  const hi = Math.max(1, Math.ceil(Math.max(0, ...vals)));
+  const f = ui.filters.proj || {}, mn = $("#prMin"), mx = $("#prMax");
+  mn.max = mx.max = hi;
+  mn.value = Math.max(0, Math.min(f.min ?? 0, hi));
+  mx.value = Math.max(0, Math.min(f.max ?? hi, hi));
+  $("#prYear").textContent = N;
+  prPaint();
+}
+function prPaint(){
+  const mn = $("#prMin"), mx = $("#prMax"), hi = +mx.max, a = +mn.value, b = +mx.value;
+  const on = a > 0 || b < hi;
+  $("#prVal").textContent = !on ? "Any" : a === b ? `${a} pts` : b >= hi ? `${a}+ pts` : `${a}–${b} pts`;
+  $("#pRange").classList.toggle("on", on);
+  $("#pRange").title = `Hunts whose ${$("#prYear").textContent} projected guaranteed points fall in this range. Random-only hunts are hidden while it's set.`;
+  const fill = $("#prFill");
+  fill.style.left = `calc(var(--th) / 2 + (100% - var(--th)) * ${a / hi})`;
+  fill.style.width = `calc((100% - var(--th)) * ${(b - a) / hi})`;
+  // Both handles at the top end: keep the low one on top so it can still be dragged.
+  mn.style.zIndex = a >= hi ? 3 : 1;
+}
+function onPRange(e){
+  const mn = $("#prMin"), mx = $("#prMax"), hi = +mx.max;
+  let a = +mn.value, b = +mx.value;
+  if (a > b){ if (e.target === mn) a = b; else b = a; mn.value = a; mx.value = b; }
+  if (a <= 0 && b >= hi) delete ui.filters.proj;
+  else ui.filters.proj = {min: a > 0 ? a : null, max: b < hi ? b : null};
+  prPaint(); render();
+}
+$("#prMin").addEventListener("input", onPRange);
+$("#prMax").addEventListener("input", onPRange);
+
 function renderFilterBar(cols){
   const act = activeFilters();
   if (!act.length){ $("#filterBar").innerHTML = ""; return; }
