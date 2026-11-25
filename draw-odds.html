@@ -374,6 +374,11 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
   .controls:not(.open) .wchips,.controls:not(.open) .seg,.controls:not(.open) .toggles,.controls:not(.open) .m-bar{display:none}
   .controls.open{padding-bottom:0.6rem;border-bottom:1px solid var(--border)}
   .controls .wchips{flex-basis:100%}
+  /* Summary: one short line of stats; the draw type and points prompt are desktop-only
+     (the Hunter button already shows points). */
+  .summary .d-only{display:none}
+  .summary{gap:0.3rem 0.9rem;font-size:0.68rem;margin:0.9rem 0.1rem 0.6rem}
+  .summary .grp-acts{margin-left:auto}
 }
 /* PHONES: each hunt becomes a card. The hunt name runs across the top, then four
    numbers: tags, guaranteed, projected guaranteed, and the hunter's odds. The rest
@@ -647,7 +652,9 @@ const ui = {
   sort: {key:"unit", dir:1},
   filters: {},            // column key -> {min, max} ; "unit" -> {units:[...]}
   open: new Set(), collapsed: new Set(),
-  starView: store.get("starView", false)   // the "Starred" tab: starred hunts from every species
+  // The "Starred" tab. Remembered, so the page reopens where it was left; a first
+  // visit has nothing saved and opens on the first species (LE elk).
+  starView: store.get("starView", false)
 };
 if (!ui.profiles.some(p => p.id === ui.active)) ui.active = ui.profiles[0].id;
 let storageOk = true;
@@ -935,10 +942,11 @@ function render(){
   const units = new Set(list.map(x => x.h.unit));
   const totTags = list.reduce((s,x) => s + x.a.next[0], 0), totApps = list.reduce((s,x) => s + x.a.apps, 0);
   $("#summary").innerHTML =
-    `<span><b>${list.length}</b> hunt${list.length === 1 ? "" : "s"} in <b>${units.size}</b> unit${units.size === 1 ? "" : "s"}</span><span><b>${fmt(totTags)}</b> ${tagYear(st)} ${ui.res === "R" ? "resident" : "nonresident"} tags</span>` +
-    `<span><b>${fmt(totApps)}</b> ${st.drawYear} first-choice applicants</span>` +
-    (sp.system === "preference" ? `<span>Preference-point draw (no random half)</span>` : `<span>Bonus-point draw (half to top points, half random)</span>`) +
-    (p == null ? `<span>Enter ${esc(prof.name)}'s ${esc(sp.short || sp.label)} points above to see odds.</span>` : `<span>${esc(prof.name)}: <b>${p}</b> pts</span>`) +
+    // On phones (.d-only hidden) this shrinks to one line: "145 hunts in 28 units · 3,051 tags · 50,869 applicants".
+    `<span class="s-stat"><b>${list.length}</b> hunt${list.length === 1 ? "" : "s"} in <b>${units.size}</b> unit${units.size === 1 ? "" : "s"}</span><span class="s-stat"><b>${fmt(totTags)}</b> <span class="d-only">${tagYear(st)} ${ui.res === "R" ? "resident" : "nonresident"} </span>tags</span>` +
+    `<span class="s-stat"><b>${fmt(totApps)}</b> <span class="d-only">${st.drawYear} first-choice </span>applicants</span>` +
+    (sp.system === "preference" ? `<span class="d-only">Preference-point draw (no random half)</span>` : `<span class="d-only">Bonus-point draw (half to top points, half random)</span>`) +
+    (p == null ? `<span class="d-only">Enter ${esc(prof.name)}'s ${esc(sp.short || sp.label)} points above to see odds.</span>` : `<span class="d-only">${esc(prof.name)}: <b>${p}</b> pts</span>`) +
     (grouped && list.length ? `<span class="grp-acts"><button type="button" class="link-btn" data-groups="collapse">Collapse all</button><button type="button" class="link-btn" data-groups="expand">Expand all</button></span>` : "");
   renderFilterBar(cols);
 
@@ -1371,7 +1379,7 @@ function renderHunter(){
     grid.querySelectorAll("label.pt").forEach(l => l.classList.toggle("cur", l.querySelector("input").dataset.pts === sp.key));
   }
   const myPts = ptsOf(prof, sp.key), open = $(".hunters").classList.contains("open");
-  $("#hSum").textContent = open ? "Done" : myPts == null ? `Add ${sp.short || sp.label} points` : `${sp.short || sp.label}: ${myPts} pts`;
+  $("#hSum").textContent = open ? "Done" : myPts == null ? "Add points" : `${sp.short || sp.label}: ${myPts} pts`;
   $("#hToggle").classList.toggle("need", !open && myPts == null);
   $("#delProfBtn").disabled = ui.profiles.length < 2;
   if (!storageOk) $("#ptsNote").textContent = "This browser isn't letting the page save. Points will be lost when you close it; use Export to keep a copy.";
