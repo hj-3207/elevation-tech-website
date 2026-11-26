@@ -271,13 +271,42 @@ The owner's decisions:
 - **Desert bighorn:** pure random, no points.
 - **Coming:** from 2028 Colorado replaces the hybrid draw with a split draw.
 
-**Still to do:**
-1. Run stage 1 for everything.
-2. The odds model for the three draw types, checked against 2026 by point level.
-3. Data assembly into `data/draw-odds/co-2026.json`.
-4. The page: species buttons with `co-` species keys so saved points don't clash with Utah's; "GMU 41 · 1st rifle" names; P/RFW filters and badges; 2nd-choice notes.
-5. Harvest.
-6. Flip `states.json` to live.
+**Stage 2 (written 2026-11-25/26), `build_colorado.py --assemble`:**
+- **Output:** `data/draw-odds/co-2026.json` in Utah's shape (rows `[pts, apps, drew, drew by preference]`, quotas `[tags, preference tags, random tags]`), plus a local preview `_preview-colorado.html` (gitignored, via `build_utah.build_preview`).
+- **Odds:** the species field `rand` picks the random rule in the template's `drawModel` (`RAND`):
+  - `hybrid`: flat chance for 5+ points;
+  - `weighted`: chance proportional to points − 2 for 3+ (points = 3 preference + weighted);
+  - `flat`: everyone the same;
+  - `utah` (default): points + 1, exponential.
+
+  Utah's odds were compared before and after and are identical.
+- **2024:** CPW's full 2024 recaps are named `2024-primary-<species>-post-draw-report` (no "recap"); `discover()` finds them now. The "Drawn Out At" record (`out` in `h.hist[y]`, guaranteed and split only, no applicants) is the fallback when a year has no recap; the year-by-year table, creep chart and trend columns handle both.
+- **Season dates** (`season_dates()`, cached `raw/colorado_dates_2026.json`):
+  - **Sources:** CPW's 2026 big game brochure and 2026 sheep and goat brochure (state library copies in PDF_DIR): row dates ("Oct. 14–18 Cow E-F-018-O1-R") and table-title dates ("Archery — … — Season Dates: Sept. 2–30").
+  - **Title dates:** apply only to codes of the same weapon. A muzzleloader code printed on an archery page once got archery dates.
+  - **Standard dates:** codes without a readable date get their species/season/weapon's most common dates, only where ≥ 80% of ≥ 3 dated codes agree (`stdDates`, said on the page). RFW, sheep, goat and some private-land seasons vary, so they get none.
+  - **Coverage:** about 90% of hunts have dates.
+- **Harvest** (`hunt_harvest()`, cached `raw/colorado_<species>_harvest_2023.json`):
+  - **Source:** CPW's newest harvest survey is **2023**. It's by game management unit and season, not hunt code.
+  - **Per hunt:** the season's table, summed over the hunt's valid units. Antlered harvest is used for antlered hunts, total harvest for either-sex; moose, sheep and goat use their single all-seasons table. All license types in those units are mixed in, and the page says so.
+  - **Layout quirks:** some deer percent-success pages number every row ("33 22 12 14 87" = row 33, unit 22), so each table type has a known column count (6 for percent-success, 7 for recreation-days). Withheld small samples ("su5m") are skipped.
+  - **Bear:** CPW's bear report has no hunter counts, so bear has no success rate.
+
+**Done as of 2026-11-26:**
+- Stage 1 for every species.
+- The odds model for all three draw types, checked against 2026.
+- `co-2026.json`.
+- The page:
+  - Species keys are plain (`elk`): saved points are stored per state (`CO:elk`), so they can't clash with Utah's.
+  - Hunt names read "Unit 41 · 1st rifle", with all valid units under them.
+  - "Hide private land" and "Hide RFW" toggles.
+  - Badges: Private land only, Ranching for Wildlife, Nonresident only, 2nd choice.
+  - Colorado wording in the notes.
+- 2024 history, season dates and harvest.
+
+**To go live:** set Colorado `"live": true` (drop `building`/`notice`) in `states.json`, make an `og-card` image (`img/drawodds-og-colorado.jpg`), rebuild, check the page, and update the apps and home page copy, which still says Utah only.
+
+**Clean-up rule:** `prune_raw` in build_utah deletes raw files older than draw year − 4 by the year in the name. That includes `colorado_*` files, which is fine while both states run the same 5-year window.
 
 ## Backlog / ideas (owner agreed to "later")
 
@@ -293,6 +322,10 @@ The owner's decisions:
   - **Picker:** the map covers the West only plus Kansas. Washington and California are dim outlines for context, not clickable, with no label. Any map state not in `states.json` shows that way, so adding one to the list is all it takes to label it. Working states are orange links; the others say "Coming later". A list beside the map (below it on phones) repeats the states with their draw system. If this browser has hunters with points, Utah's row says "Your points are saved". Under the intro it has the same "Check out these other useful apps:" strip as the state pages (added 2026-11-25). Its clicks count in `referrals_drawodds` as placement `top`, mixed with the state pages' top strip, because the table's check constraint only allows top/detail/after. A separate `map` placement would need the constraint changed in Supabase first.
   - **Switcher:** each state page has a "State: Utah ▾" button at the top right of the title (on phones a compact "Utah ▾" beside the eyebrow). It lists working states, the coming ones (greyed) and "All states (map) →".
   - **Under construction** (owner's request, 2026-11-25): a state with `"building": true` in `states.json` (Colorado now) is clickable on the map (orange dashed outline, "Under construction") and in the list. Clicking shows its `notice` text above the state list instead of opening a page; `draw-odds.html#co` opens it on arrival. The state pages' switcher lists it as "Under construction", linking to that. When the state goes live, set `"live": true` and drop `building`/`notice`.
+  - **Published while under construction** (owner's request, 2026-11-26): a `building` state that has data is built to its page (`draw-odds-colorado.html`) so visitors can reach it.
+    - **Map:** the notice gains a "Continue to Colorado →" button.
+    - **Page:** shows a dashed "Colorado is under construction…" banner (`#buildBanner`, from `states.json`) under the title.
+    - **Until the owner reviews it:** keep `building: true`. The local-only `_preview-*.html` is no longer needed for Colorado.
   - **Saved points:** hunters and points sit in one localStorage (`drawodds:` keys) shared by every state page. Utah's species keys (`le-elk`, …) are unprefixed. A new state's species keys must not clash, so prefix them (e.g. `co-elk`).
   - **Site copy:** apps.html and index.html still say "Utah" (true while it's the only working state). Update them when the second state goes live.
 - Separate Colorado and Wyoming pages. Colorado uses preference points; Wyoming uses preference plus random.

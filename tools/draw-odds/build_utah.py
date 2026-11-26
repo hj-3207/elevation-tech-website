@@ -825,7 +825,9 @@ def build_page():
     template = (TOOL / "template.html").read_text(encoding="utf-8")
     slist = json.dumps(states, separators=(",", ":")).replace("</", "<\\/")
     for s in states:
-        if not s["live"]:
+        # Live states, and states under construction that have data (the owner wants
+        # visitors able to reach those too, with an under-construction notice first).
+        if not s["live"] and not (s.get("building") and s["code"] in latest):
             continue
         st = latest.get(s["code"])
         if not st:
@@ -899,8 +901,10 @@ def build_picker(states, template):
             items.append(f'<li><a class="st live" data-code="{s["code"]}" href="{s["page"]}">{inner}</a></li>')
         elif s.get("building"):
             items.append(f'<li><a class="st building" data-code="{s["code"]}" data-building="{s["code"]}" href="#{s["code"].lower()}">{inner}</a></li>')
+            built = (ROOT / s["page"]).exists()   # page published while under construction?
             notices.append(f'<div class="notice" id="notice-{s["code"].lower()}" role="status" hidden>'
-                           f'<b>{escape(s["name"])} is under construction.</b> {escape(s.get("notice", "")).replace(escape(s["name"]) + " is under construction. ", "")}</div>')
+                           f'<b>{escape(s["name"])} is under construction.</b> {escape(s.get("notice", "")).replace(escape(s["name"]) + " is under construction. ", "")}'
+                           + (f'<a class="notice-go" href="{s["page"]}">Continue to {escape(s["name"])} →</a>' if built else "") + '</div>')
         else:
             items.append(f'<li><div class="st soon" data-code="{s["code"]}">{inner}</div></li>')
     nav = re.search(r"<nav>.*?</nav>", template, re.S).group(0)

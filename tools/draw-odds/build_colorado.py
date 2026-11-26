@@ -77,7 +77,9 @@ def discover():
             n = name.lower()
             if "secondary" in n:
                 continue
-            kind = "recap" if "recap" in n else "drawnout" if ("drawnout" in n or "drawn-out" in n) else None
+            # 2024's recaps are named "2024-primary-elk-post-draw-report" (no "recap").
+            kind = ("drawnout" if ("drawnout" in n or "drawn-out" in n)
+                    else "recap" if ("recap" in n or "post-draw-report" in n) else None)
             year = link_year(n)
             if not kind or year not in YEARS:
                 continue
@@ -215,21 +217,45 @@ DO_CODE = re.compile(r"\b([A-Z]{2}[A-Z0-9]{3}[A-Z]\d[A-Z])\b")
 
 
 def parse_drawnout(path):
-    """{code: [text lines]} from a "Drawn Out At" report. Kept as raw text per hunt for now
-    (2024 has no recap, so this is that year's only record); turned into numbers later."""
+    """{code: {"R": [label, k, n], "N": [...]}} from a "Drawn Out At" report (adults).
+    2024 has no recap for most species, so this is that year's only record. Via
+    pdfplumber's tables: a "Drawn Out At" row (code, list, label, Res, NonRes, youth...,
+    e.g. "4 Pref\\nPoints", "Choice 2", "Leftover", "None\\nDrawn", "No Apps") followed by a
+    "# Drawn at Final Level" row ("369 of\\n415"). k of n drew at that final level."""
     import pdfplumber
     out, cur = {}, None
     with pdfplumber.open(path) as pdf:
         for page in pdf.pages:
-            for l in (page.extract_text() or "").splitlines():
-                l = l.strip()
-                m = DO_CODE.search(l)
-                if m and (l == m.group(1) or l.startswith(m.group(1)) or l.endswith(m.group(1))):
-                    cur = m.group(1)
-                    out.setdefault(cur, [])
-                if cur and l and not l.startswith(("Colorado Parks", "Drawn Out At Report", "Page ")):
-                    out[cur].append(l)
+            for t in page.extract_tables():
+                for row in t:
+                    cells = [re.sub(r"\s+", " ", c or "").strip() for c in row]
+                    if len(cells) < 5:
+                        continue
+                    if DO_CODE.fullmatch(cells[0] or "") and cells[2] == "Drawn Out At":
+                        cur = cells[0]
+                        out[cur] = {"R": [cells[3], None, None], "N": [cells[4], None, None]}
+                    elif cur and cells[2].startswith("# Drawn at Final Level"):
+                        for res, c in (("R", cells[3]), ("N", cells[4])):
+                            m = re.match(r"(\d+) of (\d+)", c)
+                            if m:
+                                out[cur][res][1:] = [int(m.group(1)), int(m.group(2))]
+                        cur = None
     return out
+
+
+def drawnout_record(v):
+    """[label, k, n] -> {"guar": points, "split": [pts, n, k] or None} the way the page reads a
+    year (guaranteed = the level above a partly drawn final level), or None if nothing drew."""
+    label, k, n = v
+    m = re.match(r"(\d+) Pref Points$", label or "")
+    if m:
+        x = int(m.group(1))
+        if k is not None and n and k < n:
+            return {"guar": x + 1, "split": [x, n, k]}
+        return {"guar": x, "split": None}
+    if (label or "").startswith(("Choice", "Leftover")):
+        return {"guar": 0, "split": None}          # every first choice drew
+    return None
 
 
 # --------------------------------------------------------------------------- W-2 units
@@ -312,6 +338,254 @@ def main():
         w2_out.write_text(json.dumps(units, separators=(",", ":")), encoding="utf-8")
         print(f"  parsed W-2 units: {len(units)} hunt codes")
     src_path.write_text(json.dumps(sources, indent=1, sort_keys=True), encoding="utf-8")
+
+
+# --------------------------------------------------------------------------- season dates
+# 2026 dates per hunt code, from CPW's 2026 big game brochure and the 2026 sheep and goat
+# brochure (state library copies, kept in PDF_DIR). Two kinds:
+#  - row dates: "Oct. 14–18 Cow E-F-018-O1-R B", or with a license count on sheep/goat
+#    "Sept. 8–22 3 Ram S-M-S03-O1-R";
+#  - table dates: a title like "Archery — Limited Licenses — Season Dates: Sept. 2–30"
+#    covering codes on that page without a date of their own.
+# Codes the brochures don't date readably get the most common dates of their species,
+# season and method (e.g. elk 1st rifle Oct. 14–18), marked "standard" on the page.
+BROCHURES = {
+    "biggame_brochure_2026.pdf": "https://spl.cde.state.co.us/artemis/nrserials/nr1431internet/nr14312026internet.pdf",
+    "sheepgoat_brochure_2026.pdf": "https://spl.cde.state.co.us/artemis/nrserials/nr1430internet/nr14302026internet.pdf",
+}
+_MON = r"(?:Jan|Feb|March|Mar|April|Apr|May|June|July|Aug|Sept|Oct|Nov|Dec)\.?"
+_DATE = rf"{_MON} \d{{1,2}}\s?[–-]\s?(?:{_MON} )?\d{{1,2}}"
+_SEX = r"(?:New\s+)?(?:\d+\s+)?(?:Either|Bull|Cow|Buck|Doe|Antlered|Antlerless|Ram|Ewe|Billy|Nanny|Male|Female|Either-sex|Any)?"
+_ROWD = re.compile(rf"({_DATE})\s+{_SEX}\s*\+?\s*([A-Z]-[A-Z]-[A-Z0-9]{{3}}-[A-Z]\d-[A-Z])")
+_BCODE = re.compile(r"\b([A-Z]-[A-Z]-[A-Z0-9]{3}-[A-Z]\d-[A-Z])\b")
+_TITLE = re.compile(rf"(?i)(Archery|Muzzleloader|Rifle)[^:]{{0,80}}?Season Dates?:\s*({_DATE})")
+_TITLE_METHOD = {"archery": "A", "muzzleloader": "M", "rifle": "R"}
+_MONTHS = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}
+
+
+def _iso(text, year):
+    m = re.match(rf"({_MON}) (\d+)\s?[–-]\s?(?:({_MON}) )?(\d+)", text)
+    if not m:
+        return None
+    m1, d1 = _MONTHS[m.group(1)[:3]], int(m.group(2))
+    m2, d2 = (_MONTHS[m.group(3)[:3]] if m.group(3) else m1), int(m.group(4))
+    return [f"{year}-{m1:02d}-{d1:02d}", f"{year + 1 if m2 < m1 else year}-{m2:02d}-{d2:02d}"]
+
+
+def parse_brochure_dates(path, year):
+    """{code: [start, end]} (ISO dates) from one brochure PDF."""
+    import pdfplumber
+    out = {}
+    with pdfplumber.open(path) as pdf:
+        for pg in pdf.pages:
+            flat = " ".join((pg.extract_text() or "").split())
+            for m in _ROWD.finditer(flat):
+                out.setdefault(m.group(2).replace("-", ""), _iso(m.group(1), year))
+            # A table title's dates cover that table's codes only: same weapon as the title
+            # ("Archery — Limited Licenses — Season Dates: Sept. 2–30" doesn't date a
+            # muzzleloader code printed elsewhere on the page). No weapon in the title: none.
+            tm = _TITLE.search(flat)
+            if tm and tm.group(1):
+                d, meth = _iso(tm.group(2), year), _TITLE_METHOD[tm.group(1).lower()]
+                for m in _BCODE.finditer(flat):
+                    c = m.group(1).replace("-", "")
+                    if c[7] == meth:
+                        out.setdefault(c, d)
+    return out
+
+
+def season_dates(year=2026):
+    """All brochure dates, cached as data/draw-odds/raw/colorado_dates_<year>.json."""
+    cache = RAW / f"colorado_dates_{year}.json"
+    if cache.exists():
+        return json.loads(cache.read_text(encoding="utf-8"))
+    out = {}
+    for name, url in BROCHURES.items():
+        pdf = PDF_DIR / name
+        if not pdf.exists():
+            pdf.write_bytes(get(url))
+        for k, v in parse_brochure_dates(pdf, year).items():
+            out.setdefault(k, v)
+    cache.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    return out
+
+
+def standard_dates(hunts, dates, agree=0.8, min_dated=3):
+    """{(species letter, season, method): most common [start, end]} from the dated codes, only
+    where those dates mostly agree (>= 80% of >= 3 dated codes). Checked 2026: the regular
+    seasons agree 85-100% (elk rifle, deer 2nd-4th rifle, archery, muzzleloader); Ranching for
+    Wildlife, sheep, goat and some private-land seasons vary by hunt, so they get no guess."""
+    import collections
+    by = collections.defaultdict(collections.Counter)
+    for c in hunts:
+        if dates.get(c):
+            by[(c[0], c[5:7], c[7])][tuple(dates[c])] += 1
+    out = {}
+    for k, v in by.items():
+        top, n = v.most_common(1)[0]
+        if sum(v.values()) >= min_dated and n / sum(v.values()) >= agree:
+            out[k] = list(top)
+    return out
+
+
+# --------------------------------------------------------------------------- harvest
+# CPW's harvest reports are a hunter survey reported by game management unit and season,
+# not by hunt code (unlike Utah's). The newest posted is 2023. Each hunt gets the harvest
+# and hunters of its season's table summed over its valid units: antlered harvest for
+# antlered hunts, total harvest for either-sex. All license types in those units and that
+# season are mixed in, so it's an approximation, said so on the page. CPW withholds tiny
+# samples ("su5m"); those units are skipped. Bear's report has no hunter counts, so bear
+# gets no success rate.
+HARVEST_YEAR = 2023
+HARVEST_NAMES = {   # species key -> (statistics page slug, link name on it)
+    "elk": ("elk", "2023-statewide-elk-hunting-harvest-estimates"),
+    "deer": ("deer", "2023statewidedeerhuntingharvestestimates"),
+    "pronghorn": ("pronghorn", "2023-statewide-pronghorn-harvest-estimates"),
+    "moose": ("moose", "2023-statewide-moose-hunting-estimated-harvest-statistics"),
+    "rocky-bighorn": ("bighorn-sheep", "2023-statewide-rocky-mountain-bighorn-sheep-hunting-harvest"),
+    "desert-bighorn": ("bighorn-sheep", "2023-statewide-desert-bighorn-sheep-harvest"),
+    "goat": ("mountain-goat", "2023-statewide-mountain-goat-hunting-harvest"),
+}
+_HROW = re.compile(r"^([0-9]{1,3}|[SG]\d{2})\s+((?:[\d,.]+|su\S*)(?:\s+(?:[\d,.]+|su\S*|#DIV/0!))+)$")
+
+
+def parse_harvest_report(path):
+    """{table title: {unit: [numbers or None]}}; the title is each page's first line.
+    Some tables (deer percent-success) put a row number before the unit ("33 22 12 14 87 0
+    0 0" = row 33, unit 22): a row with one value more than its table's usual count is
+    read that way."""
+    import pdfplumber, collections
+    raw = collections.defaultdict(list)
+    with pdfplumber.open(path) as pdf:
+        for pg in pdf.pages:
+            lines = [l.strip() for l in (pg.extract_text() or "").splitlines() if l.strip()]
+            if not lines:
+                continue
+            title = re.sub(r"^20\d\d\s+", "", lines[0])
+            for l in lines[1:]:
+                m = _HROW.match(l)
+                if m:
+                    raw[title].append((m.group(1), m.group(2).split()))
+    num = lambda v: None if (v.startswith("su") or "DIV" in v) else float(v.replace(",", ""))
+    norm = lambda u: u.lstrip("0") if u[0].isdigit() else u
+    out = {}
+    for title, rows in raw.items():
+        # Expected number columns: percent-success tables have 6 (antlered harvest, hunters,
+        # %, antlerless ...); elk/deer/pronghorn recreation-days tables 7 (bulls, cows,
+        # calves, total, hunters, %, days). Some pages number every row, so the most
+        # common width can't be trusted there. Other species' tables: the most common.
+        if "Percent Success for" in title:
+            width = 6
+        elif title.startswith(("Elk Harvest", "Deer Harvest", "Pronghorn Harvest")) and "Recreation Days" in title:
+            width = 7
+        else:
+            width = collections.Counter(len(v) for _, v in rows).most_common(1)[0][0]
+        t = out.setdefault(title, {})
+        for first, vals in rows:
+            if len(vals) == width + 1 and re.fullmatch(r"[0-9]{1,3}|[SG]\d{2}", vals[0]):
+                first, vals = vals[0], vals[1:]          # leading row number
+            if len(vals) == width:
+                t[norm(first)] = [num(v) for v in vals]
+    return out
+
+
+def harvest_tables(key):
+    cache = RAW / f"colorado_{key}_harvest_{HARVEST_YEAR}.json"
+    if cache.exists():
+        return json.loads(cache.read_text(encoding="utf-8"))
+    if key not in HARVEST_NAMES:
+        return None
+    slug, name = HARVEST_NAMES[key]
+    html = get(STATS.format(slug=slug)).decode("utf-8", "ignore")
+    m = re.search(r'href="(https://cpw\.widen\.net/s/[a-z0-9]+/' + re.escape(name) + r')"', html)
+    if not m:
+        print(f"  ! no {HARVEST_YEAR} harvest report link for {key}", file=sys.stderr)
+        return None
+    pdf = PDF_DIR / f"{key}_harvest_{HARVEST_YEAR}.pdf"
+    if not pdf.exists():
+        download_share(m.group(1), pdf)
+    t = parse_harvest_report(pdf)
+    cache.write_text(json.dumps({"url": m.group(1), "tables": t}, separators=(",", ":")), encoding="utf-8")
+    return {"url": m.group(1), "tables": t}
+
+
+_ORD_WORD = {"1": "First", "2": "Second", "3": "Third", "4": "Fourth"}
+_ORD_NUM = {"1": "1st", "2": "2nd", "3": "3rd", "4": "4th"}
+
+
+def harvest_source(code, tables):
+    """(table title, harvest column, hunters column) for a hunt code, or None."""
+    sp, sex, season, n, method = code[0], code[1], code[5], code[6], code[7]
+    T = lambda s: next((t for t in tables if t.startswith(s)), None)
+    # Bulls/Bucks Cows/Does Calves/Fawns Total Hunters ...: antlered = col 0, total = col 3, hunters = col 4
+    rec = lambda title: (title, 0 if sex == "M" else 3, 4) if title else None
+    pct = lambda title: (title, 0, 1) if title else None            # Antlered Harvest, Antlered Hunters, ...
+    if sp == "E":
+        if season == "O" and method == "R":
+            return rec(T(f"Elk Harvest, Hunters and Recreation Days for {_ORD_NUM.get(n, n)} Season Limited {'Antlered' if sex == 'M' else 'Either-sex'} Seasons"))
+        if method == "A" or season == "V": return rec(T("Elk Harvest, Hunters and Recreation Days for All Archery Seasons"))
+        if method == "M": return (pct if sex == "M" else rec)(T("Elk Harvest, Hunters and Percent Success for All Muzzleloader") if sex == "M" else T("Elk Harvest, Hunters and Recreation Days for All Muzzleloader"))
+        if season == "E": return rec(T("Elk Harvest, Hunters and Recreation Days for Early Seasons"))
+        if season == "L": return rec(T("Elk Harvest, Hunters and Recreation Days for All Late Seasons"))
+        if season == "P": return rec(T("Elk Harvest, Hunters and Recreation Days for Private Land Only Seasons"))
+        if season in "WJ": return rec(T("Elk Harvest, Hunters and Recreation Days for All Ranching for Wildlife"))
+    if sp == "D":
+        if season == "O" and method == "R":
+            if sex == "M" and n in "234": return pct(T(f"Deer Harvest, Hunters and Percent Success for {_ORD_NUM[n]} Rifle Seasons"))
+            if n in "234": return rec(T(f"Deer Harvest, Hunters and Recreation Days for {_ORD_NUM[n]} Rifle Seasons"))
+            return rec(T("Deer Harvest, Hunters and Recreation Days for All Rifle Seasons"))
+        if method == "A" or season == "V": return rec(T("Deer Harvest, Hunters and Recreation Days for All Archery Seasons"))
+        if method == "M": return (pct if sex == "M" else rec)(T("Deer Harvest, Hunters and Percent Success for All Muzzleloader") if sex == "M" else T("Deer Harvest, Hunters and Recreation Days for All Muzzleloader"))
+        if season in "EL": return rec(T("Deer Harvest, Hunters and Recreation Days for Early and Late Seasons"))
+        if season == "P": return rec(T("Deer Harvest, Hunters and Recreation Days for All Rifle Seasons"))
+        if season in "WJ": return rec(T("Deer Harvest, Hunters and Recreation Days for All Ranching for Wildlife"))
+    if sp == "A":
+        if method == "A": return rec(T("Pronghorn Harvest, Hunters and Recreation Days for All Archery Seasons"))
+        if method == "M": return rec(T("Pronghorn Harvest, Hunters and Recreation Days for All Muzzleloader Seasons"))
+        if season == "L": return rec(T("Pronghorn Harvest, Hunters and Recreation Days for All Late Rifle Seasons"))
+        if season == "P": return rec(T("Pronghorn Harvest, Hunters and Recreation Days for All Private Land Only"))
+        if season in "WJ": return rec(T("Pronghorn Harvest, Hunters and Recreation Days for All Ranching for Wildlife"))
+        return rec(T("Pronghorn Harvest, Hunters and Recreation Days for All Regular Rifle Seasons"))
+    title = next(iter(tables), None)   # moose, sheep, goat: one table for all manners of take
+    if not title:
+        return None
+    if sp == "M":                       # Licenses M F T, Hunters M F T, Harvest M F T, ...
+        return (title, 6 if sex == "M" else 8, 3 if sex == "M" else 5)
+    if sp in "SC":                      # same layout with Ram / Ewe
+        return (title, 6 if sex == "M" else 8, 3 if sex == "M" else 5)
+    if sp == "G":                       # Licenses, Hunters, Male, Female, Total, %, days
+        return (title, 2 if sex == "M" else 4, 1)
+    return None
+
+
+def unit_tokens(units_text, code):
+    toks = re.findall(r"\b([SG]\d{1,2}|\d{1,3})\b", units_text or "")
+    out = []
+    for t in toks or [code[2:5]]:
+        t = t.lstrip("0") if t[0].isdigit() else (t[0] + t[1:].zfill(2))
+        if t and t not in out:
+            out.append(t)
+    return out
+
+
+def hunt_harvest(code, units_text, hv):
+    """[None, hunters, harvested, percent] summed over the hunt's units, or None."""
+    if not hv:
+        return None
+    src = harvest_source(code, hv["tables"])
+    if not src:
+        return None
+    title, hcol, ncol = src
+    t = hv["tables"].get(title) or {}
+    har = hun = 0.0; used = []
+    for u in unit_tokens(units_text, code):
+        r = t.get(u)
+        if not r or max(hcol, ncol) >= len(r) or r[hcol] is None or r[ncol] is None:
+            continue
+        har += r[hcol]; hun += r[ncol]; used.append(u)
+    if not used or hun <= 0:
+        return None
+    return [None, round(hun), round(har), round(100 * har / hun, 1)]
 
 
 # --------------------------------------------------------------------------- stage 2: assemble
@@ -397,20 +671,31 @@ def point_rows(x, ri, rule):
     return out
 
 
-def assemble(year=2026, hist_years=(2022, 2023, 2025)):
+def assemble(year=2026, hist_years=(2022, 2023, 2024, 2025)):
     sys.path.insert(0, str(TOOL))
     import build_utah as U
     units = json.loads((RAW / f"colorado_w2_units_{W2_YEAR}.json").read_text(encoding="utf-8"))
+    dates = season_dates(year)
     species = []
     for key, label, short, rule, icon in SPECIES:
         cur = json.loads((RAW / f"colorado_{key}_{year}_recap.json").read_text(encoding="utf-8"))
-        hist = {}
+        hist, outs = {}, {}
         for y in hist_years:
             f = RAW / f"colorado_{key}_{y}_recap.json"
             if f.exists():
                 for k, x in json.loads(f.read_text(encoding="utf-8")).items():
                     for code in k.split("+"):      # 2022 combined hunts: same table for each code
                         hist.setdefault(code, {})[str(y)] = x
+                continue
+            # No recap that year (2024 for most species): CPW's "Drawn Out At" report gives
+            # the guaranteed level and split, not applicants. Only meaningful for the
+            # preference species.
+            f = RAW / f"colorado_{key}_{y}_drawnout.json"
+            if f.exists() and rule == "hybrid":
+                for code, v in json.loads(f.read_text(encoding="utf-8")).items():
+                    rec = {res: drawnout_record(v[res]) for res in ("R", "N")}
+                    if rec["R"] or rec["N"]:
+                        outs.setdefault(code, {})[str(y)] = rec
         hunts = []
         for code, x in cur.items():
             if "+" in code or code[1] not in "ME" or code[5] == "K" or not x.get("drawn"):
@@ -448,12 +733,37 @@ def assemble(year=2026, hist_years=(2022, 2023, 2025)):
             for y, hx in hist.get(code, {}).items():
                 if hx.get("rows"):
                     hh[y] = {"R": point_rows(hx, 0, rule), "N": point_rows(hx, 1, rule)}
+            for y, rec in outs.get(code, {}).items():
+                hh[y] = {"R": [], "N": [], "out": rec}     # guaranteed/split only (no applicants)
             if hh:
-                h["hist"] = hh
+                h["hist"] = dict(sorted(hh.items()))
             hunts.append(h)
+        hv = harvest_tables(key)
+        n_hv = 0
+        for h in hunts:
+            r = hunt_harvest(h["code"], h["units"], hv)
+            if r:
+                h["harvest"] = r; n_hv += 1
+        print(f"    harvest ({HARVEST_YEAR}, by unit and season): {n_hv} of {len(hunts)} hunts")
+        # Season dates: the brochure's own, else the standard dates for that species,
+        # season and method ("standard": true, said so on the page).
+        std = standard_dates([h["code"] for h in hunts], dates)
+        n_own = n_std = 0
+        for h in hunts:
+            d = dates.get(h["code"])
+            if d:
+                h["seasons"] = [[h["weapon"], d[0], d[1]]]; n_own += 1
+            elif std.get((h["code"][0], h["code"][5:7], h["code"][7])):
+                d = std[(h["code"][0], h["code"][5:7], h["code"][7])]
+                h["seasons"] = [[h["weapon"], d[0], d[1]]]; h["stdDates"] = True; n_std += 1
+        print(f"    season dates: {n_own} from the brochures, {n_std} standard, {len(hunts) - n_own - n_std} none")
         hunts.sort(key=lambda h: (int(re.sub(r"\D", "", h["unit"]) or 0), h["unit"], h["weapon"], h["code"]))
         sp = {"key": key, "label": label, "short": short, "icon": icon, "system": "preference" if rule == "hybrid" else "bonus",
               "rand": rule, "hunts": hunts}
+        if hv:
+            sp["harvestYear"], sp["harvestSource"], sp["harvestByUnit"] = HARVEST_YEAR, hv["url"], True
+            if rule != "hybrid":
+                sp["harvestAllSeasons"] = True   # moose/sheep/goat: one table for every season
         species.append(sp)
         print(f"  {short}: {len(hunts)} antlered/either-sex hunts")
     # Drop-ins (people who show up above the split that last year's pool can't explain):

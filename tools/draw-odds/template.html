@@ -55,6 +55,9 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .page-title span{color:var(--orange)}
 /* State switcher, top right of the title. */
 .head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+.build-banner{border:1px dashed var(--orange);border-radius:10px;background:rgba(204,85,0,0.1);padding:0.75rem 1rem;margin:0 0 1.1rem;color:var(--text);font-size:0.9rem;line-height:1.55;max-width:860px}
+.build-banner b{color:#fff}
+.build-banner[hidden]{display:none}
 .st-switch{position:relative;flex:none;z-index:40}
 .st-switch summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:0.55rem;min-height:40px;padding:0 0.9rem;border:1px solid var(--border-strong);border-radius:6px;
   font-family:var(--mono);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);transition:border-color 0.2s}
@@ -654,6 +657,8 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
     </details>
   </div>
   <div class="divider"></div>
+  <!-- States still marked "building" in states.json (published for a look before review). -->
+  <div class="build-banner" id="buildBanner" role="status" hidden></div>
   <p class="page-sub" id="subtitle"></p>
   <!-- Cross-promotion, part 1 of 3: one quiet row of app icons saying who built this. -->
   <div class="maker-strip">
@@ -897,7 +902,13 @@ const curState = () => STATES.find(s => s.state === ui.state) || STATES[0];
 let spOverride = null;
 const curSpecies = () => { if (spOverride) return spOverride; const st = curState(); return st.species.find(s => s.key === ui.species) || st.species[0]; };
 const activeProfile = () => ui.profiles.find(p => p.id === ui.active) || ui.profiles[0];
-const ptsOf = (prof, spKey) => { const v = prof.pts[ui.state + ":" + (spKey || curSpecies().key)]; return v == null ? null : v; };
+const ptsOf = (prof, spKey) => {
+  const key = spKey || curSpecies().key, v = prof.pts[ui.state + ":" + key];
+  if (v != null) return v;
+  // No-points draws (Colorado desert bighorn): everyone's odds are the same, no entry needed.
+  const sp = curState().species.find(s => s.key === key);
+  return sp && sp.rand === "flat" ? 0 : null;
+};
 const nextYear = st => st.nextYear || st.drawYear + 1;
 const tagYear = st => st.nextTags ? nextYear(st) : st.drawYear;
 
@@ -953,17 +964,20 @@ function pastDraw(rows, res, system){
 // quotas) unless next year's official numbers are loaded, then quota vs quota.
 function trend(h, res, system, a){
   const st = curState(), D = st.drawYear;
-  const p1 = pastDraw(h.hist && h.hist[D-1] && h.hist[D-1][res], res, system);
-  const p2 = pastDraw(h.hist && h.hist[D-2] && h.hist[D-2][res], res, system);
+  // Colorado 2024 has only CPW's "Drawn Out At" record: guaranteed points, no tag count.
+  const past = y => { const e = h.hist && h.hist[y]; if (!e) return null;
+    if (e.out) return e.out[res] ? {tags: null, guar: e.out[res].guar} : null;
+    return pastDraw(e[res], res, system); };
+  const p1 = past(D-1), p2 = past(D-2);
   const diff = (x, y) => x == null || y == null ? null : x - y;
   const t = {from1: D-1, from2: D-2, to: D, isNew: !p1 && !p2};
   if (a.nextLoaded){
     t.to = D + 1; t.from1 = D; t.from2 = D - 1;
     t.tags1 = a.next[0] - a.tags;
-    t.tags2 = p1 ? a.next[0] - p1.tags : null;
+    t.tags2 = p1 && p1.tags != null ? a.next[0] - p1.tags : null;
   } else {
-    t.tags1 = p1 ? a.drew - p1.tags : null;
-    t.tags2 = p2 ? a.drew - p2.tags : null;
+    t.tags1 = p1 && p1.tags != null ? a.drew - p1.tags : null;
+    t.tags2 = p2 && p2.tags != null ? a.drew - p2.tags : null;
   }
   t.pts1 = diff(a.guarPts, p1 && p1.guar);
   t.pts2 = diff(a.guarPts, p2 && p2.guar);
@@ -1400,7 +1414,9 @@ function detailHtml(st, sp, h, a, p, ncol){
       <td>${pct(r[2]/r[1])}</td><td class="est">${pct(oddsAt(a.model, r[0]))}</td><td class="bar"><div class="barbox" style="width:${Math.max(w,2).toFixed(1)}%" title="${r[1]} applicants">
       ${sp.system === "bonus" ? `<i class="b" style="width:${(bon/r[1]*100).toFixed(1)}%"></i><i class="r" style="width:${(ran/r[1]*100).toFixed(1)}%"></i>` : `<i class="b" style="width:${(r[2]/r[1]*100).toFixed(1)}%"></i>`}</div></td></tr>`;
   }).join("");
-  const seasons = (h.seasons || []).map(s => `${esc(s[0])}: ${fmtDate(s[1])} – ${fmtDate(s[2])}`).join("<br>");
+  const seasons = (h.seasons || []).map(s => `${esc(s[0])}: ${fmtDate(s[1])} – ${fmtDate(s[2])}`).join("<br>") +
+    // Colorado codes the brochure doesn't date readably carry the standard dates for their season.
+    (h.stdDates ? ` <span class="na">(the standard dates for this season; check CPW's brochure for this hunt)</span>` : "");
   const hv = h.harvest;
   const hunters = ui.profiles.map(pr => {
     const pp = ptsOf(pr, sp.key), o = oddsAt(a.model, pp);
@@ -1424,7 +1440,8 @@ function detailHtml(st, sp, h, a, p, ncol){
       <dt>Hunt #</dt><dd><span class="code">${esc(h.code)}</span>${h.map ? ` · <a href="${esc(h.map)}" target="_blank" rel="noopener">Boundary map</a>` : ""}</dd>
       <dt>${st.drawYear} season${(h.seasons||[]).length > 1 ? "s" : ""}</dt><dd>${seasons || "—"}</dd>
       <dt>Tags</dt><dd>${tagLine}</dd>
-      <dt>${esc(harvYear(sp))} harvest</dt><dd>${!hv ? "No harvest record for this hunt #"
+      <dt>${esc(harvYear(sp))} harvest</dt><dd>${!hv ? (sp.harvestByUnit || st.state === "CO" ? "No harvest figure for these units and this season" : "No harvest record for this hunt #")
+        : sp.harvestByUnit ? `${hv[3].toFixed(0)}% · ${fmt(hv[2])} harvested by ${fmt(hv[1])} hunters <span class="na">(CPW's ${esc(harvYear(sp))} harvest survey for unit${/,/.test(h.units || "") ? "s" : ""} ${esc(h.units || h.unit)}, ${sp.harvestAllSeasons ? "all seasons" : "this season"}, all license types combined)</span>`
         : hv[1] == null ? `${hv[3].toFixed(0)}% of permits filled · ${fmt(hv[2])} harvested on ${fmt(hv[0])} permits`
         : `${hv[3].toFixed(1)}% · ${fmt(hv[2])} harvested by ${fmt(hv[1])} hunters afield (${fmt(hv[0])} permits)`}</dd>
       <dt>${N} projection</dt><dd>${projText(a, st)}</dd>
@@ -1462,7 +1479,9 @@ function trendHtml(st, sp, h, a){
     const x = analyze({rows: {[ui.res]: rows}, quota: {[ui.res]: [tot, bon, tot - bon]}}, ui.res, sp.system, true);
     return {y, tags: x.tags, apps: x.apps, guar: x.guarPts, split: x.split};
   };
-  const rows = years.map(y => yearRow(y, h.hist[y][ui.res] || []));
+  // A year with only CPW's "Drawn Out At" record (Colorado 2024): guaranteed and split, no tags/applicants.
+  const outRow = (y, o) => ({y, tags: null, apps: null, guar: o ? o.guar : null, split: o && o.split, out: true});
+  const rows = years.map(y => h.hist[y].out ? outRow(y, h.hist[y].out[ui.res]) : yearRow(y, h.hist[y][ui.res] || []));
   rows.push({y: String(st.drawYear), tags: a.drew, apps: a.apps, guar: a.guarPts, split: a.split});
   const cell = (r, prev, key) => {
     const v = r[key]; if (v == null) return "—";
@@ -1471,7 +1490,7 @@ function trendHtml(st, sp, h, a){
   };
   const m = a.model;
   const body = rows.map((r, i) => `<tr><td>${r.y}</td><td>${cell(r, rows[i-1], "tags")}</td><td>${cell(r, rows[i-1], "apps")}</td>` +
-    `<td>${r.tags ? cell(r, rows[i-1], "guar") : "—"}</td><td>${r.split ? `${r.split[0]} <span class="na">(${fmt(r.split[2])} of ${fmt(r.split[1])})</span>` : "—"}</td></tr>`).join("") +
+    `<td>${r.tags || (r.out && r.guar != null) ? cell(r, rows[i-1], "guar") : "—"}</td><td>${r.split ? `${r.split[0]} <span class="na">(${fmt(r.split[2])} of ${fmt(r.split[1])})</span>` : "—"}</td></tr>`).join("") +
     (m && !m.randomOnly ? `<tr class="proj-row"><td>${nextYear(st)} proj.</td><td>${fmt(a.next[0])}</td><td class="na">—</td><td>${m.guarPts}</td><td>${m.all ? "—" : `${m.split} <span class="na">(${fmt(m.k)} of ${fmt(m.n)})</span>`}</td></tr>` : "");
   return dsec("yby", `Year by year (${ui.res === "R" ? "residents" : "nonresidents"})`,
     creepChart(rows, m && !m.randomOnly ? m.guarPts : null, nextYear(st)) +
@@ -1560,6 +1579,9 @@ function renderExplain(st, sp){
         ? `Colorado draws by preference points, top points first. A few applicants at levels that drew still miss (group applications draw at the lowest member's points), so this is the lowest level where at least 90% of first-choice applicants drew. CPW calls it the "drawn out at" level.`
         : `Not used for ${esc(sp.short)}: ${sp.rand === "weighted" ? "licenses go by a weighted random draw, not straight by points" : "it's a pure random draw with no points"}.`,
       [`${D} split group`]: `The point level where licenses ran out: some drew, some didn't.`,
+      [`${H} harvest success`]: sp.harvestByUnit
+        ? `From CPW's ${H} harvest survey, the newest it has posted. Colorado reports harvest by game management unit and season, not by hunt code, so each hunt shows the harvest and hunters of its season summed over its valid units (antlered harvest for antlered hunts, all harvest for either-sex), with every license type in those units mixed in. Read it as how that area and season hunted, not this exact license. Units where CPW withholds a small sample are left out.`
+        : `CPW's bear harvest report gives harvest by unit but not how many hunted, so there's no success rate for Colorado bear.`,
       [`Your ${N} odds`]: sp.rand === "hybrid"
         ? `Licenses go top points down. On hunts that took 10+ resident points the year before (and have 5+ licenses), up to 20% go instead to the hybrid draw: a random draw among first-choice applicants with 5+ points who didn't draw by points, one chance each. Your odds are 100% above the split, part of the way at it, and the hybrid chance below it (0 under 5 points). Checked against the ${D} results: the draws below the split matched CPW's hybrid counts on nearly every hunt.`
         : sp.rand === "weighted"
@@ -1570,7 +1592,8 @@ function renderExplain(st, sp){
     };
     items.forEach(it => { if (co[it[0]] !== undefined) it[1] = co[it[0]]; });
     items.push([`Valid units`, `Many Colorado licenses are good in several game management units. They're listed under each hunt, from CPW's Chapter W-2 regulations, and the search box finds a hunt by any unit it's valid in. Ranching for Wildlife hunts aren't in W-2, so they show the unit in their code.`]);
-    items.push([`Coming`, `Colorado replaces the hybrid draw with a split draw starting in 2028. Harvest success for Colorado hunts is still to come.`]);
+    items.push([`Season dates`, `From CPW's ${D} big game and sheep and goat brochures. Where a hunt's own dates can't be read there, it shows the standard dates for its season (the hunt detail says so); check the brochure before you go.`]);
+    items.push([`Coming`, `Colorado replaces the hybrid draw with a split draw starting in 2028.`]);
   }
   if (sp.pooled) items.push([`One pool`, `Limited-entry turkey doesn't split permits between residents and nonresidents: everyone, youth included, draws from the same permits, so the tables count everyone and the Resident and Nonres buttons show the same numbers. Youth get a first pass at 15% of the permits before the main draw, which takes a tag or two from adults; the odds don't model that.`]);
   if (sp.key === "bear") items.push([`Bear seasons`, `Bear hunts are grouped by season (spring, summer, fall, multi-season) instead of weapon; the season buttons filter them.`]);
@@ -2155,12 +2178,16 @@ function renderStateSwitch(){
   const cur = curState().state;
   const me = STATE_LIST.find(s => s.code === cur);
   $("#stName").textContent = me ? me.name : curState().name;
-  $("#stMenu").innerHTML = [...STATE_LIST].sort((a, b) => (b.live - a.live) || (!!b.building - !!a.building) || a.name.localeCompare(b.name)).map(s => s.live
+  $("#stMenu").innerHTML = [...STATE_LIST].sort((a, b) => (b.live - a.live) || (!!b.building - !!a.building) || a.name.localeCompare(b.name)).map(s => s.live || s.code === cur
     ? `<a href="${esc(s.page)}"${s.code === cur ? ` class="cur" aria-current="page"` : ""}>${esc(s.name)}<small>${s.code === cur ? "Viewing" : esc(s.system)}</small></a>`
     : s.building ? `<a class="st-build" href="draw-odds.html#${esc(s.code.toLowerCase())}">${esc(s.name)}<small>Under construction</small></a>`
     : `<span aria-disabled="true">${esc(s.name)}<small>Coming later</small></span>`).join("") +
     `<a class="st-all" href="draw-odds.html">All states (map) →</a>`;
   if (!STATE_LIST.length) $("#stSwitch").hidden = true;
+  // Under construction: say so before anyone relies on the numbers.
+  const b = $("#buildBanner");
+  b.hidden = !(me && me.building);
+  if (me && me.building) b.innerHTML = `<b>${esc(me.name)} is under construction.</b> It's built from ${esc(me.name)}'s official draw results and checked against them, but it's still being reviewed, so numbers and layout may change. Double-check anything important against the state's own reports.`;
 }
 document.addEventListener("click", e => { const d = $("#stSwitch"); if (d.open && !e.target.closest("#stSwitch")) d.open = false; });
 document.addEventListener("keydown", e => { const d = $("#stSwitch"); if (e.key === "Escape" && d.open){ d.open = false; d.querySelector("summary").focus(); } });

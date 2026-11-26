@@ -39,6 +39,18 @@ p b{color:#fff;font-weight:700}
 <script>
 // og-card.html?states makes the picker's card (img/drawodds-og-states.jpg): the map
 // from the built draw-odds.html instead of the Utah table.
+// og-card.html?colorado makes img/drawodds-og-colorado.jpg: the Colorado elk table, Unit 10 rows.
+if (location.search.indexOf("colorado") >= 0){
+  document.querySelector("h1").innerHTML = "Colorado<b>Draw Odds</b>";
+  document.querySelector("p").innerHTML = "Points it took to draw, <b>your odds</b> (preference, hybrid and weighted draws) and next year's projections for every Colorado big game hunt.";
+  const s = document.querySelector(".shot");
+  s.innerHTML = '<iframe id="cof" src="../../draw-odds-colorado.html?sp=elk&q=10&h=EE010O1A" scrolling="no" style="position:absolute;left:-14px;top:0;width:1200px;height:1700px;border:0"></iframe>';
+  // Hide the page's fixed nav and banner inside the frame (same folder, file access allowed).
+  document.getElementById("cof").addEventListener("load", e => {
+    try { const d = e.target.contentDocument; const st = d.createElement("style");
+      st.textContent = "nav,.build-banner{display:none!important}"; d.head.appendChild(st); } catch(err){}
+  });
+}
 if (location.search.indexOf("states") >= 0){
   document.querySelector("h1").innerHTML = "Western<b>Draw Odds</b>";
   document.querySelector("p").innerHTML = "Pick a state: guaranteed points, split groups, <b>your random-draw odds</b> and next year's projections by hunt.";
