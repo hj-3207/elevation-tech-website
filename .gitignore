@@ -29,3 +29,7 @@ img/*.mp4
 
 # Python bytecode from tools/draw-odds/build_utah.py.
 __pycache__/
+
+# Local previews of Draw Odds states that aren't live yet (tools/draw-odds/build_utah.py
+# build_preview). They'd be public if committed; the state goes live via states.json.
+_preview-*.html

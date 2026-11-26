@@ -841,6 +841,27 @@ def build_page():
     build_picker(states, template)
 
 
+def build_preview(code):
+    """A local preview of a state that isn't live yet (e.g. Colorado while it's being built):
+    writes _preview-<state>.html at the repo root (so its relative links work), which
+    .gitignore keeps out of git. The live site is untouched."""
+    states = json.loads((TOOL / "states.json").read_text(encoding="utf-8"))
+    s = next(x for x in states if x["code"] == code)
+    st = max((json.loads(f.read_text(encoding="utf-8")) for f in DATA.glob("*-*.json")),
+             key=lambda d: (d["state"] == code, d["drawYear"]))
+    if st["state"] != code:
+        raise SystemExit(f"no data/draw-odds/{code.lower()}-<year>.json")
+    template = (TOOL / "template.html").read_text(encoding="utf-8")
+    slist = json.dumps(states, separators=(",", ":")).replace("</", "<\\/")
+    blob = json.dumps([st], separators=(",", ":")).replace("</", "<\\/")
+    page = (template.replace("/*__DATA__*/[]", blob).replace("/*__STATELIST__*/[]", slist)
+            .replace("__PAGE__", s["page"]).replace("__STATENAME__", s["name"])
+            .replace("__OGIMAGE__", "drawodds-og-states.jpg"))
+    out = ROOT / f"_preview-{s['page'][len('draw-odds-'):]}"
+    out.write_text(page, encoding="utf-8")
+    print(f"  wrote local preview {out.name} ({out.stat().st_size // 1024} KB, not for git)")
+
+
 def build_picker(states, template):
     """draw-odds.html: the Western states map (tools/draw-odds/west-map.json) and list."""
     from html import escape

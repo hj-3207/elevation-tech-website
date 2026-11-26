@@ -103,6 +103,8 @@ main{position:relative;z-index:1;padding:8.5rem 1.5rem 4rem}
 .tog:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
 .tog input{accent-color:var(--orange);width:14px;height:14px;margin:0;cursor:pointer}
 .tog:has(input:checked){color:#fff;border-color:var(--orange);background:rgba(204,85,0,0.14)}
+.tog[hidden]{display:none}
+td .meta.units{font-size:0.72rem;color:var(--muted);white-space:normal;max-width:240px}
 /* Points-to-draw slider: two range inputs stacked on one track (only the thumbs take
    the pointer), with an orange fill between them. */
 /* Desktop: a filter button that drops the slider down in a small box. */
@@ -706,6 +708,10 @@ dl.facts dd{margin:0;color:var(--text);line-height:1.6}
     <div class="toggles" role="group" aria-label="Options">
       <label class="tog" title="Within 1 point of guaranteed"><input type="checkbox" id="onlyRun"> Within 1 pt</label>
       <label class="tog"><input type="checkbox" id="onlyStar"> Starred only</label>
+      <!-- Colorado only (shown when the species has such hunts): private-land-only and
+           Ranching for Wildlife codes, which need landowner permission / are resident-only. -->
+      <label class="tog" id="hidePLOtog" hidden><input type="checkbox" id="hidePLO"> Hide private land</label>
+      <label class="tog" id="hideRFWtog" hidden><input type="checkbox" id="hideRFW"> Hide RFW</label>
     </div>
     <!-- Points to draw: a two-handled slider on the projected guaranteed points. It is
          the same filter as that column's filter button (ui.filters.proj). Desktop: a
@@ -875,6 +881,7 @@ const ui = {
   active: store.get("activeProfile", null),
   stars: new Set(store.get("stars", [])),
   wtypes: new Set(), q: "", onlyRun: false, onlyStar: store.get("onlyStar", false),
+  hidePLO: store.get("hidePLO", false), hideRFW: store.get("hideRFW", false),
   showTrends: store.get("showTrends", false),   // tag change, point creep, vs projected
   sort: {key:"unit", dir:1},
   filters: {},            // column key -> {min, max} ; "unit" -> {units:[...]}
@@ -1017,8 +1024,25 @@ function withDropins(pool, bonusTags, d){
   return {pool: [...m.entries()].sort((x, y) => y[0] - x[0]), added};
 }
 
+// Random-draw rules (species "rand"), each checked against that state's last draw by point level:
+//  utah      Utah: everyone left holds points + 1 entries; drawn without replacement,
+//            P = 1 - e^(-w*tau).
+//  hybrid    Colorado elk/deer/pronghorn/bear: the hybrid draw's tags go at random to
+//            first-choice applicants with 5+ points, one chance each: P = min(1, tau).
+//  weighted  Colorado moose/Rocky bighorn/goat: points = 3 preference + weighted; under 3
+//            can't draw; the random number is divided by (weighted + 1), so the chance is
+//            linear in weighted + 1 = points - 2: P = min(1, tau * (points - 2)).
+//  flat      Colorado desert bighorn: no points, everyone the same chance.
+const RAND = {
+  utah:     {w: p => p + 1,                 linear: false},
+  hybrid:   {w: p => p >= 5 ? 1 : 0,        linear: true},
+  weighted: {w: p => p >= 3 ? p - 2 : 0,    linear: true},
+  flat:     {w: () => 1,                    linear: true},
+};
+const randRule = () => (curSpecies() && curSpecies().rand) || "utah";
 function drawModel(pool, bonusTags, randTags){
-  const m = {pool, bonusTags, randTags, split: null, guar: null, k: 0, n: 0, tau: 0, randomOnly: bonusTags === 0};
+  const rule = randRule(), R = RAND[rule] || RAND.utah;
+  const m = {pool, bonusTags, randTags, split: null, guar: null, k: 0, n: 0, tau: 0, rule, randomOnly: bonusTags === 0};
   let left = bonusTags; const rest = [];
   for (const [p, c] of pool){
     if (m.randomOnly){ rest.push([p, c]); continue; }
@@ -1027,20 +1051,21 @@ function drawModel(pool, bonusTags, randTags){
     rest.push([p, c]);
   }
   m.rest = rest;
-  m.entries = rest.reduce((s, [p, c]) => s + c * (p + 1), 0);
+  m.entries = rest.reduce((s, [p, c]) => s + c * R.w(p), 0);
+  m.eligible = rest.reduce((s, [p, c]) => s + (R.w(p) > 0 ? c : 0), 0);
   m.all = !m.randomOnly && m.split == null;
   m.guarPts = m.randomOnly ? null : m.guar != null ? m.guar : (m.split != null ? m.split + 1 : 0);
-  const restN = rest.reduce((s, x) => s + x[1], 0);
-  if (randTags <= 0 || !restN) m.tau = 0;
-  else if (randTags >= restN) m.tau = Infinity;
+  const prob = (p, t) => { const w = R.w(p); if (w <= 0) return 0; if (t === Infinity) return 1; return R.linear ? Math.min(1, w * t) : 1 - Math.exp(-w * t); };
+  if (randTags <= 0 || !m.eligible) m.tau = 0;
+  else if (randTags >= m.eligible) m.tau = Infinity;
   else {
-    const f = t => rest.reduce((s, [p, c]) => s + c * (1 - Math.exp(-(p + 1) * t)), 0);
+    const f = t => rest.reduce((s, [p, c]) => s + c * prob(p, t), 0);
     let lo = 0, hi = 1;
     while (f(hi) < randTags) hi *= 2;
     for (let i = 0; i < 60; i++){ const mid = (lo + hi) / 2; f(mid) < randTags ? lo = mid : hi = mid; }
     m.tau = hi;
   }
-  m.randAt = p => m.tau === Infinity ? 1 : 1 - Math.exp(-(p + 1) * m.tau);
+  m.randAt = p => prob(p, m.tau);
   return m;
 }
 function oddsAt(m, p){
@@ -1157,6 +1182,9 @@ function render(){
   $("#eyebrow").textContent = sp.label;
   $("#subtitle").innerHTML = `Results from the <b>${st.drawYear} draw</b>, harvest from the <b>${harvYear(sp)} season</b>, and projections for the <b>${N} draw</b>.`;
   renderSpeciesTabs(); renderWeaponChips(); renderHunter(); renderExplain(st, sp);
+  // Private-land / Ranching for Wildlife toggles only where the species has such hunts.
+  $("#hidePLOtog").hidden = !sp.hunts.some(h => h.plo); $("#hidePLO").checked = ui.hidePLO;
+  $("#hideRFWtog").hidden = !sp.hunts.some(h => h.rfw); $("#hideRFW").checked = ui.hideRFW;
   if (typeof showCurrentSpecies === "function") showCurrentSpecies();
   if (typeof renderPin === "function") renderPin();
   $("#starView").hidden = !ui.starView;
@@ -1170,8 +1198,10 @@ function render(){
   renderPRange(all, N);
   let list = all
     .filter(({h}) => !ui.wtypes.size || ui.wtypes.has(h.wtype))
-    .filter(({h}) => !q || (h.unit + " " + h.code + " " + h.weapon + " " + (h.notes || []).map(n => n[0]).join(" ")).toLowerCase().includes(q))
+    .filter(({h}) => !q || (h.unit + " " + h.code + " " + h.weapon + " " + (h.notes || []).map(n => n[0]).join(" ")).toLowerCase().includes(q)
+      || (h.units && (", " + h.units.replace(/\s+/g, " ") + ",").includes(", " + q + ",")))   // "41" finds every code valid in unit 41
     .filter(({h}) => !ui.onlyStar || ui.stars.has(st.state + ":" + h.code))
+    .filter(({h}) => !(ui.hidePLO && h.plo) && !(ui.hideRFW && h.rfw))
     .filter(({a}) => {
       if (!ui.onlyRun || p == null) return true;
       const g = a.model ? a.model.guarPts : a.guarPts;
@@ -1209,7 +1239,8 @@ function render(){
 
   renderHead(cols); renderMobileBar(cols);
   // How many filters are on, for the phone "Filters" button.
-  const nOn = ui.wtypes.size + (ui.onlyRun ? 1 : 0) + (ui.onlyStar ? 1 : 0) + activeFilters().length;
+  const nOn = ui.wtypes.size + (ui.onlyRun ? 1 : 0) + (ui.onlyStar ? 1 : 0) + activeFilters().length
+    + (ui.hidePLO && sp.hunts.some(h => h.plo) ? 1 : 0) + (ui.hideRFW && sp.hunts.some(h => h.rfw) ? 1 : 0);
   $("#fCount").textContent = nOn ? ` · ${nOn}` : "";
   $("#fToggle").classList.toggle("has", nOn > 0);
   if (!list.length){
@@ -1251,7 +1282,8 @@ function rowHtml(st, sp, h, a, p, inGroup){
   const nt = a.next;
   let tags = `<span class="big">${fmt(nt[0])}</span>`;
   // "random" spelled out unless the trend columns are taking the width
-  if (sp.system === "bonus" && nt[0]) tags += `<span class="small">${fmt(nt[1])} bonus · ${fmt(nt[2])} ${ui.showTrends ? "rand." : "random"}</span>`;
+  if (sp.system === "bonus" && !sp.rand && nt[0]) tags += `<span class="small">${fmt(nt[1])} bonus · ${fmt(nt[2])} ${ui.showTrends ? "rand." : "random"}</span>`;
+  else if (sp.rand === "hybrid" && nt[2]) tags += `<span class="small">${fmt(nt[1])} by points · ${fmt(nt[2])} hybrid</span>`;
   if (a.nextLoaded){
     const diff = nt[0] - a.tags;
     tags += `<span class="small">${st.drawYear}: ${fmt(a.tags)}${diff ? ` <span class="${diff > 0 ? "up" : "down"}">${diff > 0 ? "+" : ""}${diff}</span>` : ""}</span>`;
@@ -1259,7 +1291,7 @@ function rowHtml(st, sp, h, a, p, inGroup){
   const guar = a.allDrew ? `<span class="big">${a.guar ? a.guar[0] : 0}</span><span class="small">everyone drew</span>`
     : a.guar ? `<span class="big">${a.guar[0]}</span><span class="small">points</span>`
     : a.split ? `<span class="big">${a.guarPts}</span><span class="small">points</span>`
-    : a.randomOnly ? `<span class="na">random only</span><span class="small">no bonus tag</span>` : `<span class="na">—</span>`;
+    : a.randomOnly ? `<span class="na">${randomOnlyLabel()[0]}</span><span class="small">${randomOnlyLabel()[1]}</span>` : `<span class="na">—</span>`;
   const split = a.split ? `<span class="big">${a.split[0]} pts</span><span class="small">${fmt(a.split[2])} of ${fmt(a.split[1])} drew</span>` : `<span class="na">—</span>`;
   const hv = harvCell(h.harvest);
   const o = oddsAt(a.model, p);
@@ -1268,7 +1300,7 @@ function rowHtml(st, sp, h, a, p, inGroup){
     : `<span class="pill ${oddsClass(o)}">${pct(o)}</span><span class="small">${mineNote(a.model, p, o)}</span>`;
   const m = a.model;
   const pGuar = !m ? `<span class="na">—</span>`
-    : m.randomOnly ? `<span class="na">random only</span><span class="small">no bonus tag</span>`
+    : m.randomOnly ? `<span class="na">${randomOnlyLabel()[0]}</span><span class="small">${randomOnlyLabel()[1]}</span>`
     : m.all ? `<span class="big">${m.guarPts}</span><span class="small">all would draw</span>`
     : `<span class="big">${m.guarPts}</span><span class="small">points</span>`;
   const pSplit = !m || m.randomOnly || m.all ? `<span class="na">—</span>`
@@ -1276,9 +1308,11 @@ function rowHtml(st, sp, h, a, p, inGroup){
   const s0 = h.seasons && h.seasons[0];
   const dates = s0 && h.seasons.length === 1 ? ` · ${fmtDate(s0[1])} – ${fmtDate(s0[2])}` : "";
   const badges = (h.notes || []).map(n => `<span class="badge" title="${esc(n[1])}">${esc(n[0])}</span>`).join("");
+  // Colorado codes can be valid in several units (from CPW Chapter W-2): list them all.
+  const unitsLine = h.units && h.units !== h.unit.replace(/^Unit /, "") ? `<div class="meta units">Units ${esc(h.units)}</div>` : "";
   const name = inGroup
-    ? `<div class="unit">${esc(h.weapon)}${badges}</div><div class="meta"><span class="code">${esc(h.code)}</span>${esc(dates)}</div>`
-    : `<div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div>` +
+    ? `<div class="unit">${esc(h.weapon)}${badges}</div><div class="meta"><span class="code">${esc(h.code)}</span>${esc(dates)}</div>${unitsLine}`
+    : `<div class="unit">${esc(h.unit)}</div><div class="meta">${esc(h.weapon)} · <span class="code">${esc(h.code)}</span></div>${unitsLine}` +
       (ui.sort.key === "season" ? seasonDatesHtml(h) : "") +
       `${badges ? `<div class="badges">${badges}</div>` : ""}`;
   const cell = {
@@ -1327,9 +1361,22 @@ function demandCell(t){
 function mineNote(m, p, o){
   if (o >= 1 && !m.randomOnly) return "guaranteed";
   if (!m.randomOnly && p === m.split) return "in split group";
+  if (m.rule === "hybrid") return m.randTags > 0 ? (p >= 5 ? `hybrid draw: ${fmt(m.randTags)} tag${m.randTags === 1 ? "" : "s"}, ${fmt(m.eligible)} in it` : "hybrid draw needs 5 pts") : "no hybrid draw";
+  if (m.rule === "weighted") return p < 3 ? "needs 3 points to draw" : `${fmt(p - 2)}× chance of 3 pts`;
+  if (m.rule === "flat") return `${fmt(m.randTags)} of ${fmt(m.eligible)} applicants`;
   if (m.randTags > 0 && m.entries > 0) return `${fmt(p + 1)} of ${fmt(Math.round(m.entries))} entries`;
   return "no random tags";
 }
+// The random-draw line in the hunt detail, by draw rule.
+function hatText(m, N, p){
+  const tags = `${fmt(m.randTags)} tag${m.randTags === 1 ? "" : "s"}`, who = esc(activeProfile().name);
+  if (m.rule === "hybrid") return `${N} hybrid draw: ${tags} drawn at random from about <b>${fmt(Math.round(m.eligible))}</b> first-choice applicants with 5+ points who don't draw by points, one chance each.${p != null ? (p >= 5 ? ` ${who} is in it.` : ` ${who} needs 5 points to be in it.`) : ""}`;
+  if (m.rule === "weighted") return `${N} weighted draw: ${tags} among about <b>${fmt(Math.round(m.eligible))}</b> applicants with 3+ points. Each weighted point adds one more 3-point applicant's chance.${p != null ? (p >= 3 ? ` ${who}'s chance is ${fmt(p - 2)}× a 3-point applicant's.` : ` ${who} needs 3 points to be in it.`) : ""}`;
+  if (m.rule === "flat") return `${N} random draw: ${tags} among about <b>${fmt(Math.round(m.eligible))}</b> applicants, everyone the same chance (no points).`;
+  return `${N} random draw: ${tags} drawn from about <b>${fmt(Math.round(m.entries))}</b> entries held by ${fmt(m.rest.reduce((s,x) => s + x[1], 0))} applicants.${p != null ? ` ${who} holds ${p + 1}.` : ""}`;
+}
+// Label for a hunt with no preference/bonus tags (random only), by draw rule.
+const randomOnlyLabel = () => ({weighted: ["weighted draw", "3+ points to draw"], flat: ["random draw", "no points"]}[randRule()] || ["random only", "no bonus tag"]);
 
 // Sections of the hunt detail that fold on phones (closed by default there, and
 // remembered while the page is open). On desktop they're always open and the
@@ -1368,7 +1415,7 @@ function detailHtml(st, sp, h, a, p, ncol){
       ${trendHtml(st, sp, h, a)}
       <h3${h.hist ? ` style="margin-top:1.4rem"` : ""}>Hunters · ${N} odds</h3>
       <table class="pts hunters-tbl"><thead><tr><th class="l">Hunter</th><th>Points</th><th>${N} odds</th></tr></thead><tbody>${hunters}</tbody></table>
-      ${a.model && !a.model.all && a.model.randTags > 0 ? `<p class="hat">${N} random draw: ${fmt(a.model.randTags)} tag${a.model.randTags === 1 ? "" : "s"} drawn from about <b>${fmt(Math.round(a.model.entries))}</b> entries held by ${fmt(a.model.rest.reduce((s,x) => s + x[1], 0))} applicants.${p != null ? ` ${esc(activeProfile().name)} holds ${p + 1}.` : ""}</p>` : ""}
+      ${a.model && !a.model.all && a.model.randTags > 0 ? `<p class="hat">${hatText(a.model, N, p)}</p>` : ""}
       <h3 style="margin-top:1.4rem">Hunt</h3><dl class="facts">
       ${(h.notes || []).length ? `<dt>Notes</dt><dd>${h.notes.map(n => `<span class="badge">${esc(n[0])}</span> ${esc(n[1])}`).join("<br>")}</dd>` : ""}
       <dt>Hunt #</dt><dd><span class="code">${esc(h.code)}</span>${h.map ? ` · <a href="${esc(h.map)}" target="_blank" rel="noopener">Boundary map</a>` : ""}</dd>
@@ -1502,6 +1549,26 @@ function renderExplain(st, sp){
       ? `Hounds, Bait, Hounds or bait and No hounds or bait show what each bear season allows, from DWR's black bear guidebook: dogs in spring and fall, bait only in summer (with a bait station registration), each season's rules on a multi-season permit. Hover a badge, or open the hunt, for the details.`
       : `Management buck, cactus buck, premium, restricted weapon, HAMSS and bison cow/hunter's choice come from DWR's hunt labels. Hover a badge, or open the hunt, for the rule.`],
   ];
+  // Colorado: CPW's draw works differently, so its explanations replace Utah's.
+  if (st.state === "CO"){
+    const co = {
+      [`${tagYear(st)} tags`]: `Licenses drawn in the ${D} primary draw by adult ${ui.res === "R" ? "residents" : "nonresidents"}, from CPW's draw recap. Colorado caps nonresidents at 20% of a hunt's licenses where it took 6+ resident points, 35% elsewhere, so the Resident and Nonres numbers differ. ${sp.rand === "hybrid" ? `"By points · hybrid" splits off the licenses that went to the hybrid draw.` : ""}`,
+      [`${D} guaranteed at`]: sp.rand === "hybrid"
+        ? `Colorado draws by preference points, top points first. A few applicants at levels that drew still miss (group applications draw at the lowest member's points), so this is the lowest level where at least 90% of first-choice applicants drew. CPW calls it the "drawn out at" level.`
+        : `Not used for ${esc(sp.short)}: ${sp.rand === "weighted" ? "licenses go by a weighted random draw, not straight by points" : "it's a pure random draw with no points"}.`,
+      [`${D} split group`]: `The point level where licenses ran out: some drew, some didn't.`,
+      [`Your ${N} odds`]: sp.rand === "hybrid"
+        ? `Licenses go top points down. On hunts that took 10+ resident points the year before (and have 5+ licenses), up to 20% go instead to the hybrid draw: a random draw among first-choice applicants with 5+ points who didn't draw by points, one chance each. Your odds are 100% above the split, part of the way at it, and the hybrid chance below it (0 under 5 points). Checked against the ${D} results: the draws below the split matched CPW's hybrid counts on nearly every hunt.`
+        : sp.rand === "weighted"
+        ? `Moose, Rocky Mountain bighorn and goat use weighted points. You need 3 preference points to be in the draw (nobody under 3 drew in ${D}); after that each unsuccessful year adds a weighted point. Enter your total, 3 + weighted points. Your random number is divided by (weighted points + 1), so your chance is that many times a 3-point applicant's. This matched the ${D} draws by weighted points.`
+        : `Desert bighorn is a pure random draw: no preference points, everyone who applies has the same chance.`,
+      [`Your entries`]: sp.rand === "weighted" ? `Under your odds, "5× chance of 3 pts" means your chance is five times that of someone with 3 points and no weighted points.` : sp.rand === "hybrid" ? `Under your odds, "hybrid draw" shows how many licenses go to the hybrid draw and how many applicants are in it.` : `Under your odds: licenses against applicants.`,
+      [`Badges`]: `Private land only (you need a landowner's permission before applying), Ranching for Wildlife (a specific ranch, residents only), Nonresident only, and 2nd choice (licenses were left after every first choice drew, so it can be drawn as a 2nd choice). Use "Hide private land" and "Hide RFW" to leave those hunts out.`,
+    };
+    items.forEach(it => { if (co[it[0]] !== undefined) it[1] = co[it[0]]; });
+    items.push([`Valid units`, `Many Colorado licenses are good in several game management units. They're listed under each hunt, from CPW's Chapter W-2 regulations, and the search box finds a hunt by any unit it's valid in. Ranching for Wildlife hunts aren't in W-2, so they show the unit in their code.`]);
+    items.push([`Coming`, `Colorado replaces the hybrid draw with a split draw starting in 2028. Harvest success for Colorado hunts is still to come.`]);
+  }
   if (sp.pooled) items.push([`One pool`, `Limited-entry turkey doesn't split permits between residents and nonresidents: everyone, youth included, draws from the same permits, so the tables count everyone and the Resident and Nonres buttons show the same numbers. Youth get a first pass at 15% of the permits before the main draw, which takes a tag or two from adults; the odds don't model that.`]);
   if (sp.key === "bear") items.push([`Bear seasons`, `Bear hunts are grouped by season (spring, summer, fall, multi-season) instead of weapon; the season buttons filter them.`]);
   if (sp.system === "preference") items.push([`Preference points`, `General-season deer gives every tag to the highest point holders, so there's no random half. The ${D} split is the highest level where fewer than 90% drew; group applications blur it slightly.`]);
@@ -1708,11 +1775,11 @@ function renderStarred(st){
     spOverride = s;
     try { a = analyze(h, ui.res, s.system); } finally { spOverride = null; }
     const id = st.state + ":" + h.code, m = a.model, nt = a.next;
-    const tags = `<span class="big">${fmt(nt[0])}</span>` + (s.system === "bonus" && nt[0] ? `<span class="small">${fmt(nt[1])} bonus · ${fmt(nt[2])} random</span>` : "");
+    const tags = `<span class="big">${fmt(nt[0])}</span>` + (s.system === "bonus" && !s.rand && nt[0] ? `<span class="small">${fmt(nt[1])} bonus · ${fmt(nt[2])} random</span>` : s.rand === "hybrid" && nt[2] ? `<span class="small">${fmt(nt[1])} by points · ${fmt(nt[2])} hybrid</span>` : "");
     const guar = a.allDrew ? `<span class="big">${a.guar ? a.guar[0] : 0}</span><span class="small">everyone drew</span>`
       : a.guarPts != null ? `<span class="big">${a.guarPts}</span><span class="small">points</span>`
-      : a.randomOnly ? `<span class="na">random only</span>` : `<span class="na">—</span>`;
-    const pGuar = !m ? `<span class="na">—</span>` : m.randomOnly ? `<span class="na">random only</span>`
+      : a.randomOnly ? `<span class="na">${{weighted: "weighted draw", flat: "random draw"}[s.rand] || "random only"}</span>` : `<span class="na">—</span>`;
+    const pGuar = !m ? `<span class="na">—</span>` : m.randomOnly ? `<span class="na">${{weighted: "weighted draw", flat: "random draw"}[s.rand] || "random only"}</span>`
       : `<span class="big">${m.guarPts}</span><span class="small">${m.all ? "all would draw" : "points"}</span>`;
     const pSplit = !m || m.randomOnly || m.all ? `<span class="na">—</span>` : `<span class="big">${m.split} pts</span><span class="small">${fmt(m.k)} of ${fmt(m.n)} draw</span>`;
     const odds = ui.profiles.map((prof, i) => {
@@ -1944,6 +2011,8 @@ $("#speciesTabs").addEventListener("click", e => {
 $("#q").oninput = e => { ui.q = e.target.value; render(); };
 $("#onlyRun").onchange = e => { ui.onlyRun = e.target.checked; render(); };
 $("#onlyStar").onchange = e => { ui.onlyStar = e.target.checked; store.set("onlyStar", ui.onlyStar); render(); };
+$("#hidePLO").onchange = e => { ui.hidePLO = e.target.checked; store.set("hidePLO", ui.hidePLO); render(); };
+$("#hideRFW").onchange = e => { ui.hideRFW = e.target.checked; store.set("hideRFW", ui.hideRFW); render(); };
 // "Show/Hide trend columns" in the summary line (re-rendered, so delegated).
 $("#summary").addEventListener("click", e => {
   if (!e.target.closest("[data-trends]")) return;

@@ -249,6 +249,13 @@ The owner's decisions:
 - **Storage:** downloads PDFs to `C:\Users\hayden.j\OneDrive\Documents\Hunting\DrawOddsData\colorado\` and writes parsed JSON to `data/draw-odds/raw/colorado_<species>_<year>_<recap|drawnout>.json`, `colorado_w2_units_2026.json` and `colorado_sources.json`.
 - **Recaps:** 2022, 2023, 2025 and 2026 for every species, plus desert bighorn 2024. CPW posts no 2024 recap for the others, so `parse_drawnout` fetches the "Drawn Out At" report only where a year has no recap.
 - **Recap parser:** checked by `verify_recap` against CPW's own Total Choice 1 lines. 2026 elk: 1,039 codes, 0 mismatches. Per hunt it keeps the quota; post-draw # drawn (adult R/N, youth R/N, landowner); hybrid licenses drawn; the nonresident cap; first-choice applicants and draws by point level; and totals by choice 1–4 (choice 2+ draws mean a 2nd-choice tag).
+- **Result of the first full run (2026-11-25):** 10,616 hunt tables across 7 species × 4–5 years, **0 parse errors**. 89 minutes, mostly the large elk and deer PDFs; parsed JSON is cached, so reruns only redo what's asked (`--only <species> --year <year> --reparse`). Layout variants the parser handles:
+  - **Old vs new layout:** 2022 (capitalized headers, numbers on label lines) vs 2026.
+  - **Letter units:** goat and sheep codes use letter units (`GEG01O1A`, `SMS03O1R`).
+  - **Weighted species:** moose, goat and Rocky Mountain bighorn have two key columns, preference points (0–3) plus weighted points. Their rows are keyed `"3w24"`, and the species decides which row pattern applies (`WEIGHTED`), because a 1-point weighted row looks like a choice-labelled plain row.
+  - **Combined hunts:** 2022 has several codes sharing one quota and table. They're keyed `"EF003O2R+EF003O3R"` with `shared: [...]`.
+  - **CPW's extra-applicant quirk:** 41 hunts, all sheep, moose and goat plus 1 pronghorn. CPW's total counts 1–6 more applicants than its point rows show, and the "drew" columns always match. It was checked by hand (SMS06O1A 2026: rows 28, total 29). `verify_recap()` lists these separately, not as errors.
+  - **Retries:** the first run died on a DNS failure for cpw.widen.net, so `get()` now retries 4 times with back-off.
 - **Valid units:** from CPW **Chapter W-2** (as approved May 2026) via pdfplumber `extract_tables()`. The merged unit cell carries down a group of code rows and across pages. All 422 non-RFW antlered/either-sex elk codes get units, including CPW's qualifiers ("82 public lands only"). Ranching for Wildlife codes aren't in W-2, so they show the code's GMU plus a badge.
 
 **Hunt codes** (2026 brochure p. 20) read species, sex, GMU, season, method:
