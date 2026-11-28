@@ -88,8 +88,9 @@ Data rows are `[points, applicants, drew (all rounds), drew in bonus round]`. Qu
 - **Random round:** each applicant holds **points + 1 entries**, drawn without replacement.
   - **Evidence:** fitting this against 2026 random winners beat unweighted and squared weighting by far, and the model reproduced 6,566 vs 6,567 actual resident tags drawn.
   - **Odds formula:** P = 1 − e^(−w·τ), with τ solved so expected winners = tags.
-- **Guaranteed (2026 column):** bonus hunts use the lowest point level that drew a bonus tag outright. If no one sat above the split group, guaranteed = split + 1.
+- **Guaranteed (2026 column):** **split + 1** whenever the split group drew some tags (bonus tags for bonus hunts; any for preference hunts), even if nobody held that level. Only when tags ran out exactly at a level (nobody below drew) is that level the answer.
   - This is the owner's rule: 10 people at 25 points with 8 bonus tags → 26.
+  - **Changed 2026-11-26.** It used to be the lowest level that actually drew, which overstated thin hunts that skip levels (EB3165 resident: split 23, nobody at 24–28, old 29 → now 24). Changed in 131 of 3,758 hunt × residency rows (Utah and Colorado), always down; the projected column changed in 16. JS `analyze()`/`drawModel()` and Python `_bonus_round()`/`_actual_guar()` all use it. The refit backtest improved: LE elk exact 206 → 214 of 510, average miss 1.05 → 0.99.
   - Preference hunts (general deer) use the highest level where fewer than 90% drew as the split.
   - The owner's sheet sometimes used the stricter "everyone at that level drew". Example: Manti archery 2025, sheet 10 vs page 9, because 34 of 35 drew at 9. The page's rule was kept.
 - **Next-year projection (2027):**

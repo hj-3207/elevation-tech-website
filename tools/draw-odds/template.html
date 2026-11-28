@@ -941,9 +941,13 @@ function analyze(h, res, system, light){
     if (i === rows.length - 1){ a.guar = rows[i]; a.allDrew = true; }
     else { a.split = rows[i+1]; a.guar = i >= 0 ? rows[i] : null; }
   }
-  a.guarPts = a.guar ? a.guar[0] : a.split ? a.split[0] + 1 : null;
+  // Guaranteed = split + 1 whenever the split group drew some: anyone with one more point
+  // was ahead of all of them, even if nobody held that level (thin hunts often skip levels).
+  // Only when tags ran out exactly at a level (nobody below drew) is that level the answer.
+  const splitDrew = a.split ? (system === "bonus" ? a.split[3] : a.split[2]) : 0;
+  a.guarPts = a.split && (splitDrew > 0 || !a.guar) ? a.split[0] + 1 : a.guar ? a.guar[0] : null;
   a.randomOnly = system === "bonus" && a.bonusTags === 0 && a.randTags > 0;
-  a.topGroup = a.guar ? rows.filter(r => r[0] >= a.guar[0]).reduce((s,r) => s + r[1], 0) : 0;
+  a.topGroup = a.guarPts != null ? rows.filter(r => r[0] >= a.guarPts).reduce((s,r) => s + r[1], 0) : 0;
   if (light) return a;
   const di = dropinFor(res);
   const adj = di && di.use ? withDropins(nextPool(rows), a.next[1], di.d) : null;
@@ -1065,7 +1069,8 @@ function drawModel(pool, bonusTags, randTags){
   m.entries = rest.reduce((s, [p, c]) => s + c * R.w(p), 0);
   m.eligible = rest.reduce((s, [p, c]) => s + (R.w(p) > 0 ? c : 0), 0);
   m.all = !m.randomOnly && m.split == null;
-  m.guarPts = m.randomOnly ? null : m.guar != null ? m.guar : (m.split != null ? m.split + 1 : 0);
+  // Same rule as analyze(): split + 1 when the split group gets some tags.
+  m.guarPts = m.randomOnly ? null : m.split != null && (m.k > 0 || m.guar == null) ? m.split + 1 : m.guar != null ? m.guar : 0;
   const prob = (p, t) => { const w = R.w(p); if (w <= 0) return 0; if (t === Infinity) return 1; return R.linear ? Math.min(1, w * t) : 1 - Math.exp(-w * t); };
   if (randTags <= 0 || !m.eligible) m.tau = 0;
   else if (randTags >= m.eligible) m.tau = Infinity;
@@ -1300,8 +1305,7 @@ function rowHtml(st, sp, h, a, p, inGroup){
     tags += `<span class="small">${st.drawYear}: ${fmt(a.tags)}${diff ? ` <span class="${diff > 0 ? "up" : "down"}">${diff > 0 ? "+" : ""}${diff}</span>` : ""}</span>`;
   }
   const guar = a.allDrew ? `<span class="big">${a.guar ? a.guar[0] : 0}</span><span class="small">everyone drew</span>`
-    : a.guar ? `<span class="big">${a.guar[0]}</span><span class="small">points</span>`
-    : a.split ? `<span class="big">${a.guarPts}</span><span class="small">points</span>`
+    : a.guarPts != null ? `<span class="big">${a.guarPts}</span><span class="small">points</span>`
     : a.randomOnly ? `<span class="na">${randomOnlyLabel()[0]}</span><span class="small">${randomOnlyLabel()[1]}</span>` : `<span class="na">—</span>`;
   const split = a.split ? `<span class="big">${a.split[0]} pts</span><span class="small">${fmt(a.split[2])} of ${fmt(a.split[1])} drew</span>` : `<span class="na">—</span>`;
   const hv = harvCell(h.harvest);
@@ -1551,7 +1555,7 @@ function renderExplain(st, sp){
     [`${tagYear(st)} tags`, st.nextTags
       ? `Permits for the ${N} draw. The small line shows ${D} and the change. Bonus hunts: half the tags (rounded up) go to the top point holders, the rest to the random draw. A hunt with a single tag sends it to the random draw.`
       : `Permits from the ${D} draw. DWR releases ${N} numbers in the spring; until then the ${N} projections use these. Bonus hunts: half the tags (rounded up) go to the top point holders, the rest to the random draw. A hunt with a single tag sends it to the random draw.`],
-    [`${D} guaranteed at`, `The lowest point level that drew a bonus tag outright in ${D}. If nobody sat above the split group, it's the split + 1.`],
+    [`${D} guaranteed at`, `One point above the ${D} split group. Anyone with that many points was ahead of everyone in the split group, so they drew, even in a hunt where nobody actually held that many. If the bonus tags ran out exactly at a level (nobody below it got one), it's that level.`],
     [`${D} split group`, `The point level where the bonus tags ran out. "X of Y drew" counts everyone in that group who drew, bonus or random.`],
     [`Your ${N} odds`, `First the bonus tags go top points down. Everyone left goes in the hat with points + 1 entries each. Example: 10 people at 15 points hold 160 entries, 30 at 14 hold 450, and so on down to 0 points. Your 6 entries (5 points) are compared to that total. Tags come out one at a time and a winner's other entries are pulled, which the math accounts for. This matched the ${D} results at every point level.`],
     [`${N} projected guaranteed / split`, `Everyone who drew in ${D} is removed, everyone who didn't comes back with one more point, and the same number of new applicants start at 0. The bonus tags (${st.nextTags ? N : D} numbers) are handed out top points down: the split is where they run out, guaranteed is the level above it. See the assumptions below the table.`],
@@ -1576,7 +1580,7 @@ function renderExplain(st, sp){
     const co = {
       [`${tagYear(st)} tags`]: `Licenses drawn in the ${D} primary draw by adult ${ui.res === "R" ? "residents" : "nonresidents"}, from CPW's draw recap. Colorado caps nonresidents at 20% of a hunt's licenses where it took 6+ resident points, 35% elsewhere, so the Resident and Nonres numbers differ. ${sp.rand === "hybrid" ? `"By points · hybrid" splits off the licenses that went to the hybrid draw.` : ""}`,
       [`${D} guaranteed at`]: sp.rand === "hybrid"
-        ? `Colorado draws by preference points, top points first. A few applicants at levels that drew still miss (group applications draw at the lowest member's points), so this is the lowest level where at least 90% of first-choice applicants drew. CPW calls it the "drawn out at" level.`
+        ? `Colorado draws by preference points, top points first. A few applicants at levels that drew still miss (group applications draw at the lowest member's points), so the split group is the highest level where under 90% of first-choice applicants drew, and guaranteed is one point above it (even if nobody held that many). CPW's "drawn out at" report lists the split group itself.`
         : `Not used for ${esc(sp.short)}: ${sp.rand === "weighted" ? "licenses go by a weighted random draw, not straight by points" : "it's a pure random draw with no points"}.`,
       [`${D} split group`]: `The point level where licenses ran out: some drew, some didn't.`,
       [`${H} harvest success`]: sp.harvestByUnit

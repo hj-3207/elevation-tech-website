@@ -618,7 +618,8 @@ def _bonus_round(pool, bonus):
             continue
         if left > 0 and c <= left + 1e-9:
             left -= c; guar = p; continue
-        return (guar if guar is not None else p + 1), p
+        # Mirrors drawModel(): split + 1 when the split group gets some tags.
+        return (p + 1 if left > 1e-9 or guar is None else guar), p
     return (guar if guar is not None else 0), None
 
 
@@ -631,15 +632,15 @@ def _actual_guar(rows, system):
         if idx < 0:
             return None
         low = rows[idx]
-        if low[3] < low[1]:
-            return rows[idx - 1][0] if idx > 0 else low[0] + 1
-        return low[0]
+        # Mirrors analyze(): split + 1 when the split group drew some.
+        return low[0] + 1 if low[3] < low[1] else low[0]
     i = len(rows) - 1
     while i >= 0 and rows[i][2] / rows[i][1] < 0.9:
         i -= 1
     if i == len(rows) - 1:
         return rows[i][0]
-    return rows[i][0] if i >= 0 else rows[i + 1][0] + 1
+    split = rows[i + 1]
+    return split[0] + 1 if split[2] > 0 or i < 0 else rows[i][0]
 
 
 def _with_dropins(pool, bonus, d):
